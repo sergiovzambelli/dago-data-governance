@@ -20,20 +20,21 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #5, #6 | feat/entities | CF e IBAN con controllo, email, telefono, nascita, Sig./Sig.ra, IP, matricola → NESSUN_DATO_PERSONALE | 19,9 | 18,7 |
 | #7 | feat/categories | Categorie particolari con dizionari, negazioni | 35,4 | 34,9 |
 | #8 | feat/categories-ext | Dizionari estesi, categorie art. 9 nuove, EML decodificate con allegati, caselle `☐` | 35,6 | 35,2 |
-| #9 | feat/ocr | OCR (ocrmypdf, tesseract `ita`) per scansioni e foto | **39,9** | **38,7** |
+| #9 | feat/ocr | OCR (ocrmypdf, tesseract `ita`) per scansioni e foto | 39,9 | 38,7 |
+| #10 | chore/roadmap | Questo file | – | – |
+| #11 | feat/matching | Top-3 schede da parole chiave pesate + cartella dichiarata, con motivazione | **59,4** | **57,9** |
 
-Metriche dopo #9 (sviluppo): esito 0,52 · categorie 0,98 · scheda top-3 0 · F1 SCHEDA_MANCANTE 0 · F1 scostamenti 0 · precisione entità 1,0.
+Metriche dopo #11 (sviluppo): esito 0,52 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0 · F1 scostamenti 0 · precisione entità 1,0.
 
 ## Da fare (in ordine)
 
-1. **feat/matching** — abbinamento al registro: punteggio per scheda da percorso dichiarato + parole chiave (pesatura tipo BM25, senza librerie) + tipologie documentali; top-3 con punteggio e motivazione. Attenzione: i documenti con LUOGO_NON_DICHIARATO stanno nella cartella sbagliata, il testo deve poter vincere sul percorso. Valgono anche le "Alternative accettabili". Metrica: scheda top-3 (20).
-2. **feat/missing-record** — soglia sotto cui l'esito è SCHEDA_MANCANTE (tarata solo su sviluppo; colonna "Scheda più vicina" per controllo). Metriche: F1 SCHEDA_MANCANTE (15), esito.
-3. **feat/compliance** — le 5 regole deterministiche (CATEGORIA_NON_DICHIARATA, LUOGO_NON_DICHIARATO, ACCESSO_ECCESSIVO con `permessi_cartelle.csv`, CONSERVAZIONE_SCADUTA con data di riferimento 28/10/2026, DIFFUSIONE_NON_PREVISTA) → CONFORME / NON_CONFORME. Metrica: F1 scostamenti (15), esito.
-4. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
-5. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
-6. **LLM locale (Ollama, opzionale)** — categorie implicite e abbinamenti incerti.
-7. **UI** — FastAPI + Jinja2 + Bootstrap Italia 2.x: inventario, coda di validazione, cruscotto, ricerca, registro decisioni RPD.
-8. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
+1. **feat/missing-record** — soglia sotto cui l'esito è SCHEDA_MANCANTE (tarata solo su sviluppo; colonna "Scheda più vicina" per controllo). I punteggi di `matching.py` non sono normalizzati (somma di pesi): valutare punteggio della prima, distacco dalla seconda o normalizzazione. Metriche: F1 SCHEDA_MANCANTE (15), esito.
+2. **feat/compliance** — le 5 regole deterministiche (CATEGORIA_NON_DICHIARATA, LUOGO_NON_DICHIARATO, ACCESSO_ECCESSIVO con `permessi_cartelle.csv`, CONSERVAZIONE_SCADUTA con data di riferimento 28/10/2026, DIFFUSIONE_NON_PREVISTA) → CONFORME / NON_CONFORME. Metrica: F1 scostamenti (15), esito.
+3. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
+4. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
+5. **LLM locale (Ollama, opzionale)** — categorie implicite e abbinamenti incerti.
+6. **UI** — FastAPI + Jinja2 + Bootstrap Italia 2.x: inventario, coda di validazione, cruscotto, ricerca, registro decisioni RPD.
+7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 
 ## Decisioni prese
 

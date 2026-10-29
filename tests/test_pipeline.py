@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 
+from classifier.matching import load_register
 from classifier.pipeline import classify
 
 
@@ -67,3 +68,28 @@ def test_special_category_makes_document_personal(tmp_path):
     (r,) = classify(tmp_path)
     assert r["dati_personali"] is True and r["esito"] == "CONFORME"
     assert r["categorie_particolari"] == ["SALUTE"]
+
+
+def test_proposals_from_register(tmp_path):
+    reg = tmp_path / "registro.csv"
+    reg.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche\n"
+                   "T-PER-07;Personale/Permessi;congedo;Istanza\n", encoding="utf-8")
+    root = tmp_path / "share"
+    (root / "Personale" / "Permessi").mkdir(parents=True)
+    (root / "Personale" / "Permessi" / "a.txt").write_text("C.F. BLDSLV66A68E625M chiede congedo")
+    (r,) = classify(root, load_register(reg))
+    assert r["scheda"] == "T-PER-07"
+    assert [p["scheda"] for p in r["proposte"]] == ["T-PER-07"]
+
+
+def test_proposals_also_without_personal_data_but_no_record(tmp_path):
+    # se il "senza dati personali" è un errore (es. soli nomi), le proposte restano utili all'RPD
+    reg = tmp_path / "registro.csv"
+    reg.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche\n"
+                   "T-PER-02;Personale/Concorsi;graduatoria;Graduatoria\n", encoding="utf-8")
+    root = tmp_path / "share"
+    (root / "Personale" / "Concorsi").mkdir(parents=True)
+    (root / "Personale" / "Concorsi" / "g.txt").write_text("Graduatoria: Rossi Mario 28/30")
+    (r,) = classify(root, load_register(reg))
+    assert r["esito"] == "NESSUN_DATO_PERSONALE" and r["scheda"] is None
+    assert [p["scheda"] for p in r["proposte"]] == ["T-PER-02"]

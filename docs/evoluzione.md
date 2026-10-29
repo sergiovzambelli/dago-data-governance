@@ -2,6 +2,13 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/matching: abbinamento al registro dei trattamenti
+- `classifier/matching.py`: per ogni scheda, somma dei pesi delle parole chiave e tipologie documentali trovate nel testo (peso più alto per le parole rare tra le schede, `log(1 + N/df)`) + bonus 2 se il file sta in una cartella dichiarata. Top-3 con punteggio e motivazione ("cartella dichiarata; parole chiave: …").
+- Misure su sviluppo per scegliere: solo percorso top-3 0,87; solo parole chiave 0,95; insieme 0,97. Il peso del percorso (da 0,5 a 8) non cambia la top-3: scelto 2, così il testo può battere una cartella sbagliata (documenti con LUOGO_NON_DICHIARATO).
+- Le proposte si calcolano anche per i file "senza dati personali" (se il giudizio è sbagliato restano utili); la `scheda` scelta resta vuota per quei file.
+- `make score` passa il registro; `python -m classifier.pipeline <cartella> [registro.csv]`.
+- Punteggio: sviluppo 39,9 → **59,4** (top-3 0,97), validation 38,7 → **57,9** (top-3 0,96).
+
 ## 2026-10-29 — chore/roadmap: stato del progetto per ogni sessione
 - Nuovo `docs/roadmap.md`: PR fatte con punteggio, prossime PR in ordine, decisioni e regole pratiche. `AGENTS.md` chiede di leggerlo all'inizio di ogni sessione e di aggiornarlo in ogni PR.
 

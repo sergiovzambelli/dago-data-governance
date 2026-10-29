@@ -28,3 +28,4 @@ _Nessuno ancora (vedi `flussi.md`)._
 | T-013 | Estrazione EML | T/D | Allegato con nome malevolo (`../../x`) o email annidate all'infinito | dal nome dell'allegato si usa solo l'estensione, file scritto in una cartella temporanea; massimo 3 livelli di annidamento | chiusa | feat/categories-ext |
 | T-014 | OCR | T | Nome di file che inietta opzioni o comandi in tesseract/ocrmypdf | comando come lista senza shell; percorso assoluto, quindi mai un argomento che inizia con `-` | chiusa | feat/ocr |
 | T-015 | OCR | D | PDF con migliaia di pagine o immagine enorme che blocca l'analisi | timeout di 300 s per file, poi testo vuoto | chiusa | feat/ocr |
+| T-016 | Registro trattamenti | T | Registro malformato o con parole chiave costruite per rallentare le regex | colonne obbligatorie verificate all'importazione; parole chiave trattate come testo letterale (`re.escape`) | chiusa | feat/matching |
