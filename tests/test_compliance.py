@@ -31,13 +31,10 @@ def test_undeclared_category(perms):
         ["CATEGORIA_NON_DICHIARATA"]
 
 
-def test_folder_not_declared_and_open_to_all_employees(perms):
-    assert check(REC, "fileserver/Personale/Varie/scan.pdf", [], perms) == \
-        ["LUOGO_NON_DICHIARATO", "ACCESSO_ECCESSIVO"]
-
-
-def test_folder_prefix_must_match_whole_segments(perms):
-    assert "LUOGO_NON_DICHIARATO" in check(REC, "fileserver/Personale/PermessiVecchi/a.pdf", [], perms)
+def test_folder_open_to_all_employees_and_location_not_checked(perms):
+    # il controllo del luogo è stato tolto (decisione dell'utente): conta solo chi può accedere
+    assert check(REC, "fileserver/Personale/Varie/scan.pdf", [], perms) == ["ACCESSO_ECCESSIVO"]
+    assert check(REC, "fileserver/Altro/a.pdf", [], perms) == []
 
 
 def test_most_specific_folder_decides_access(tmp_path):

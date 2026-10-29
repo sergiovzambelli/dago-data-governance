@@ -18,7 +18,7 @@ PREDS = [
                  "confidenza": 0.99}],
      "categorie_particolari": ["SALUTE"], "livello": None,
      "proposte": [{"scheda": "T-PER-07", "punteggio": 5.04, "motivazione": "parole chiave: permesso"}],
-     "scheda": "T-PER-07", "esito": "NON_CONFORME", "scostamenti": ["LUOGO_NON_DICHIARATO", "ACCESSO_ECCESSIVO"]},
+     "scheda": "T-PER-07", "esito": "NON_CONFORME", "scostamenti": ["CONSERVAZIONE_SCADUTA", "ACCESSO_ECCESSIVO"]},
     {"file": "fileserver/Personale/Permessi/congedo_Lenzi.docx", "sha256": "b" * 64, "dati_personali": True,
      "entita": [], "categorie_particolari": [], "livello": None,
      "proposte": [{"scheda": "T-PER-07", "punteggio": 8.09, "motivazione": "cartella dichiarata"}],
@@ -117,7 +117,7 @@ def test_inventory_rejects_unknown_filter_values(client):
 def test_document_detail_shows_evidence_and_rules(client):
     html = client.get(doc_url(client, "scansione_0412.pdf")).text
     assert "BLL***********Q" in html and "Codice fiscale" in html
-    assert "Luogo non dichiarato" in html and "fileserver/Personale/Permessi" in html  # cartella dichiarata
+    assert "Accesso eccessivo" in html and "Luogo non dichiarato" not in html  # controllo del luogo tolto
     assert "T-PER-07" in html and "parole chiave: permesso" in html
 
 
@@ -535,7 +535,8 @@ def test_missing_record_operator_picks_one_and_document_enters_inventory(try_cli
     r = save_choice(try_client, html, "T-PER-07")
     assert r.status_code == 303 and r.headers["location"].startswith("/documenti/")
     doc = try_client.get(r.headers["location"]).text
-    assert "fileserver/Altro" in doc and "T-PER-07" in doc and "Luogo non dichiarato" in doc and "Validato" in doc
+    assert "fileserver/Altro" in doc and "T-PER-07" in doc and "Conforme" in doc and "Validato" in doc
+    assert "Luogo non dichiarato" not in doc
     assert "richiesta.txt" in try_client.get("/documenti").text
 
 
@@ -594,7 +595,7 @@ def test_document_page_choice_validates_the_document(doc_settings):
     r = save_choice(c, c.get(url).text, "T-PER-07")
     assert r.status_code == 303 and r.headers["location"].startswith(url)
     page = c.get(url).text
-    assert "Validato" in page and "Luogo non dichiarato" in page
+    assert "Validato" in page and "T-PER-07" in page and "Conforme" in page
     assert len(re.findall(r"reclamo_117\.txt", c.get("/documenti").text)) >= 1
     assert c.get("/documenti", params={"esito": "SCHEDA_MANCANTE"}).text.count("reclamo_117.txt") == 0
 

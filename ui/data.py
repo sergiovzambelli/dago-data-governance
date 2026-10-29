@@ -17,10 +17,6 @@ DEVIATIONS = {
         "Categoria non dichiarata",
         "Il documento contiene una categoria particolare o giudiziaria che la scheda non dichiara.",
         "Aggiornare le categorie della scheda oppure spostare il documento nel trattamento corretto."),
-    "LUOGO_NON_DICHIARATO": (
-        "Luogo non dichiarato",
-        "Il file non si trova in nessuna delle cartelle dichiarate nella scheda.",
-        "Spostare il documento in una cartella dichiarata oppure aggiungere la cartella alla scheda."),
     "ACCESSO_ECCESSIVO": (
         "Accesso eccessivo",
         "Il documento contiene dati personali e la cartella è accessibile a tutti i dipendenti.",
