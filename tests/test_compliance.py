@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from classifier.compliance import check, load_permissions
@@ -54,6 +56,26 @@ def test_published_document_with_special_category_is_never_allowed(perms):
     rec = {**REC, "percorsi": ["fileserver/Pubblicazioni"], "diffusione": True}
     assert check(rec, "fileserver/Pubblicazioni/albo/g.xlsx", ["SALUTE"], perms) == ["DIFFUSIONE_NON_PREVISTA"]
     assert check(rec, "fileserver/Pubblicazioni/albo/g.xlsx", [], perms) == []
+
+
+def test_retention_expired_before_reference_date(perms):
+    rec = {**REC, "conservazione_anni": 10}
+    path = "fileserver/Personale/Permessi/a.pdf"
+    assert check(rec, path, [], perms, date(2016, 10, 27)) == ["CONSERVAZIONE_SCADUTA"]
+    # il 28/10/2026 non è anteriore al 28/10/2026
+    assert check(rec, path, [], perms, date(2016, 10, 28)) == []
+
+
+def test_retention_never_expires_when_unlimited_or_date_unknown(perms):
+    path = "fileserver/Personale/Permessi/a.pdf"
+    assert check({**REC, "conservazione_anni": None}, path, [], perms, date(1990, 1, 1)) == []
+    assert check({**REC, "conservazione_anni": 5}, path, [], perms, None) == []
+
+
+def test_retention_from_29_february(perms):
+    rec = {**REC, "conservazione_anni": 1}
+    assert check(rec, "fileserver/Personale/Permessi/a.pdf", [], perms, date(2024, 2, 29)) == \
+        ["CONSERVAZIONE_SCADUTA"]
 
 
 def test_permissions_without_required_columns_are_rejected(tmp_path):

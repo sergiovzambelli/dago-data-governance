@@ -2,6 +2,14 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/retention: CONSERVAZIONE_SCADUTA, la quinta regola
+- `classifier/dates.py`: `document_date(percorso, testo)` cerca la data del documento in quest'ordine: data dopo il luogo o un'etichetta ("Livorno, 12 marzo 2026", "Data: …"), poi data nel nome del file (AAAAMMGG), poi data più recente nel testo. Escluse le date di nascita ("nato … il", "Nome (23/02/1991)"), le date future e quelle impossibili (31/02).
+- Strategie misurate su sviluppo (data esatta su 155 file): solo nome file 132, solo testo 127, **ordine scelto 134**. La data di modifica dei file non serve: nello zip del kit vale 28/10/2026 per tutti.
+- `compliance.check` riceve la data: scaduto se data + "Conservazione in anni" della scheda è anteriore al 28/10/2026 (il giorno stesso non conta; 29 febbraio → 28). Mai con conservazione illimitata, vuota o data sconosciuta.
+- Risultato su CONSERVAZIONE_SCADUTA: sviluppo 11/13, validation 5/7, **nessun falso positivo**. I casi mancati hanno la scheda sbagliata a monte (SCHEDA_MANCANTE o "senza dati personali").
+- `data/pred_*.json` aggiornati applicando `compliance.check` e `document_date` alle predizioni salvate, con il testo estratto da `pdftotext` e dalla libreria standard: su Windows mancavano markitdown e OCR. Per le scansioni senza testo vale la data nel nome del file.
+- Punteggio: sviluppo 84,9 → **88,3** (F1 scostamenti 0,75, esito 0,83), validation 87,4 → **90,1** (F1 0,81, esito 0,84).
+
 ## 2026-10-29 — feat/compliance: 4 regole di conformità su 5
 - `classifier/compliance.py`: con dati personali e una scheda, il documento è confrontato con la scheda. Almeno uno scostamento → NON_CONFORME.
   - CATEGORIA_NON_DICHIARATA: categoria rilevata assente dalle "Categorie particolari dichiarate" (ETNICA e SESSUALE del registro diventano ORIGINE_ETNICA e ORIENTAMENTO_SESSUALE).

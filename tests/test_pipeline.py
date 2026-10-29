@@ -122,3 +122,14 @@ def test_document_outside_declared_folder_is_not_compliant(tmp_path):
     (r,) = classify(root, load_register(reg), load_permissions(perm))
     assert r["scheda"] == "T-PER-07" and r["esito"] == "NON_CONFORME"
     assert r["scostamenti"] == ["LUOGO_NON_DICHIARATO", "ACCESSO_ECCESSIVO"]
+
+
+def test_document_older_than_retention_is_not_compliant(tmp_path):
+    reg = tmp_path / "registro.csv"
+    reg.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche;Conservazione in anni\n"
+                   "T-POL-01;Verbali;verbale, targa;Verbale;5\n", encoding="utf-8")
+    root = tmp_path / "share"
+    (root / "Verbali").mkdir(parents=True)
+    (root / "Verbali" / "verbale_ZTL_20170316_840.txt").write_text("Verbale, targa AB123CD, C.F. BLDSLV66A68E625M")
+    (r,) = classify(root, load_register(reg))
+    assert r["esito"] == "NON_CONFORME" and r["scostamenti"] == ["CONSERVAZIONE_SCADUTA"]

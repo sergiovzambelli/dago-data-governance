@@ -9,6 +9,7 @@ from pathlib import Path
 
 from classifier.categories import find_categories
 from classifier.compliance import check, load_permissions
+from classifier.dates import document_date
 from classifier.entities import find_entities
 from classifier.extract import extract_text
 from classifier.matching import is_missing_record, load_register, match
@@ -45,7 +46,7 @@ def classify(root, register=(), permissions=()):
         # con SCHEDA_MANCANTE la più vicina resta tra le proposte, per il controllo dell'RPD
         record = records[proposals[0]["scheda"]] if proposals and personal and not missing else None
         # i controlli confrontano il documento con la sua scheda: senza scheda non ci sono scostamenti
-        deviations = check(record, rel, categories, permissions) if record else []
+        deviations = check(record, rel, categories, permissions, document_date(rel, text)) if record else []
         if missing:
             esito = "SCHEDA_MANCANTE"
         elif personal:

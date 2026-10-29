@@ -1,8 +1,10 @@
 """Controllo di conformità: confronta il documento con la scheda del registro a cui è abbinato.
 
-Regole della specifica, deterministiche. CONSERVAZIONE_SCADUTA manca: serve la data del documento nel testo.
+Le 5 regole della specifica, deterministiche.
 """
 import csv
+
+from classifier.dates import REFERENCE
 
 ALL_EMPLOYEES = "GG_TUTTI_DIPENDENTI"
 # shortcut: cartelle di pubblicazione scritte qui, come nel kit; da spostare in configurazione per un altro ente
@@ -29,7 +31,17 @@ def _groups(permissions, file_path):
     return max(folders, key=lambda x: x[0])[1] if folders else set()
 
 
-def check(record, file_path, categories, permissions):
+def _expired(doc_date, years):
+    if doc_date is None or years is None:
+        return False
+    try:
+        end = doc_date.replace(year=doc_date.year + years)
+    except ValueError:  # 29 febbraio in un anno non bisestile
+        end = doc_date.replace(year=doc_date.year + years, day=28)
+    return end < REFERENCE
+
+
+def check(record, file_path, categories, permissions, doc_date=None):
     found = []
     if set(categories) - record["categorie_dichiarate"]:
         found.append("CATEGORIA_NON_DICHIARATA")
@@ -39,6 +51,8 @@ def check(record, file_path, categories, permissions):
     # (sviluppo: nessun falso positivo); da sostituire con il livello calcolato in feat/level
     if ALL_EMPLOYEES in _groups(permissions, file_path):
         found.append("ACCESSO_ECCESSIVO")
+    if _expired(doc_date, record.get("conservazione_anni")):
+        found.append("CONSERVAZIONE_SCADUTA")
     # shortcut: "destinato alla pubblicazione" solo dalla cartella; le determine da pubblicare all'albo
     # si riconoscono dal testo (PR successiva)
     published = any(seg in PUBLISHED for seg in file_path.split("/")[:-1])
