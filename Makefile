@@ -18,3 +18,9 @@ score:
 	python3 -m classifier.scorer data/validation/Etichette_valutazione_RISERVATO.csv data/pred_validation.json
 
 .PHONY: score
+
+# bozze di nuove schede per i documenti SCHEDA_MANCANTE di sviluppo (dopo make score); con LLM= solo lo scheletro
+drafts:
+	CLASSIFIER_LLM_MODEL=$(LLM) python3 -m classifier.drafts data/pred_sviluppo.json $(KIT)/sviluppo $(KIT)/permessi_cartelle.csv > data/bozze_sviluppo.json
+
+.PHONY: drafts

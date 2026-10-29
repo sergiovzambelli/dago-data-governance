@@ -73,7 +73,7 @@
                   <ul class="navbar-nav">
                     {% for key, href, label in [("cruscotto", "/", "Cruscotto"), ("coda", "/coda", "Coda di validazione"),
                                                 ("documenti", "/documenti", "Inventario"), ("ricerca", "/ricerca", "Ricerca"),
-                                                ("decisioni", "/decisioni", "Registro decisioni")] %}
+                                                ("bozze", "/bozze", "Nuove schede"), ("decisioni", "/decisioni", "Registro decisioni")] %}
                     <li class="nav-item">
                       <a class="nav-link{% if nav == key %} active{% endif %}" href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}><span>{{ label }}</span></a>
                     </li>

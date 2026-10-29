@@ -22,6 +22,15 @@ PICK_PROMPT = (
     "Sei l'RPD di un Comune italiano. Indica la scheda del registro dei trattamenti che comprende il documento. "
     "Se nessuna descrive davvero quel procedimento, rispondi NESSUNA: non forzare l'abbinamento. " + JSON_ONLY +
     'Rispondi solo con JSON: {"scheda": "<codice o NESSUNA>", "motivo": "<max 15 parole>"}')
+DRAFT_PROMPT = (
+    "Sei l'RPD di un Comune italiano. Nessuna scheda del registro dei trattamenti descrive i documenti che ti do: "
+    "proponi la bozza di una nuova scheda. Descrivi il procedimento, non le persone: niente nomi, codici fiscali, "
+    "indirizzi o altri dati dei documenti; gli interessati sono categorie (es. richiedenti). Parole chiave: solo parole che "
+    "compaiono nei documenti. Base giuridica (art. 6 GDPR): c = obbligo di legge, e = compito di interesse pubblico, "
+    "b = contratto, a = consenso. " + JSON_ONLY.replace("Il testo", "Ogni testo") +
+    'Rispondi solo con JSON: {"denominazione": "<max 10 parole>", "finalita": "<max 40 parole>", '
+    '"interessati": "<chi>", "categorie_dati": "<quali dati>", "tipologie": "<documenti tipici>", '
+    '"parole_chiave": ["<parola>", ...], "base_giuridica": "c, e, b o a"}')
 
 
 def _describe(rec):
@@ -60,6 +69,11 @@ class OllamaClient:
         schede = "\n".join(f"- {_describe(r)}" for r in records.values())
         a = self._chat(PICK_PROMPT, f"SCHEDE:\n{schede}\n\n<documento>\n{text[:MAX_CHARS]}\n</documento>")
         return str(a.get("scheda", "")).strip().upper() if a else None
+
+    def draft(self, texts):
+        """Campi descrittivi di una nuova scheda (dict da validare), oppure None se il modello non risponde."""
+        # niente scheda di esempio: qwen3:1.7b ne copiava denominazione e finalità
+        return self._chat(DRAFT_PROMPT, "\n".join(f"<documento>\n{t[:MAX_CHARS // 3]}\n</documento>" for t in texts[:3]))
 
 
 def decide(client, records, proposals, text):

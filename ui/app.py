@@ -13,8 +13,9 @@ from markupsafe import Markup, escape
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ui.config import LOOPBACK
-from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, ENTITY_TYPES, OUTCOMES, apply_decision, load_predictions,
-                     load_register, priority, risk, split_path, when)
+from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, DRAFT_ACTIONS, DRAFT_EDITABLE, DRAFT_REQUIRED, ENTITY_TYPES,
+                     OUTCOMES, REGISTER_COLUMNS, apply_decision, load_drafts, load_predictions, load_register, priority,
+                     risk, split_path, when)
 from ui.decisions import DecisionLog
 from ui.security import HEADERS, LOCAL_USER, ROLES, Csrf, check_basic_auth, load_users
 
@@ -26,12 +27,31 @@ MAX_QUERY = 100
 ID_RE = re.compile(r"^[0-9a-f]{16}$")
 
 
+def _cell(v):
+    if isinstance(v, bool):
+        v = "SI" if v else "NO"
+    v = ", ".join(v) if isinstance(v, list) else ("" if v is None else str(v))
+    # niente formule quando il CSV si apre in un foglio di calcolo
+    return "'" + v if v[:1] in ("=", "+", "-", "@", "\t", "\r") else v
+
+
+def _csv(header, rows, filename):
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter=";")
+    w.writerow(header)
+    w.writerows([_cell(v) for v in r] for r in rows)
+    return Response("\ufeff" + buf.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
 class Store:
     """Predizioni ricaricate quando il file cambia (es. nuova analisi della pipeline)."""
 
     def __init__(self, settings):
         self.settings, self.mtime, self.docs = settings, None, []
         self.register = load_register(settings.register)
+        # shortcut: bozze lette all'avvio; dopo make drafts va riavviata la UI, ricaricarle come le predizioni se serve
+        self.drafts = load_drafts(settings.drafts)
         self.refresh()
 
     def refresh(self):
@@ -88,6 +108,18 @@ def create_app(settings):
         titles = {400: "Richiesta non valida", 403: "Operazione non consentita", 404: "Pagina non trovata"}
         return page(request, "errore.html", status=exc.status_code, title=titles.get(exc.status_code, "Errore"),
                     message=exc.detail)
+
+    def guard(request, token, action):
+        """Controlli comuni ai moduli: stessa origine, ruolo RPD, token anti-CSRF."""
+        user = request.state.user
+        origin = request.headers.get("origin")
+        if origin and origin.split("://", 1)[-1] != request.headers.get("host"):
+            raise HTTPException(403, "Richiesta da un'altra origine.")
+        if user["ruolo"] != "rpd":
+            raise HTTPException(403, f"Solo l'RPD può {action}.")
+        if not csrf.valid(user, token):
+            raise HTTPException(403, "Modulo scaduto o non valido: ricarica la pagina e riprova.")
+        return user
 
     def documents():
         latest = log.latest()
@@ -147,14 +179,7 @@ def create_app(settings):
     @app.post("/documenti/{doc_id}/decisione")
     def decide(request: Request, doc_id: str, csrf_token: str = Form("", alias="csrf"), azione: str = Form(""),
                esito: str = Form(""), scheda: str = Form(""), nota: str = Form(""), poi: str = Form("")):
-        user = request.state.user
-        origin = request.headers.get("origin")
-        if origin and origin.split("://", 1)[-1] != request.headers.get("host"):
-            raise HTTPException(403, "Richiesta da un'altra origine.")
-        if user["ruolo"] != "rpd":
-            raise HTTPException(403, "Solo l'RPD può registrare decisioni.")
-        if not csrf.valid(user, csrf_token):
-            raise HTTPException(403, "Modulo scaduto o non valido: ricarica la pagina e riprova.")
+        user = guard(request, csrf_token, "registrare decisioni")
         doc = find(doc_id)
         nota = re.sub(r"[\x00-\x1f\x7f]", " ", nota).strip()[:MAX_NOTE]
         if azione == "CONFERMA":
@@ -226,22 +251,52 @@ def create_app(settings):
 
     @app.get("/esporta.csv")
     def export_csv():
-        def cell(v):
-            if isinstance(v, bool):
-                v = "SI" if v else "NO"
-            v = ", ".join(v) if isinstance(v, list) else ("" if v is None else str(v))
-            # niente formule quando il CSV si apre in un foglio di calcolo
-            return "'" + v if v[:1] in ("=", "+", "-", "@", "\t", "\r") else v
-        buf = io.StringIO()
-        w = csv.writer(buf, delimiter=";")
         cols = ["file", "sha256", "esito", "scheda", "scostamenti", "categorie_particolari", "dati_personali",
                 "validato", "nota_rpd"]
-        w.writerow(cols)
         latest = log.latest()
+        rows = []
         for d in documents():
             dec = latest.get((d["file"], d["sha256"]))
-            w.writerow([cell(d[c]) for c in cols[:-1]] + [cell(dec["nota"] if dec else "")])
-        return Response("﻿" + buf.getvalue(), media_type="text/csv; charset=utf-8",
-                        headers={"Content-Disposition": 'attachment; filename="risultati.csv"'})
+            rows.append([d[c] for c in cols[:-1]] + [dec["nota"] if dec else ""])
+        return _csv(cols, rows, "risultati.csv")
+
+    @app.get("/bozze", response_class=HTMLResponse)
+    def drafts(request: Request):
+        ids = {d["file"]: d["id"] for d in store.refresh()}
+        return page(request, "bozze.html", nav="bozze", drafts=store.drafts, decided=log.drafts(), ids=ids,
+                    editable=DRAFT_EDITABLE, required=DRAFT_REQUIRED, draft_actions=DRAFT_ACTIONS,
+                    can_decide=request.state.user["ruolo"] == "rpd", drafts_file=settings.drafts.exists())
+
+    @app.get("/bozze/approvate.csv")
+    def approved_drafts():
+        """Righe nel formato del registro, da incollare nel registro dei trattamenti dopo la revisione."""
+        decided = log.drafts()
+        rows = [[decided[d["id"]]["campi"].get(c, "") for c in REGISTER_COLUMNS] for d in store.drafts
+                if decided.get(d["id"], {}).get("azione") == "APPROVA"]
+        return _csv(REGISTER_COLUMNS, rows, "nuove_schede.csv")
+
+    @app.post("/bozze/{draft_id}")
+    async def decide_draft(request: Request, draft_id: str):
+        form = await request.form()
+        user = guard(request, form.get("csrf", ""), "decidere sulle bozze")
+        draft = next((d for d in store.drafts if d["id"] == draft_id), None) if ID_RE.match(draft_id) else None
+        if draft is None:
+            raise HTTPException(404, "Bozza non trovata.")
+        action = form.get("azione")
+        if action not in DRAFT_ACTIONS:
+            raise HTTPException(400, "Azione non valida.")
+        fields = dict(draft["campi"])
+        for name, col in DRAFT_EDITABLE.items():
+            value = form.get(name, "")
+            if not isinstance(value, str):
+                raise HTTPException(400, "Campo non valido.")
+            fields[col] = re.sub(r"[\x00-\x1f\x7f]", " ", value).strip()[:MAX_NOTE]
+        if action == "APPROVA":
+            if not all(fields[c] for c in DRAFT_REQUIRED):
+                raise HTTPException(400, f"Per approvare servono: {', '.join(DRAFT_REQUIRED).lower()}.")
+            if fields["Conservazione in anni"] and not re.fullmatch(r"\d{1,3}", fields["Conservazione in anni"]):
+                raise HTTPException(400, "Conservazione in anni: scrivi un numero intero.")
+        log.add_draft(user["nome"], draft_id, action, fields if action == "APPROVA" else {})
+        return RedirectResponse(f"/bozze?registrata={draft_id}#bozza-{draft_id}", status_code=303)
 
     return app

@@ -60,3 +60,8 @@ def test_client_without_server_answers_none():
     client = OllamaClient("http://127.0.0.1:9", "qwen3:8b", timeout=2)
     assert client.verify(RECORDS["T-PER-07"], "testo") is None
     assert client.pick(RECORDS, "testo") is None
+
+
+def test_draft_without_server_answers_none():
+    client = OllamaClient("http://127.0.0.1:9", "qwen3:8b", timeout=2)
+    assert client.draft(["testo"]) is None

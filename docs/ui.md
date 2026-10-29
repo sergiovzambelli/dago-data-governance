@@ -14,6 +14,7 @@ UI_ENTE="Comune di Livorno" .venv/bin/python -m ui  # http://127.0.0.1:8000
 |---|---|---|
 | `UI_PREDIZIONI` | `data/pred_sviluppo.json` | JSON della pipeline; ricaricato da solo quando il file cambia |
 | `UI_REGISTRO` | `data/Kit_team_hackathon_sfida_5/Registro_trattamenti.csv` | registro dei trattamenti (separatore `;`) |
+| `UI_BOZZE` | `data/bozze_sviluppo.json` | bozze di nuove schede (`make drafts`); lette all'avvio |
 | `UI_DB` | `ui/var/decisioni.sqlite3` | registro delle decisioni (escluso da git) |
 | `UI_ENTE` | `Comune` | nome dell'ente nell'intestazione |
 | `UI_HOST`, `UI_PORTA` | `127.0.0.1`, `8000` | indirizzo di ascolto |
@@ -31,6 +32,7 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 | **Inventario** `/documenti` | filtri per esito, scheda e scostamento; 50 righe per pagina |
 | **Documento** `/documenti/<id>` | evidenze: entità mascherate con posizione e confidenza, categorie, tre proposte con punteggio e motivazione, scostamenti spiegati con l'azione suggerita, scheda abbinata. Modulo di conferma o correzione e storico |
 | **Ricerca** `/ricerca` | per percorso, scheda, esito, scostamento, categoria, tipo di entità, motivazione. Il testo integrale non è indicizzato (la specifica chiede di non conservare copie integrali) |
+| **Nuove schede** `/bozze` | una bozza di scheda per tipo di documento senza scheda: l'RPD corregge i testi e approva o scarta; `/bozze/approvate.csv` scarica le approvate con le colonne del registro |
 | **Registro decisioni** `/decisioni` | tutte le conferme e correzioni, in sola aggiunta |
 | **Esportazione** `/esporta.json`, `/esporta.csv` | risultati con le correzioni dell'RPD applicate |
 

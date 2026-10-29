@@ -29,6 +29,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #15 | feat/llm-matching | Modello locale (Ollama) sui casi dubbi di abbinamento, facoltativo e spento: con registro senza parole chiave 92 → 100/109 schede giuste | 88,3 (88,0 acceso) | 90,1 (88,7 acceso) |
 | #16 | feat/ui | Interfaccia web per l'RPD in `ui/` (Bootstrap Italia 2.18.3), separata dal classificatore | – | – |
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
+| #NN | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 
@@ -38,7 +39,7 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 2. **feat/publication** — "destinato alla pubblicazione" anche dal testo, non solo dalla cartella: determine all'albo (5 casi di DIFFUSIONE_NON_PREVISTA mancati su sviluppo). Metrica: F1 scostamenti (15), esito.
 3. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
 4. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
-5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti.
+5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti. Bozze di schede fatte (feat/draft-records); da fare: rimettere nel registro le schede approvate senza copia a mano, provare `qwen3:8b` sulle bozze.
 6. **UI** — prima versione fatta (feat/ui, `docs/ui.md`). Da fare: ricerca nei limiti dei permessi dell'utente (T-034), HTTPS tramite proxy al deploy (T-026), dichiarazione di accessibilità AgID, verifica con lettore di schermo.
 7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 
@@ -57,5 +58,6 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 - **Merge**: li fa l'utente. L'agente non può fare merge né force-push (bloccati dai permessi): per allineare un branch usa `git merge origin/main`.
 - **PR in pila**: aprire sempre con base `main`, anche se il branch parte da un'altra PR non ancora unita (il diff si riduce da solo dopo l'unione). Con base su un altro branch la #5 è finita dentro `feat/extract` invece che su `main` ed è servita la #6 per recuperarla.
 - **Dipendenze di sistema**: `sudo apt install tesseract-ocr tesseract-ocr-ita ocrmypdf` (Debian 12). Senza, l'OCR resta vuoto ma tutto il resto funziona.
+- **Modelli piccoli e esempi**: dando a qwen3:1.7b una scheda di esempio "per lo stile", ne copia denominazione e finalità. Niente esempi nel prompt, solo i documenti.
 - `sviluppo/LEGGIMI.txt` non ha etichetta: lo scorer lo ignora con un avviso.
 - **Windows**: `test_classify_skips_symlinks_outside_root` richiede il permesso di creare link simbolici (modalità sviluppatore) e senza markitdown installato la pipeline non parte. Lo scorer usa solo la libreria standard: `python -m classifier.scorer` funziona ovunque sulle `data/pred_*.json` salvate.

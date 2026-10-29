@@ -113,3 +113,23 @@ flowchart LR
     DB --> PAG
     DB --> EXP
 ```
+
+## Bozze di nuove schede (feat/draft-records)
+
+```mermaid
+flowchart LR
+    PRED[data/pred_sviluppo.json] -->|esito SCHEDA_MANCANTE| GRP[raggruppa per tipo di documento<br/>nome file senza date, numeri, cognomi]
+    FS[(cartella analizzata<br/>sola lettura)] -->|testo, solo file dentro la cartella| GRP
+    PERM[permessi_cartelle.csv] --> SYS
+    GRP --> SYS[campi noti: cartella prevalente,<br/>gruppo di accesso, categorie, diffusione NO]
+    GRP -. "fino a 3 estratti — solo host locali" .-> LLM[Ollama<br/>campi descrittivi in JSON]
+    LLM -. risposta non fidata .-> VAL{validazione<br/>una riga · 500 car. · niente entità né nomi<br/>parole chiave presenti nei documenti<br/>base giuridica da elenco chiuso}
+    SYS & VAL --> BOZ[data/bozze_sviluppo.json]
+    BOZ --> UIB
+    subgraph UIB["ui/ — pagina Nuove schede"]
+        FORM[RPD corregge i campi<br/>approva o scarta<br/>ruolo rpd + CSRF + Origin]
+        CSV["/bozze/approvate.csv<br/>colonne del registro"]
+    end
+    FORM -->|solo aggiunte| DB[(tabella bozze<br/>ui/var/decisioni.sqlite3)]
+    DB --> CSV -->|copia a mano dell'RPD| REG[(Registro_trattamenti.csv)]
+```
