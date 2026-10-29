@@ -19,3 +19,6 @@ _Nessuno ancora (vedi `flussi.md`)._
 | T-004 | Scorer | T | File di predizioni malformato o con percorsi inventati che falsa il punteggio | i file non etichettati vengono ignorati (non entrano nelle metriche, avviso su stderr); i campi mancanti contano come errore | chiusa | feat/scorer, feat/baseline |
 | T-005 | Scansione | I | Link simbolico nella cartella che porta a file fuori dal perimetro | link simbolici saltati; file aperti in sola lettura | chiusa | feat/baseline |
 | T-006 | Scansione | D | File enorme che esaurisce la memoria durante l'hash | SHA-256 calcolato a blocchi da 1 MB | chiusa | feat/baseline |
+| T-007 | Estrazione | D | ODT costruito come zip bomb o XML "billion laughs" | `content.xml` oltre 50 MB scartato; XML letto con `defusedxml` | chiusa | feat/extract |
+| T-008 | Estrazione | T | File malevolo che sfrutta un difetto dei parser (pdfminer, mammoth, openpyxl) | versioni fissate in `requirements.txt`; errori trasformati in testo vuoto; da isolare in container senza rete (deploy) | aperta | feat/extract |
+| T-009 | Dipendenze | T | Pacchetto PyPI compromesso o aggiornato di nascosto | versioni fissate; hash (`--require-hashes`) da aggiungere | aperta | feat/extract |
