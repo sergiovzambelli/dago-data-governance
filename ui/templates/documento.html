@@ -29,7 +29,7 @@
 {% set n_ent = doc.entita|length %}
 <section class="verdict verdict-{{ doc.esito|lower }}" aria-labelledby="h-sintesi">
   <div class="verdict-main">
-    <p class="verdict-kicker">Esito {{ "validato" if doc.validato else "proposto" }} · {{ status(doc) }}</p>
+    <p class="verdict-kicker">Esito {{ "validato" if doc.validato else "proposto dal sistema" }} · {{ status(doc) }}</p>
     <h2 id="h-sintesi" class="verdict-title">{{ outcomes[doc.esito][0] }}</h2>
     <p class="verdict-lead">
       {% if n_dev %}{{ n_dev }} problem{{ "a" if n_dev == 1 else "i" }} da risolvere:
@@ -115,6 +115,7 @@
   <section aria-labelledby="h-scostamenti" class="block">
     <h2 id="h-scostamenti" class="h4">Problemi rispetto alla scheda</h2>
     {% if doc.scostamenti %}
+      <div class="group">
       {% for s in doc.scostamenti %}
       {% set title, meaning, action = deviations[s] %}
       <div class="issue">
@@ -127,6 +128,7 @@
         <p class="issue-action"><span class="fw-semibold">Cosa fare:</span> {{ action }}</p>
       </div>
       {% endfor %}
+      </div>
     {% elif doc.esito == "SCHEDA_MANCANTE" %}
       <p>Nessuna scheda del registro descrive questo trattamento, quindi il controllo non si applica.
         Sotto trovi le schede più vicine: se una va bene, scegli «Correggi esito o scheda».</p>

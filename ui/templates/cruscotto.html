@@ -13,53 +13,45 @@
 
 {% set todo = personal - validated %}
 {% set pct = (100 * validated / personal)|round|int if personal else 0 %}
-<section aria-labelledby="h-urgenti" class="mb-5">
-  <h2 id="h-urgenti" class="h4">Da guardare subito</h2>
-  <div class="kpis">
-    <a class="kpi kpi-red" href="/documenti?esito=NON_CONFORME">
-      <span class="kpi-num">{{ by_outcome.get("NON_CONFORME", 0) }}</span>
-      <span class="kpi-label">Non conformi</span>
-      <span class="kpi-hint">scostamenti rispetto alla scheda</span></a>
-    <a class="kpi kpi-amber" href="/documenti?esito=SCHEDA_MANCANTE">
-      <span class="kpi-num">{{ by_outcome.get("SCHEDA_MANCANTE", 0) }}</span>
-      <span class="kpi-label">Senza scheda</span>
-      <span class="kpi-hint">trattamento non nel registro</span></a>
-    <div class="kpi kpi-red">
-      <span class="kpi-num">{{ sensitive }}</span>
-      <span class="kpi-label">Con categorie particolari</span>
-      <span class="kpi-hint">salute, giudiziari e altri dati art. 9–10</span></div>
-    <div class="kpi kpi-blue">
-      <span class="kpi-num">{{ pct }}<small>%</small></span>
-      <span class="kpi-label">Validati</span>
-      <span class="kpi-hint">{{ validated }} su {{ personal }} con dati personali</span>
-      <span class="meter mt-2" aria-hidden="true"><span style="--pct: {{ pct }}%"></span></span></div>
+{% set nc, sm = by_outcome.get("NON_CONFORME", 0), by_outcome.get("SCHEDA_MANCANTE", 0) %}
+<section class="summary-card" aria-labelledby="h-urgenti">
+  <h2 id="h-urgenti" class="eyebrow">Da guardare subito</h2>
+  <p class="summary-sentence">
+    <a class="fig fig-red" href="/documenti?esito=NON_CONFORME"><span class="fig-n">{{ nc }}</span> non conform{{ "e" if nc == 1 else "i" }}</a>,
+    <a class="fig fig-amber" href="/documenti?esito=SCHEDA_MANCANTE"><span class="fig-n">{{ sm }}</span> senza scheda</a>
+    e <span class="fig fig-purple"><span class="fig-n">{{ sensitive }}</span> con categorie particolari</span>.
+  </p>
+  <div class="gauge-row">
+    <p class="gauge-text mb-0"><strong>{{ validated }} di {{ personal }}</strong> validati ({{ pct }}%)</p>
+    <span class="meter" aria-hidden="true"><span style="--pct: {{ pct }}%"></span></span>
+    {% if urgent %}<a class="btn btn-primary" href="/documenti/{{ urgent[0].id }}">Valida i {{ todo }} rimasti {{ icon("it-arrow-right", "icon-white icon-sm") }}</a>
+    {% else %}<span>Tutti i documenti con dati personali sono validati.</span>{% endif %}
   </div>
-
-  {% if urgent %}
-  <div class="panel mt-3">
-    <div class="panel-head">
-      <h3 class="h5 mb-0">I più urgenti della coda</h3>
-      <a class="btn btn-primary btn-sm" href="/documenti/{{ urgent[0].id }}">Valida ({{ todo }} da fare) {{ icon("it-arrow-right", "icon-white icon-sm") }}</a>
-    </div>
-    <ol class="urgent-list">
-      {% for d in urgent %}{% set p = priority(d) %}
-      <li>
-        <a class="doc-link" href="/documenti/{{ d.id }}"><span class="doc-name">{{ d.file|nome_file|spezza }}</span>
-          <span class="doc-folder">{{ d.file|cartella|spezza }}</span></a>
-        <span class="urgent-meta">{{ outcome(d.esito) }} <span class="prio prio-{{ p.colore }}">{{ p.livello }}</span>
-          {% if p.motivi %}<span class="prio-why">{{ p.motivi|join(" · ") }}</span>{% endif %}</span>
-      </li>
-      {% endfor %}
-    </ol>
-    <p class="mb-0"><a href="/coda">Vedi tutta la coda di validazione</a></p>
-  </div>
-  {% else %}
-  <p class="mt-3">Tutti i documenti con dati personali sono validati.</p>
-  {% endif %}
 </section>
 
-<section aria-labelledby="h-esiti" class="mb-5">
-  <h2 id="h-esiti" class="h4">Documenti per esito</h2>
+{% if urgent %}
+<section aria-labelledby="h-coda">
+  <div class="section-head">
+    <h2 id="h-coda" class="h4">I più urgenti</h2>
+    <a href="/coda">Vedi tutta la coda</a>
+  </div>
+  <ol class="rows group">
+    {% for d in urgent %}{% set p = priority(d) %}
+    <li>
+      <span class="row-num" aria-hidden="true">{{ loop.index }}</span>
+      <a class="doc-link" href="/documenti/{{ d.id }}"><span class="doc-name">{{ d.file|nome_file|spezza }}</span>
+        <span class="doc-folder">{{ d.file|cartella|spezza }}</span></a>
+      <span class="row-meta">{{ outcome(d.esito) }} <span class="prio prio-{{ p.colore }}">{{ p.livello }}</span>
+        {% if p.motivi %}<span class="prio-why">{{ p.motivi|join(" · ") }}</span>{% endif %}</span>
+      <span class="chevron" aria-hidden="true"></span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+<h2 id="h-esiti" class="h4">Documenti per esito</h2>
+<section aria-labelledby="h-esiti" class="panel mb-4">
   <div class="stack" aria-hidden="true">
     {% for code in outcomes %}{% set n = by_outcome.get(code, 0) %}{% if n %}
     <span class="stack-{{ code|lower }}" style="--pct: {{ 100 * n / docs|length }}%"></span>{% endif %}{% endfor %}

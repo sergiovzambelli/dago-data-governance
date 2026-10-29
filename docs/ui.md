@@ -58,11 +58,14 @@ Dove Bootstrap Italia non bastava per leggibilità o accessibilità, `ui/static/
 
 ## Le informazioni importanti per prime
 
-Secondo giro sulla UI: ogni pagina mostra in alto ciò su cui l'RPD deve agire, il dettaglio sotto.
+Secondo giro sulla UI, con il metodo della skill [apple-design](https://github.com/dickwu/apple-design-skill) (Human Interface Guidelines di Apple applicate a una web app: principi, colore, tipografia, layout, accessibilità). Ogni pagina mostra in alto ciò su cui l'RPD deve agire, il dettaglio sotto.
 
-- **Cruscotto**: "Da guardare subito" con quattro numeri grandi (non conformi, senza scheda, con categorie particolari, percentuale validata) e i 5 documenti più urgenti della coda con i motivi. Gli esiti sono una sola barra divisa in proporzione, con la legenda cliccabile. Le schede mostrano le prime 8; le altre in un pannello da aprire.
-- **Documento**: il verdetto in alto riassume esito, numero e nome dei problemi, scheda, categorie particolari e dati trovati per tipo (es. "Codice fiscale × 12"). La tabella dei valori mascherati è chiusa in un pannello se supera 5 righe.
-- **Aspetto**: sfondo grigio chiaro con riquadri bianchi arrotondati e ombra leggera, colori degli esiti invariati (contrasto già misurato).
+- **Token** in `ui/static/ui.css`: sfondo raggruppato `#f5f5f7` e riquadri bianchi; testo `#1d1d1f` (16,8:1), secondario `#636366` (6,0:1). **Un colore, un significato**: blu `#0066cc` solo per link e azioni, rosso per non conforme e problemi, ambra per scheda mancante, verde per conforme e validato, grigio per nessun dato, viola `#6b3fa0` (7,4:1) per le categorie particolari, che prima condividevano il rosso con i problemi.
+- **Cruscotto**: l'elemento firma è una frase in italiano semplice, "35 non conformi, 27 senza scheda e 89 con categorie particolari", con ogni numero colorato che porta all'elenco. Sostituisce le tessere con il numero grande, che la skill indica come schema da template. Sotto c'è l'avanzamento della validazione con il pulsante per partire, poi "I più urgenti": i primi 5 della coda come lista raggruppata con chevron, cliccabile su tutta la riga. Gli esiti sono in una barra unica; le schede oltre l'ottava stanno in un pannello da aprire.
+- **Documento**: verdetto in alto (esito grande nel suo colore, frase con i problemi, a destra scheda, categorie e dati per tipo come lista raggruppata). Problemi in una lista unica con "Cosa fare" evidenziato. Valori mascherati in un pannello oltre 5 righe.
+- **Componenti**: intestazione con i temi chiari di Bootstrap Italia (`theme-light`, `theme-light-desk`), barra istituzionale blu invariata; pulsanti ed etichette a capsula; triangoli di apertura sui `<details>`; tabelle come liste raggruppate; etichette dei campi senza maiuscolo.
+- **Focus**: anello blu di 3 px (5,6:1 sul bianco) al posto di quello giallo (1,9:1, sotto il 3:1 richiesto per gli indicatori grafici).
+- Fuori: tema scuro (i componenti di Bootstrap Italia non lo prevedono), font: resta Titillium Web, carattere della PA.
 
 ## Sicurezza
 

@@ -30,7 +30,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #16 | feat/ui | Interfaccia web per l'RPD in `ui/` (Bootstrap Italia 2.18.3), separata dal classificatore | – | – |
 | #18 | feat/ui-ux | UI più leggibile e accessibile, flusso "conferma e vai al prossimo" | – | – |
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
-| – | feat/ui-refresh | UI: in alto ciò che conta (numeri chiave, 5 più urgenti, verdetto del documento), aspetto a riquadri | – | – |
+| #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 

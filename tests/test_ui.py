@@ -291,7 +291,7 @@ def test_dashboard_puts_urgent_documents_first(client):
     assert "Da guardare subito" in html
     urgent = html[html.index("Da guardare subito"):html.index("Documenti per esito")]
     assert urgent.index("scansione_0412.pdf") < urgent.index("reclamo_117.eml")
-    assert re.search(r">\s*1\s*</[^>]+>\s*<[^>]+>\s*Con categorie particolari", html)
+    assert re.search(r">\s*1\s*</span>\s*con categorie particolari", html)
 
 
 def test_document_verdict_says_what_matters(client):
