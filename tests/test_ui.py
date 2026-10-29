@@ -376,3 +376,88 @@ def test_document_verdict_says_what_matters(client):
     assert "2 problemi da risolvere" in html
     assert "1 dato personale" in html
     assert html.index("2 problemi da risolvere") < html.index("La tua decisione")
+
+
+# --- gestione delle schede del registro ---
+
+def new_record(client, **fields):
+    data = {"csrf": token(client.get("/schede/nuova").text), "Codice": "T-URP-01", "Denominazione": "Reclami e segnalazioni",
+            "Finalità": "Gestione dei reclami dei cittadini", "Base giuridica": "Art. 6, par. 1, lett. e) GDPR",
+            "Percorsi dichiarati": "fileserver/URP/Reclami", "Diffusione": "NO", "Consenso": "NO",
+            "Conservazione in anni": "5", "Categorie particolari dichiarate": "Nessuna"}
+    data.update(fields)
+    return client.post("/schede/nuova", data=data, follow_redirects=False)
+
+
+def test_records_page_lists_current_register(client):
+    html = client.get("/schede").text
+    assert "T-PER-07" in html and "Permessi, congedi e assenze" in html and "T-POL-02" in html
+
+
+def test_create_record_appears_everywhere(client):
+    r = new_record(client)
+    assert r.status_code == 303 and r.headers["location"].startswith("/schede/T-URP-01?")
+    assert "Reclami e segnalazioni" in client.get("/schede").text
+    assert "Gestione dei reclami dei cittadini" in client.get("/schede/T-URP-01").text
+    # subito utilizzabile nelle correzioni e nei filtri
+    assert 'value="T-URP-01"' in client.get(doc_url(client, "reclamo_117.eml")).text
+    assert client.get("/documenti", params={"scheda": "T-URP-01"}).status_code == 200
+
+
+def test_edit_record_keeps_history(client, settings):
+    page = client.get("/schede/T-PER-07").text
+    r = client.post("/schede/T-PER-07", follow_redirects=False,
+                    data={"csrf": token(page), "azione": "MODIFICA", "Denominazione": "Permessi e congedi",
+                          "Finalità": "Gestione delle richieste di permesso", "Base giuridica": "Art. 6 lett. b",
+                          "Percorsi dichiarati": "fileserver/Personale/Permessi", "Diffusione": "NO", "Consenso": "NO",
+                          "Conservazione in anni": "10", "Categorie particolari dichiarate": "SALUTE"})
+    assert r.status_code == 303
+    html = client.get("/schede/T-PER-07").text
+    assert "Permessi e congedi" in html and "Modifica" in html and "operatore locale" in html
+    assert "Permessi e congedi" in client.get(doc_url(client, "congedo_Lenzi.docx")).text
+    assert settings.register.read_text(encoding="utf-8") == REGISTER  # il CSV di partenza non si tocca
+
+
+def test_archive_and_restore_record(client):
+    page = client.get("/schede/T-POL-02").text
+    assert client.post("/schede/T-POL-02", data={"csrf": token(page), "azione": "ARCHIVIA"},
+                       follow_redirects=False).status_code == 303
+    active = client.get("/schede").text
+    assert "Archiviate" in active
+    url = doc_url(client, "reclamo_117.eml")
+    t = token(client.get(url).text)
+    assert client.post(url + "/decisione", data={"csrf": t, "azione": "CORREZIONE", "esito": "CONFORME",
+                                                 "scheda": "T-POL-02"}).status_code == 400
+    page = client.get("/schede/T-POL-02").text
+    assert client.post("/schede/T-POL-02", data={"csrf": token(page), "azione": "RIPRISTINA"},
+                       follow_redirects=False).status_code == 303
+    assert client.post(url + "/decisione", data={"csrf": t, "azione": "CORREZIONE", "esito": "CONFORME",
+                                                 "scheda": "T-POL-02"}, follow_redirects=False).status_code == 303
+
+
+def test_record_values_are_validated(client):
+    assert new_record(client, Codice="T-PER-07").status_code == 400          # già esistente
+    assert new_record(client, Codice="../x").status_code == 400              # formato
+    assert new_record(client, Denominazione="").status_code == 400           # obbligatorio
+    assert new_record(client, Diffusione="FORSE").status_code == 400
+    assert new_record(client, **{"Conservazione in anni": "dieci"}).status_code == 400
+    assert new_record(client, **{"Categorie particolari dichiarate": "<b>"}).status_code == 400
+    assert client.get("/schede/..%2Fetc").status_code == 404
+
+
+def test_records_require_rpd_and_csrf(client, settings, tmp_path):
+    assert new_record(client, csrf="sbagliato").status_code == 403
+    c = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
+    h = _auth("ufficio", "pw-op-123")
+    page = c.get("/schede", headers=h).text
+    assert "T-PER-07" in page and 'href="/schede/nuova"' not in page
+    assert 'name="azione"' not in c.get("/schede/T-PER-07", headers=h).text
+    assert c.post("/schede/nuova", headers=h, data={"csrf": "x", "Codice": "T-X-01"}).status_code == 403
+
+
+def test_register_export_has_all_columns_and_no_formulas(client):
+    new_record(client, Codice="T-URP-02", Denominazione="=HYPERLINK(\"x\")")
+    text = client.get("/schede/registro.csv").text.lstrip("﻿")
+    header, *rows = text.splitlines()
+    assert header.startswith("Codice;Origine;Denominazione;") and header.endswith("Parole chiave")
+    assert any(r.startswith("T-URP-02;") and "'=HYPERLINK" in r for r in rows)

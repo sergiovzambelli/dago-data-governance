@@ -30,6 +30,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #16 | feat/ui | Interfaccia web per l'RPD in `ui/` (Bootstrap Italia 2.18.3), separata dal classificatore | – | – |
 | #18 | feat/ui-ux | UI più leggibile e accessibile, flusso "conferma e vai al prossimo" | – | – |
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
+| – | feat/records | UI: pagina Schede (crea, modifica, archivia, ripristina, storico, esporta il registro in CSV) | – | – |
 | #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
 

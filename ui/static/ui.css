@@ -253,3 +253,10 @@ a.fig:hover { text-decoration: underline; text-decoration-thickness: 2px; text-u
 .history { list-style: none; padding: 0; }
 .history li { border-left: 3px solid var(--sep); padding-left: .75rem; margin-bottom: .75rem; }
 .sha { font-size: .75rem; }
+
+/* modulo della scheda: gruppi di campi con titolo */
+.form-section { border: 0; padding: 0; margin: 0 0 2rem; }
+.form-section legend { font-size: 1.125rem; font-weight: 700; line-height: 1.4; color: var(--ink); padding: 0;
+  margin-bottom: .75rem; cursor: default; }
+.field select { display: block; width: 100%; max-width: 12rem; border: 1px solid var(--sep); border-radius: 12px;
+  padding: .55rem .9rem; font-size: 1rem; color: var(--ink); background: var(--card); }

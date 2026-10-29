@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}{{ code or "Nuova scheda" }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item"><a href="/schede">Schede</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">{{ code or "Nuova scheda" }}</li>
+{% endblock %}
+{% block content %}
+{% if request.query_params.get("salvata") %}
+<div class="alert alert-success" role="alert" tabindex="-1" data-focus>Scheda salvata.</div>
+{% endif %}
+
+{% if rec %}
+<div class="doc-head">
+  <div>
+    <h1 class="doc-title">{{ code }} · {{ values["Denominazione"] }}</h1>
+    <p class="doc-path">{% if rec.archiviata %}Archiviata: non si abbina più ai documenti.{% else %}{{ values["Struttura responsabile"] or "Struttura non indicata" }}{% endif %}</p>
+  </div>
+  {% if not rec.archiviata %}<a class="btn btn-outline-primary btn-sm" href="/documenti?scheda={{ code }}">{{ linked }} document{{ "o" if linked == 1 else "i" }} abbinat{{ "o" if linked == 1 else "i" }}</a>{% endif %}
+</div>
+{% else %}
+<h1>Nuova scheda</h1>
+<p class="intro">Una scheda descrive un trattamento: cosa si fa, perché, con quali dati e dove stanno i documenti.
+  Non scrivere dati personali: la scheda parla del trattamento, non delle persone.</p>
+{% endif %}
+
+{% macro field(c) %}
+{% set fid = "f" ~ columns.index(c) %}
+{% set hint = hints.get(c) %}
+<div class="field">
+  <label for="{{ fid }}">{{ c }}{% if c in required %} <span class="muted">(obbligatorio)</span>{% endif %}</label>
+  {% if hint %}<p id="{{ fid }}-aiuto" class="hint mb-1">{{ hint }}</p>{% endif %}
+  {% if c in ("Diffusione", "Consenso") %}
+  <select id="{{ fid }}" name="{{ c }}" class="form-select"{% if hint %} aria-describedby="{{ fid }}-aiuto"{% endif %}>
+    {% for v, label in [("NO", "No"), ("SI", "Sì")] %}<option value="{{ v }}"{% if values[c]|upper == v %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  {% elif c in long %}
+  <textarea id="{{ fid }}" name="{{ c }}" rows="3" maxlength="1000"{% if c in required %} required{% endif %}{% if hint %} aria-describedby="{{ fid }}-aiuto"{% endif %}>{{ values[c] }}</textarea>
+  {% else %}
+  <input type="text" id="{{ fid }}" name="{{ c }}" value="{{ values[c] }}" maxlength="{{ 20 if c == 'Codice' else 1000 }}"{% if c in required %} required{% endif %}{% if hint %} aria-describedby="{{ fid }}-aiuto"{% endif %}{% if c == "Codice" %} autocapitalize="characters" spellcheck="false"{% endif %}>
+  {% endif %}
+</div>
+{% endmacro %}
+
+<div class="row">
+<div class="col-lg-8">
+{% if can_decide %}
+<form method="post" action="/schede/{{ code or 'nuova' }}" class="decision">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  {% if rec %}<input type="hidden" name="azione" value="MODIFICA">{% endif %}
+  {% for title, cols in sections %}
+  <fieldset class="form-section">
+    <legend class="h5">{{ title }}</legend>
+    {% for c in cols if not (rec and c == "Codice") %}{{ field(c) }}{% endfor %}
+  </fieldset>
+  {% endfor %}
+  <div class="actions">
+    <button type="submit" class="btn btn-primary">{{ "Salva le modifiche" if rec else "Crea la scheda" }}</button>
+    <a class="btn btn-outline-primary" href="{{ '/schede/' ~ code if rec else '/schede' }}">Annulla</a>
+  </div>
+</form>
+{% else %}
+<div class="record-card">
+  <dl>{% for title, cols in sections %}{% for c in cols %}<dt>{{ c }}</dt><dd>{{ values[c] or "—" }}</dd>{% endfor %}{% endfor %}</dl>
+</div>
+{% endif %}
+</div>
+
+{% if rec %}
+<div class="col-lg-4">
+  {% if can_decide %}
+  <section class="block panel" aria-labelledby="h-stato">
+    <h2 id="h-stato" class="h5">{{ "Ripristina la scheda" if rec.archiviata else "Archivia la scheda" }}</h2>
+    <p class="hint">{% if rec.archiviata %}Torna nel registro in uso e si può di nuovo abbinare ai documenti.{% else %}Esce dal registro in uso ma resta nello storico: si può ripristinare. Le decisioni già prese restano.{% endif %}</p>
+    <form method="post" action="/schede/{{ code }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="btn btn-outline-primary btn-sm" name="azione" value="{{ 'RIPRISTINA' if rec.archiviata else 'ARCHIVIA' }}">{{ "Ripristina" if rec.archiviata else "Archivia" }}</button>
+    </form>
+  </section>
+  {% endif %}
+  <section class="block" aria-labelledby="h-storico">
+    <h2 id="h-storico" class="h5">Storico</h2>
+    <ul class="history">
+      {% for v in rec.versioni|reverse %}
+      <li><time datetime="{{ v.quando }}">{{ v.quando|quando }}</time> · {{ v.utente }}<br>{{ record_actions.get(v.azione, v.azione) }}</li>
+      {% endfor %}
+      {% if not rec.nuova %}<li>Dal registro dei trattamenti di partenza</li>{% endif %}
+    </ul>
+  </section>
+</div>
+{% endif %}
+</div>
+{% endblock %}

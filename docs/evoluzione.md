@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/records: gestione delle schede del registro
+- Richiesta dell'utente: una pagina per vedere le schede del registro, crearne di nuove, modificarle, archiviarle.
+- Decisioni (dell'utente): salvataggio in SQLite con storico, il CSV del registro resta com'è; eliminare = archiviare, con ripristino; nuova PR da `main`.
+- Perché così: il registro dei trattamenti (art. 30 GDPR) deve restare tracciabile, e il CSV del kit è anche l'ingresso del classificatore e dei punteggi: scriverlo dalla UI cambierebbe le misure senza che nessuno lo veda. La PR #20 aveva già scelto di non scriverlo.
+- Le modifiche valgono subito nella UI; per l'analisi si esporta il registro in CSV. Il collegamento "bozza approvata → nuova scheda" resta fuori.
+
 ## 2026-10-29 — feat/draft-records: bozze di nuove schede per i documenti senza scheda
 - `classifier/drafts.py` (`make drafts`, dopo `make score`): per i documenti SCHEDA_MANCANTE propone una scheda del registro **per tipo di documento**. Il tipo viene dal nome del file senza date, numeri e cognomi (`SCIA_vicinato_20260124_202.pdf` → `scia_vicinato`), così le domande SAD finite in `Condivisa` stanno con quelle di `Sociale/Disabilita`.
 - Il sistema compila ciò che sa: cartella prevalente del gruppo (un documento fuori posto non diventa un percorso dichiarato), gruppo di accesso da `permessi_cartelle.csv`, categorie particolari rilevate, diffusione NO. Il modello locale, se attivo (`LLM=qwen3:1.7b`), propone denominazione, finalità, interessati, categorie di dati, tipologie, parole chiave e una base giuridica da un elenco chiuso (art. 6 lett. a, b, c, e). Fonti normative, struttura, ufficio e conservazione restano sempre da scrivere all'RPD e sono segnati "da verificare".
