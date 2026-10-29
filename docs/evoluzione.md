@@ -2,6 +2,20 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/compliance: 4 regole di conformità su 5
+- `classifier/compliance.py`: con dati personali e una scheda, il documento è confrontato con la scheda. Almeno uno scostamento → NON_CONFORME.
+  - CATEGORIA_NON_DICHIARATA: categoria rilevata assente dalle "Categorie particolari dichiarate" (ETNICA e SESSUALE del registro diventano ORIGINE_ETNICA e ORIENTAMENTO_SESSUALE).
+  - LUOGO_NON_DICHIARATO: il percorso non sta in nessuna cartella dichiarata della scheda (segmenti interi).
+  - ACCESSO_ECCESSIVO: la cartella più specifica in `permessi_cartelle.csv` è aperta a `GG_TUTTI_DIPENDENTI`.
+  - DIFFUSIONE_NON_PREVISTA: file in una cartella `Pubblicazioni` o `OpenData` e scheda senza diffusione, oppure con categorie particolari.
+- Decisione: CONSERVAZIONE_SCADUTA (13 casi su sviluppo) in una PR a parte, perché serve la data del documento letta nel testo.
+- Decisione: senza scheda (SCHEDA_MANCANTE) nessun controllo, come nella specifica. Applicare ACCESSO_ECCESSIVO anche a quei file alzava F1 a 0,65, ma solo perché copriva i nostri errori di SCHEDA_MANCANTE; nelle etichette i veri documenti senza scheda non hanno scostamenti.
+- Scorciatoie: livello di riservatezza non ancora calcolato, quindi ogni documento con dati personali vale come livello ≥ 2 (nessun falso positivo su sviluppo). "Destinato alla pubblicazione" solo dalla cartella: le determine da pubblicare all'albo (5 casi) restano da riconoscere dal testo.
+- Quasi tutti gli errori restanti vengono dalle fasi prima: scheda sbagliata o SCHEDA_MANCANTE di troppo (es. log VPN e delega sindacale fuori posto).
+- `make score` passa anche `permessi_cartelle.csv`; `python -m classifier.pipeline <cartella> [registro.csv [permessi.csv]]`.
+- `data/pred_*.json` aggiornati applicando `compliance.check` alle predizioni salvate: i controlli usano solo percorso, scheda e categorie, già nel file.
+- Punteggio: sviluppo 73,2 → **84,9** (F1 scostamenti 0,61, esito 0,77), validation 72,9 → **87,4** (F1 0,71, esito 0,78).
+
 ## 2026-10-29 — feat/missing-record: esito SCHEDA_MANCANTE
 - `matching.is_missing_record`: un documento con dati personali è SCHEDA_MANCANTE se nessuna scheda ha indizi, oppure se la migliore ha **al massimo una parola chiave** e il file **non** sta in una sua cartella dichiarata. In quel caso `scheda` resta vuota; la scheda più vicina resta tra le proposte, per il controllo dell'RPD.
 - Si contano le parole chiave e non il punteggio: il punteggio è una somma di pesi non normalizzata, che cambia con il registro.
