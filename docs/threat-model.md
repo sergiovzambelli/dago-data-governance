@@ -4,7 +4,7 @@ Metodo: STRIDE (Spoofing, Tampering, Repudiation, Information disclosure, Denial
 Aggiornato a ogni PR che aggiunge dati, input, endpoint, integrazioni, dipendenze o permessi. Le minacce non si cancellano: si chiudono.
 
 ## Asset
-_Nessuno ancora._
+- Dati del kit in `data/`: documenti con dati personali (sintetici), etichette di valutazione riservate.
 
 ## Confini di fiducia
 _Nessuno ancora (vedi `flussi.md`)._
@@ -13,4 +13,6 @@ _Nessuno ancora (vedi `flussi.md`)._
 
 | ID | Componente | STRIDE | Minaccia | Mitigazione | Stato | PR |
 |----|------------|--------|----------|-------------|-------|----|
-| T-001 | Repository | I | Segreti committati per errore | `.env` escluso da git | aperta finché non esiste `.gitignore` | — |
+| T-001 | Repository | I | Segreti committati per errore | `.env` escluso da git | chiusa | chore/kit-data |
+| T-002 | `data/` | I | Dati personali o etichette riservate committati | `data/` in `.gitignore`, rigenerato con `make data` | chiusa | chore/kit-data |
+| T-003 | `make data` | T | Archivio zip con percorsi `..` o assoluti (zip-slip) | estrazione con `zipfile` di Python, che li scarta | chiusa | chore/kit-data |
