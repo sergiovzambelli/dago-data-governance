@@ -25,7 +25,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #11 | feat/matching | Top-3 schede da parole chiave pesate + cartella dichiarata, con motivazione | 59,4 | 57,9 |
 | #12 | feat/missing-record | SCHEDA_MANCANTE se la scheda migliore ha ≤ 1 parola chiave ed è fuori dalle cartelle dichiarate | 73,2 | 72,9 |
 | #13 | feat/compliance | 4 regole su 5: categoria, luogo, accesso, diffusione → NON_CONFORME | 84,9 | 87,4 |
-| – | feat/retention | CONSERVAZIONE_SCADUTA con la data del documento (testo, nome file) | **88,3** | **90,1** |
+| #14 | feat/retention | CONSERVAZIONE_SCADUTA con la data del documento (testo, nome file) | **88,3** | **90,1** |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 
