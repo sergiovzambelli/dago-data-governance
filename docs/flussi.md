@@ -106,12 +106,16 @@ flowchart LR
         AUTH{utente?<br/>Basic + PBKDF2<br/>oppure solo 127.0.0.1}
         PAG[cruscotto · coda · inventario<br/>documento · ricerca · registro]
         DEC[decisione RPD<br/>ruolo rpd + token CSRF + Origin]
+        SCH[schede: crea · modifica · archivia<br/>ruolo rpd + token CSRF + Origin]
         EXP[esporta JSON / CSV]
     end
     U((RPD / operatore)) -->|confine di fiducia: browser → server| AUTH --> PAG
     PAG --> DEC -->|solo aggiunte| DB[(ui/var/decisioni.sqlite3)]
     DB --> PAG
     DB --> EXP
+    PAG --> SCH -->|versioni, solo aggiunte| DB
+    REG -.->|mai scritto| SCH
+    DB -->|CSV + versioni| REGOUT["/schede/registro.csv"] -.->|a mano| PIPE
 ```
 
 ## Bozze di nuove schede (feat/draft-records)

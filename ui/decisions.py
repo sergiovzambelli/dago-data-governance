@@ -31,6 +31,18 @@ CREATE TRIGGER IF NOT EXISTS bozze_no_update BEFORE UPDATE ON bozze
 BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
 CREATE TRIGGER IF NOT EXISTS bozze_no_delete BEFORE DELETE ON bozze
 BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
+CREATE TABLE IF NOT EXISTS schede (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quando TEXT NOT NULL,
+    utente TEXT NOT NULL,
+    codice TEXT NOT NULL,
+    azione TEXT NOT NULL CHECK (azione IN ('CREA', 'MODIFICA', 'ARCHIVIA', 'RIPRISTINA')),
+    campi TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS schede_no_update BEFORE UPDATE ON schede
+BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
+CREATE TRIGGER IF NOT EXISTS schede_no_delete BEFORE DELETE ON schede
+BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
 """
 FIELDS = ("id", "quando", "utente", "documento", "sha256", "azione", "esito", "scheda", "nota")
 
@@ -63,6 +75,18 @@ class DecisionLog:
         with self._db() as db:
             rows = db.execute("SELECT quando, utente, bozza, azione, campi FROM bozze ORDER BY id").fetchall()
         return {b: {"quando": q, "utente": u, "azione": a, "campi": json.loads(c)} for q, u, b, a, c in rows}
+
+    def add_record(self, user, code, action, fields):
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        with self._db() as db:
+            db.execute("INSERT INTO schede (quando, utente, codice, azione, campi) VALUES (?, ?, ?, ?, ?)",
+                       (now, user, code, action, json.dumps(fields, ensure_ascii=False)))
+
+    def records(self):
+        """Versioni delle schede salvate dall'RPD, dalla più vecchia."""
+        with self._db() as db:
+            rows = db.execute("SELECT quando, utente, codice, azione, campi FROM schede ORDER BY id").fetchall()
+        return [{"quando": q, "utente": u, "codice": c, "azione": a, "campi": json.loads(f)} for q, u, c, a, f in rows]
 
     def all(self):
         with self._db() as db:

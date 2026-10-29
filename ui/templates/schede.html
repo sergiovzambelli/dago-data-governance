@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Schede del registro{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Schede</li>
+{% endblock %}
+{% block content %}
+{% set active = records.items()|sort|rejectattr("1.archiviata")|list %}
+{% set archived = records.items()|sort|selectattr("1.archiviata")|list %}
+<div class="doc-head">
+  <div>
+    <h1 class="mb-1">Schede del registro</h1>
+    <p class="page-lead">{{ active|length }} schede in uso nel registro dei trattamenti{% if archived %}, {{ archived|length }} archiviate{% endif %}.</p>
+  </div>
+  <div class="actions">
+    {% if can_decide %}<a class="btn btn-primary" href="/schede/nuova">{{ icon("it-plus", "icon-white icon-sm") }} Nuova scheda</a>{% endif %}
+    <a class="btn btn-outline-primary" href="/schede/registro.csv">Esporta il registro (CSV)</a>
+  </div>
+</div>
+<p class="intro">Le modifiche si salvano nell'interfaccia, con autore e data, e non cambiano il file del registro di
+  partenza. Per usarle nell'analisi dei documenti esporta il registro e passalo al classificatore.</p>
+
+{% macro record_rows(items) %}
+<table class="doc-table">
+  <caption class="visually-hidden">Schede del registro</caption>
+  <thead><tr><th scope="col">Scheda</th><th scope="col">Struttura</th><th scope="col">Categorie particolari</th>
+    <th scope="col">Documenti</th><th scope="col">Stato</th></tr></thead>
+  <tbody>
+  {% for code, r in items %}
+    <tr>
+      <td data-label="Scheda"><a class="doc-link" href="/schede/{{ code }}"><span class="doc-name">{{ code }}</span>
+        <span class="doc-folder">{{ r.campi["Denominazione"] }}</span></a></td>
+      <td data-label="Struttura">{{ r.campi["Struttura responsabile"] or "—" }}</td>
+      <td data-label="Categorie particolari">{% set cats = r.campi["Categorie particolari dichiarate"] %}{% if cats and cats != "Nessuna" %}<ul class="tag-list">{% for c in cats.split(",") %}<li class="tag tag-strong">{{ c.strip() }}</li>{% endfor %}</ul>{% else %}<span class="muted">Nessuna</span>{% endif %}</td>
+      <td data-label="Documenti">{% if counts.get(code) %}<a href="/documenti?scheda={{ code }}">{{ counts[code] }}</a>{% else %}<span class="muted">0</span>{% endif %}</td>
+      <td data-label="Stato">{% if r.archiviata %}<span class="stato">Archiviata</span>{% elif r.nuova %}<span class="stato stato-ok">Nuova</span>{% elif r.versioni %}<span class="stato stato-ok">Modificata</span>{% else %}<span class="stato">Dal registro</span>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5">Nessuna scheda.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{{ record_rows(active) }}
+{% if archived %}
+<details class="more">
+  <summary>Archiviate ({{ archived|length }})</summary>
+  <p class="hint">Non si possono più abbinare ai documenti; dalla loro pagina si ripristinano.</p>
+  {{ record_rows(archived) }}
+</details>
+{% endif %}
+{% endblock %}

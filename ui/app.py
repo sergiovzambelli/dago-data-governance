@@ -14,8 +14,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ui.config import LOOPBACK
 from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, DRAFT_ACTIONS, DRAFT_EDITABLE, DRAFT_REQUIRED, ENTITY_TYPES,
-                     OUTCOMES, REGISTER_COLUMNS, apply_decision, load_drafts, load_predictions, load_register, priority,
-                     risk, split_path, when)
+                     NO_LIMIT, OUTCOMES, RECORD_ACTIONS, RECORD_CODE, RECORD_HINTS, RECORD_LONG, RECORD_REQUIRED,
+                     RECORD_SECTIONS, REGISTER_COLUMNS, apply_decision, apply_records, clean_record, load_drafts,
+                     load_predictions, load_register, priority, record_view, risk, split_path, when)
 from ui.decisions import DecisionLog
 from ui.security import HEADERS, LOCAL_USER, ROLES, Csrf, check_basic_auth, load_users
 
@@ -49,7 +50,8 @@ class Store:
 
     def __init__(self, settings):
         self.settings, self.mtime, self.docs = settings, None, []
-        self.register = load_register(settings.register)
+        self.base = load_register(settings.register)  # CSV del registro: la UI non lo scrive mai
+        self.records, self.register = {}, {}
         # shortcut: bozze lette all'avvio; dopo make drafts va riavviata la UI, ricaricarle come le predizioni se serve
         self.drafts = load_drafts(settings.drafts)
         self.refresh()
@@ -71,7 +73,14 @@ def create_app(settings):
     templates = Jinja2Templates(directory=HERE / "templates")  # autoescape attivo sui .html
     templates.env.globals.update(ente=settings.ente, bi=f"/static/{BI}", outcomes=OUTCOMES, deviations=DEVIATIONS,
                                  entity_types=ENTITY_TYPES, categories=CATEGORIES, roles=ROLES, actions=ACTIONS,
-                                 local_mode=users is None, schede=store.register, priority=priority)
+                                 local_mode=users is None, priority=priority)
+
+    def sync_register():
+        """Schede in uso = CSV + versioni salvate. Si riassegna il dizionario intero: nessuna richiesta lo vede a metà."""
+        store.records = apply_records(store.base, log.records())
+        store.register = {c: record_view(r["campi"]) for c, r in store.records.items() if not r["archiviata"]}
+        templates.env.globals["schede"] = store.register
+    sync_register()
     def breakable(text):
         # a capo dopo _ - / . invece che a metà parola (prima si fa l'escape, poi si aggiunge <wbr>)
         return Markup(re.sub(r"([_\-/.])", r"\1<wbr>", str(escape(text))))
@@ -84,6 +93,7 @@ def create_app(settings):
     @app.middleware("http")
     async def security(request, call_next):
         if not request.url.path.startswith("/static/"):
+            sync_register()  # vale anche con più processi che scrivono nello stesso database
             if users is None:
                 request.state.user = LOCAL_USER
             else:
@@ -299,5 +309,75 @@ def create_app(settings):
                 raise HTTPException(400, "Conservazione in anni: scrivi un numero intero.")
         log.add_draft(user["nome"], draft_id, action, fields if action == "APPROVA" else {})
         return RedirectResponse(f"/bozze?registrata={draft_id}#bozza-{draft_id}", status_code=303)
+
+    def find_record(code):
+        if not RECORD_CODE.fullmatch(code) or code not in store.records:
+            raise HTTPException(404, "Scheda non trovata.")
+        return store.records[code]
+
+    def record_page(request, code=None, status=200):
+        ctx = {"sections": RECORD_SECTIONS, "long": RECORD_LONG, "hints": RECORD_HINTS, "required": RECORD_REQUIRED,
+               "columns": REGISTER_COLUMNS, "no_limit": NO_LIMIT, "record_actions": RECORD_ACTIONS,
+               "can_decide": request.state.user["ruolo"] == "rpd"}
+        if code is None:
+            return page(request, "scheda.html", nav="schede", code=None, rec=None,
+                        values=dict.fromkeys(REGISTER_COLUMNS, ""), **ctx)
+        rec = find_record(code)
+        n = sum(d["scheda"] == code for d in documents())
+        return page(request, "scheda.html", status=status, nav="schede", code=code, rec=rec, values=rec["campi"],
+                    linked=n, **ctx)
+
+    @app.get("/schede", response_class=HTMLResponse)
+    def records(request: Request):
+        counts = Counter(d["scheda"] for d in documents() if d["scheda"])
+        return page(request, "schede.html", nav="schede", records=store.records, counts=counts,
+                    can_decide=request.state.user["ruolo"] == "rpd")
+
+    @app.get("/schede/registro.csv")
+    def export_register():
+        """Registro in uso, con le stesse colonne del CSV del kit: si passa al classificatore."""
+        rows = [[r["campi"][c] for c in REGISTER_COLUMNS] for r in store.records.values() if not r["archiviata"]]
+        return _csv(REGISTER_COLUMNS, rows, "registro_trattamenti.csv")
+
+    @app.get("/schede/nuova", response_class=HTMLResponse)
+    def new_record_form(request: Request):
+        return record_page(request)
+
+    @app.post("/schede/nuova")
+    async def create_record(request: Request):
+        form = await request.form()
+        user = guard(request, form.get("csrf", ""), "modificare il registro")
+        try:
+            fields = clean_record(form)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+        if fields["Codice"] in store.records:
+            raise HTTPException(400, "Esiste già una scheda con questo codice (anche tra le archiviate).")
+        log.add_record(user["nome"], fields["Codice"], "CREA", fields)
+        sync_register()
+        return RedirectResponse(f"/schede/{fields['Codice']}?salvata=1", status_code=303)
+
+    @app.get("/schede/{code}", response_class=HTMLResponse)
+    def record_detail(request: Request, code: str):
+        return record_page(request, code)
+
+    @app.post("/schede/{code}")
+    async def change_record(request: Request, code: str):
+        form = await request.form()
+        user = guard(request, form.get("csrf", ""), "modificare il registro")
+        rec = find_record(code)
+        action = form.get("azione")
+        if action == "MODIFICA":
+            try:
+                fields = clean_record({**form, "Codice": code})  # il codice non cambia
+            except ValueError as e:
+                raise HTTPException(400, str(e))
+        elif action == ("RIPRISTINA" if rec["archiviata"] else "ARCHIVIA"):
+            fields = rec["campi"]
+        else:
+            raise HTTPException(400, "Azione non valida.")
+        log.add_record(user["nome"], code, action, fields)
+        sync_register()
+        return RedirectResponse(f"/schede/{code}?salvata=1", status_code=303)
 
     return app

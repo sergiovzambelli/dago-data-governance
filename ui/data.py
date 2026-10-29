@@ -106,25 +106,88 @@ def load_predictions(path):
 
 
 def load_register(path):
-    """Schede del registro per codice: solo i campi mostrati nella UI."""
+    """Righe del registro per codice, con tutte le colonne (quelle assenti dal CSV restano vuote)."""
     if path is None or not path.exists():
         return {}
     with open(path, encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f, delimiter=";")
         if "Codice" not in (reader.fieldnames or []):
             raise ValueError("registro: colonna 'Codice' mancante")
-        rows = list(reader)
+        rows = [{c: (r.get(c) or "").strip()[:MAX_TEXT * 2] for c in REGISTER_COLUMNS} for r in reader]
+    return {r["Codice"]: r for r in rows if r["Codice"]}
 
-    def col(r, name):
-        return (r.get(name) or "").strip()[:MAX_TEXT * 2]
-    return {col(r, "Codice"): {
-        "codice": col(r, "Codice"), "denominazione": col(r, "Denominazione"), "finalita": col(r, "Finalità"),
-        "struttura": col(r, "Struttura responsabile"),
-        "categorie": col(r, "Categorie particolari dichiarate") or "Nessuna",
-        "percorsi": [p.strip() for p in col(r, "Percorsi dichiarati").split(";") if p.strip()],
-        "conservazione": col(r, "Conservazione") or col(r, "Conservazione in anni"),
-        "diffusione": col(r, "Diffusione") or "NO",
-    } for r in rows if col(r, "Codice")}
+
+def record_view(r):
+    """Campi della scheda mostrati nelle pagine dei documenti."""
+    return {
+        "codice": r["Codice"], "denominazione": r["Denominazione"], "finalita": r["Finalità"],
+        "struttura": r["Struttura responsabile"], "categorie": r["Categorie particolari dichiarate"] or "Nessuna",
+        "percorsi": [p.strip() for p in r["Percorsi dichiarati"].split(";") if p.strip()],
+        "conservazione": r["Conservazione"] or r["Conservazione in anni"], "diffusione": r["Diffusione"] or "NO",
+    }
+
+
+RECORD_ACTIONS = {"CREA": "Creazione", "MODIFICA": "Modifica", "ARCHIVIA": "Archiviazione", "RIPRISTINA": "Ripristino"}
+RECORD_CODE = re.compile(r"[A-Z][A-Z0-9]{0,5}(-[A-Z0-9]{1,6}){1,3}")  # es. T-PER-07
+RECORD_REQUIRED = ("Codice", "Denominazione", "Finalità", "Base giuridica")
+NO_LIMIT = "Illimitata / non calcolabile"
+# colonne del registro raggruppate nel modulo della scheda
+RECORD_SECTIONS = (
+    ("Trattamento", ("Codice", "Denominazione", "Origine", "Struttura responsabile", "Ufficio")),
+    ("Finalità e base giuridica", ("Finalità", "Base giuridica", "Fonti normative", "Consenso")),
+    ("Dati e interessati", ("Categorie di dati", "Categorie particolari dichiarate", "Interessati", "Comunicazione",
+                            "Diffusione", "Responsabili esterni")),
+    ("Dove stanno i documenti", ("Percorsi dichiarati", "Gruppo di accesso", "Archivi", "Software")),
+    ("Conservazione", ("Conservazione", "Conservazione in anni")),
+    ("Abbinamento automatico dei documenti", ("Tipologie documentali tipiche", "Parole chiave")),
+)
+RECORD_LONG = {"Finalità", "Base giuridica", "Fonti normative", "Categorie di dati", "Interessati", "Comunicazione",
+               "Responsabili esterni", "Archivi", "Tipologie documentali tipiche", "Parole chiave"}
+RECORD_HINTS = {
+    "Codice": "Lettere maiuscole, cifre e trattini, es. T-URP-01. Non si cambia dopo la creazione.",
+    "Categorie particolari dichiarate": "Codici in maiuscolo separati da virgola (es. SALUTE, GIUDIZIARI) oppure «Nessuna».",
+    "Percorsi dichiarati": "Cartelle separate da punto e virgola, es. fileserver/URP/Reclami.",
+    "Conservazione in anni": f"Un numero di anni oppure «{NO_LIMIT}»: serve al controllo della conservazione.",
+    "Tipologie documentali tipiche": "Servono all'abbinamento automatico dei documenti alla scheda.",
+    "Parole chiave": "Separate da virgola: servono all'abbinamento automatico dei documenti alla scheda.",
+}
+
+
+def clean_record(form):
+    """Valori di una scheda dal modulo: testo senza caratteri di controllo, campi a scelta chiusa verificati."""
+    out = {}
+    for c in REGISTER_COLUMNS:
+        value = form.get(c, "")
+        if not isinstance(value, str):
+            raise ValueError("Campo non valido.")
+        out[c] = re.sub(r"[\x00-\x1f\x7f]", " ", value).strip()[:MAX_TEXT * 2]
+    missing = [c for c in RECORD_REQUIRED if not out[c]]
+    if missing:
+        raise ValueError(f"Campi obbligatori: {', '.join(missing).lower()}.")
+    if not RECORD_CODE.fullmatch(out["Codice"]):
+        raise ValueError("Codice non valido: lettere maiuscole, cifre e trattini, es. T-URP-01.")
+    for c in ("Diffusione", "Consenso"):
+        if out[c] not in ("SI", "NO"):
+            raise ValueError(f"{c}: scegli SI o NO.")
+    years = out["Conservazione in anni"]
+    if years and years != NO_LIMIT and not re.fullmatch(r"\d{1,3}", years):
+        raise ValueError(f"Conservazione in anni: un numero oppure «{NO_LIMIT}».")
+    cats = out["Categorie particolari dichiarate"]
+    if cats and cats != "Nessuna" and not re.fullmatch(r"[A-Z_]+(, ?[A-Z_]+)*", cats):
+        raise ValueError("Categorie particolari: codici in maiuscolo separati da virgola, oppure «Nessuna».")
+    return out
+
+
+def apply_records(base, versions):
+    """Schede in uso: il registro CSV con sopra le versioni salvate dall'RPD, nell'ordine in cui sono state salvate."""
+    records = {code: {"campi": row, "archiviata": False, "nuova": False, "versioni": []} for code, row in base.items()}
+    for v in versions:
+        r = records.setdefault(v["codice"], {"campi": v["campi"], "archiviata": False, "nuova": True, "versioni": []})
+        if v["azione"] in ("CREA", "MODIFICA"):
+            r["campi"] = v["campi"]
+        r["archiviata"] = v["azione"] == "ARCHIVIA" or (r["archiviata"] and v["azione"] == "MODIFICA")
+        r["versioni"].append(v)
+    return records
 
 
 ACTIONS = {"CONFERMA": "Conferma", "CORREZIONE": "Correzione"}

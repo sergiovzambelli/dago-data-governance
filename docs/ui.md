@@ -32,7 +32,8 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 | **Inventario** `/documenti` | filtri per esito, scheda e scostamento; 50 righe per pagina |
 | **Documento** `/documenti/<id>` | evidenze: entità mascherate con posizione e confidenza, categorie, tre proposte con punteggio e motivazione, scostamenti spiegati con l'azione suggerita, scheda abbinata. Modulo di conferma o correzione e storico |
 | **Ricerca** `/ricerca` | per percorso, scheda, esito, scostamento, categoria, tipo di entità, motivazione. Il testo integrale non è indicizzato (la specifica chiede di non conservare copie integrali) |
-| **Nuove schede** `/bozze` | una bozza di scheda per tipo di documento senza scheda: l'RPD corregge i testi e approva o scarta; `/bozze/approvate.csv` scarica le approvate con le colonne del registro |
+| **Schede** `/schede` | registro dei trattamenti in uso: elenco con documenti abbinati e stato, nuova scheda (`/schede/nuova`), modifica, archiviazione e ripristino (`/schede/<codice>`), storico per scheda, esportazione `/schede/registro.csv` con tutte le colonne del registro |
+| **Bozze di schede** `/bozze` | una bozza di scheda per tipo di documento senza scheda: l'RPD corregge i testi e approva o scarta; `/bozze/approvate.csv` scarica le approvate con le colonne del registro |
 | **Registro decisioni** `/decisioni` | tutte le conferme e correzioni, in sola aggiunta |
 | **Esportazione** `/esporta.json`, `/esporta.csv` | risultati con le correzioni dell'RPD applicate |
 
@@ -69,10 +70,19 @@ Secondo giro sulla UI, con il metodo della skill [apple-design](https://github.c
 - **Focus**: anello blu di 3 px (5,6:1 sul bianco) al posto di quello giallo (1,9:1, sotto il 3:1 richiesto per gli indicatori grafici).
 - Fuori: tema scuro (i componenti di Bootstrap Italia non lo prevedono), font: resta Titillium Web, carattere della PA.
 
+## Schede del registro
+
+- **Il CSV del registro non viene mai scritto.** Le schede in uso sono le righe del CSV (`UI_REGISTRO`) con sopra le versioni salvate dall'RPD nella tabella `schede` di `ui/var/decisioni.sqlite3`: creazione, modifica, archiviazione e ripristino, ognuna con autore e data, in sola aggiunta (trigger che vietano modifica e cancellazione).
+- Le modifiche valgono subito in tutta la UI: nome della scheda nelle tabelle, scelta nella correzione, filtri. Una scheda **archiviata** non si può più scegliere; i documenti già abbinati la mantengono. Si ripristina dalla sua pagina.
+- Il codice non si cambia dopo la creazione e non si riusa, nemmeno se la scheda è archiviata.
+- **Per l'analisi**: "Esporta il registro (CSV)" scarica le schede in uso con le colonne del kit; si passa al classificatore (`python -m classifier.pipeline <cartella> registro_trattamenti.csv`).
+- Modulo diviso in gruppi (trattamento, finalità e base giuridica, dati e interessati, dove stanno i documenti, conservazione, abbinamento automatico) con le spiegazioni dei campi che il classificatore usa: cartelle, categorie particolari, conservazione in anni, parole chiave.
+
 ## Sicurezza
 
 - Senza file degli utenti la UI si rifiuta di partire su un indirizzo non locale. Con il file: autenticazione HTTP Basic, password PBKDF2-SHA256 (310.000 iterazioni) e confronto a tempo costante.
 - Decisioni solo con ruolo `rpd`, token anti-CSRF legato all'utente e controllo dell'intestazione `Origin`.
+- Schede: solo ruolo `rpd`, con gli stessi controlli delle decisioni. Codice nel formato `T-URP-01` (anche negli URL), obbligatori denominazione, finalità e base giuridica, diffusione e consenso solo SI o NO, conservazione in anni numerica o «Illimitata / non calcolabile», categorie particolari come codici in maiuscolo; testo senza caratteri di controllo, massimo 1000 caratteri per campo.
 - Valori della decisione validati (esito tra i 4 ammessi, scheda presente nel registro, nota di massimo 500 caratteri senza caratteri di controllo). Registro SQLite con trigger che vietano modifica e cancellazione.
 - Il JSON della pipeline è validato all'avvio; gli URL usano un identificativo opaco, non il percorso del file.
 - Intestazioni: CSP senza script inline né risorse esterne, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: same-origin`, `Cache-Control: no-store`. Log di accesso spento, perché gli URL della ricerca possono contenere termini sensibili.
