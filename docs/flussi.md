@@ -17,7 +17,7 @@ flowchart LR
 
 ## Flussi dell'applicazione
 
-### Architettura e tool (proposta; implementati: Scansione senza incrementale, Estrazione testo con OCR (EML con allegati), Entità con regex, Categorie particolari con dizionari, Export JSON, Scorer)
+### Architettura e tool (proposta; implementati: Scansione senza incrementale, Estrazione testo con OCR (EML con allegati), Entità con regex, Categorie particolari con dizionari, Abbinamento scheda top-3 senza soglia, Export JSON, Scorer)
 
 Tutto gratuito, open source, eseguito in locale senza Internet. Il LLM è opzionale: la catena funziona anche solo con le regole.
 

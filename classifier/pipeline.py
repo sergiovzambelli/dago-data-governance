@@ -1,6 +1,6 @@
 """Analizza una cartella (in sola lettura) e produce una predizione per file nel formato della specifica.
 
-Uso: python -m classifier.pipeline <cartella> > predizioni.json
+Uso: python -m classifier.pipeline <cartella> [registro.csv] > predizioni.json
 """
 import hashlib
 import json
@@ -10,6 +10,7 @@ from pathlib import Path
 from classifier.categories import find_categories
 from classifier.entities import find_entities
 from classifier.extract import extract_text
+from classifier.matching import load_register, match
 
 
 def _sha256(path):
@@ -20,7 +21,7 @@ def _sha256(path):
     return h.hexdigest()
 
 
-def classify(root):
+def classify(root, register=()):
     root = Path(root)
     results = []
     for path in sorted(root.rglob("*")):
@@ -34,16 +35,19 @@ def classify(root):
         # una categoria particolare descritta riguarda una persona anche senza identificativi
         # shortcut: un modulo in bianco che nomina una categoria risulta "con dati personali"
         personal = bool(entities or categories) or not text.strip()
+        rel = path.relative_to(root).as_posix()
+        # proposte anche senza dati personali: se quel giudizio è sbagliato (es. soli nomi) restano utili
+        proposals = match(register, rel, text)
         # shortcut: con dati personali l'esito è sempre CONFORME; i passi successivi lo sostituiscono
         results.append({
-            "file": path.relative_to(root).as_posix(),
+            "file": rel,
             "sha256": _sha256(path),
             "dati_personali": personal,
             "entita": entities,
             "categorie_particolari": categories,
             "livello": None,
-            "proposte": [],
-            "scheda": None,
+            "proposte": proposals,
+            "scheda": proposals[0]["scheda"] if proposals and personal else None,
             "esito": "CONFORME" if personal else "NESSUN_DATO_PERSONALE",
             "scostamenti": [],
         })
@@ -51,6 +55,7 @@ def classify(root):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
-    print(json.dumps(classify(sys.argv[1]), ensure_ascii=False, indent=1))
+    register = load_register(sys.argv[2]) if len(sys.argv) == 3 else ()
+    print(json.dumps(classify(sys.argv[1], register), ensure_ascii=False, indent=1))
