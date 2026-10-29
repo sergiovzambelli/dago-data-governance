@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — chore/llm-model-make: scelta del modello da `make`
+- `make score LLM=qwen3:1.7b` (o `LLM=qwen3:8b`) accende il modello locale sui casi dubbi; `make score` senza `LLM` resta con le sole regole. Il modello passa a `CLASSIFIER_LLM_MODEL`, già letto dalla pipeline: nessuna modifica al codice Python.
+- Misure con `qwen3:1.7b` (Quadro T1000 4 GB, tutto in GPU; circa 11 minuti per sviluppo + validation, contro meno di 2 minuti con le sole regole): sviluppo 88,3 → **91,6**, validation 90,1 → **88,3**. Stesso schema del modello 8b: migliora sviluppo, peggiora validation.
+- Decisione: il modello resta spento di default e le predizioni salvate restano quelle delle sole regole.
+- Nota di sistema: un `CUDA_VISIBLE_DEVICES=` vuoto nell'override systemd di Ollama nascondeva la GPU (tutto su CPU, molto più lento). Va tolto e il servizio riavviato.
+
 ## 2026-10-29 — feat/ui-ux: leggibilità, accessibilità e flusso di validazione
 - Analisi della UI nel browser: contrasto insufficiente su "Scheda mancante" (2,39:1), nomi dei file persi nei percorsi, priorità come numero senza significato, nessun modo di passare al documento successivo, modulo di decisione con campi sempre attivi, tabelle che sul telefono scorrevano di lato, etichette flottanti sovrapposte, avviso ripetuto su ogni pagina, date in formato tecnico.
 - Correzioni descritte in `docs/ui.md` ("Leggibilità e flusso di lavoro"). La più utile: "Conferma la proposta e vai al prossimo" e la posizione nella coda, che evitano di tornare all'elenco dopo ogni documento.
