@@ -2,6 +2,7 @@
 import csv
 import hashlib
 import json
+import re
 from datetime import datetime
 
 OUTCOMES = {
@@ -127,6 +128,43 @@ def load_register(path):
 
 
 ACTIONS = {"CONFERMA": "Conferma", "CORREZIONE": "Correzione"}
+# stesse colonne di classifier/drafts.py: la UI non importa il classificatore
+REGISTER_COLUMNS = (
+    "Codice", "Origine", "Denominazione", "Struttura responsabile", "Ufficio", "Finalità", "Base giuridica",
+    "Fonti normative", "Categorie di dati", "Categorie particolari dichiarate", "Interessati", "Comunicazione",
+    "Diffusione", "Responsabili esterni", "Archivi", "Percorsi dichiarati", "Gruppo di accesso", "Conservazione",
+    "Conservazione in anni", "Software", "Consenso", "Tipologie documentali tipiche", "Parole chiave")
+# campi di una bozza che l'RPD può correggere: nome nel modulo → colonna del registro. Gli altri (cartelle, gruppo,
+# categorie rilevate, diffusione) vengono dall'analisi e si cambiano nel registro dopo l'approvazione
+DRAFT_EDITABLE = {
+    "denominazione": "Denominazione", "finalita": "Finalità", "base_giuridica": "Base giuridica",
+    "fonti": "Fonti normative", "interessati": "Interessati", "categorie_dati": "Categorie di dati",
+    "struttura": "Struttura responsabile", "ufficio": "Ufficio", "tipologie": "Tipologie documentali tipiche",
+    "parole_chiave": "Parole chiave", "conservazione": "Conservazione", "conservazione_anni": "Conservazione in anni",
+}
+DRAFT_REQUIRED = ("Denominazione", "Finalità", "Base giuridica")
+DRAFT_ACTIONS = {"APPROVA": "Approvata", "SCARTA": "Scartata"}
+
+
+def load_drafts(path):
+    """Bozze di schede (classifier/drafts.py), validate come le predizioni; senza file nessuna bozza."""
+    if not path.exists():
+        return []
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, list):
+        raise ValueError("bozze: atteso un elenco")
+    drafts = []
+    for item in raw:
+        if not isinstance(item, dict) or not re.fullmatch(r"[0-9a-f]{16}", str(item.get("id", ""))) \
+                or not isinstance(item.get("campi"), dict):
+            raise ValueError("bozze: ogni bozza deve avere 'id' e 'campi'")
+        fields = {c: str(item["campi"].get(c) or "")[:MAX_TEXT] for c in REGISTER_COLUMNS}
+        drafts.append({"id": item["id"], "codice": fields["Codice"], "campi": fields, "modello": bool(item.get("modello")),
+                       "documenti": [d[:MAX_TEXT] for d in _list(item.get("documenti"), "documenti", item["id"])
+                                     if isinstance(d, str)],
+                       "da_verificare": [c for c in _list(item.get("da_verificare"), "da_verificare", item["id"])
+                                         if c in REGISTER_COLUMNS]})
+    return drafts
 
 
 def risk(doc):

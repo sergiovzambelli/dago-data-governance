@@ -2,11 +2,22 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/draft-records: bozze di nuove schede per i documenti senza scheda
+- `classifier/drafts.py` (`make drafts`, dopo `make score`): per i documenti SCHEDA_MANCANTE propone una scheda del registro **per tipo di documento**. Il tipo viene dal nome del file senza date, numeri e cognomi (`SCIA_vicinato_20260124_202.pdf` → `scia_vicinato`), così le domande SAD finite in `Condivisa` stanno con quelle di `Sociale/Disabilita`.
+- Il sistema compila ciò che sa: cartella prevalente del gruppo (un documento fuori posto non diventa un percorso dichiarato), gruppo di accesso da `permessi_cartelle.csv`, categorie particolari rilevate, diffusione NO. Il modello locale, se attivo (`LLM=qwen3:1.7b`), propone denominazione, finalità, interessati, categorie di dati, tipologie, parole chiave e una base giuridica da un elenco chiuso (art. 6 lett. a, b, c, e). Fonti normative, struttura, ufficio e conservazione restano sempre da scrivere all'RPD e sono segnati "da verificare".
+- Controlli sulla risposta del modello: campi su una riga, al massimo 500 caratteri; scartati se contengono entità riconosciute (CF, IBAN, …) o un "Nome Cognome" presente nei documenti; parole chiave tenute solo se compaiono nei documenti; base giuridica fuori elenco ignorata.
+- Prova su sviluppo con qwen3:1.7b: 27 documenti → 15 bozze in circa 75 s. Con una scheda di esempio nel prompt il modello ne copiava denominazione e finalità (SCIA → "Appalti di lavori", reclami → "Incidenti stradali"): tolta. Senza esempio le denominazioni sono pertinenti ("Domanda di assistenza domiciliare", "SCIA per l'apertura di un esercizio di vicinato"), ma il modello metteva nomi veri negli interessati: da qui il filtro dei nomi.
+- UI: pagina **Nuove schede** (`/bozze`). L'RPD corregge i campi testuali e approva o scarta; decisioni nella tabella `bozze` del registro SQLite, in sola aggiunta. Le schede approvate si scaricano in `/bozze/approvate.csv` con le stesse colonne del registro. Base giuridica, denominazione e finalità obbligatorie per approvare.
+- Decisione: la UI non scrive nel registro dei trattamenti. È il riferimento dei controlli di conformità: una modifica passa dall'RPD, che incolla le righe approvate.
+- Decisione (dell'utente): una sola PR per classificatore, UI e documentazione, invece delle due PR piccole previste da AGENTS.md.
+- Punteggio invariato: la pipeline non cambia.
+
 ## 2026-10-29 — feat/ui-refresh: le informazioni importanti per prime
 - Richiesta dell'utente: UI più attuale e che metta in evidenza ciò che conta. Dalle schermate: nel cruscotto i numeri da cui partire erano allo stesso livello dell'elenco delle 30 schede; nel documento esito, problemi e dati trovati erano sparsi in tre punti, e 12 righe di codici fiscali spingevano in basso il resto.
 - Primo passo: "Da guardare subito" con i 5 più urgenti, verdetto in alto nel documento, valori mascherati in un pannello.
 - Secondo passo, su richiesta dell'utente ("non avere paura a stravolgere la visual"): stile rifatto con la skill apple-design (HIG di Apple come principi per il web). Frase di sintesi al posto delle tessere numeriche, liste raggruppate, un colore per significato (viola per le categorie particolari), intestazione chiara, focus blu. Dettagli e contrasti in `docs/ui.md`.
 - Decisione: Bootstrap Italia resta (griglia, icone, font, intestazione e piè di pagina istituzionali, temi chiari della libreria); cambia lo strato di stile sopra. Niente tema scuro: i componenti della libreria non lo supportano.
+
 ## 2026-10-29 — chore/llm-model-make: scelta del modello da `make`
 - `make score LLM=qwen3:1.7b` (o `LLM=qwen3:8b`) accende il modello locale sui casi dubbi; `make score` senza `LLM` resta con le sole regole. Il modello passa a `CLASSIFIER_LLM_MODEL`, già letto dalla pipeline: nessuna modifica al codice Python.
 - Misure con `qwen3:1.7b` (Quadro T1000 4 GB, tutto in GPU; circa 11 minuti per sviluppo + validation, contro meno di 2 minuti con le sole regole): sviluppo 88,3 → **91,6**, validation 90,1 → **88,3**. Stesso schema del modello 8b: migliora sviluppo, peggiora validation.

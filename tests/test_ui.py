@@ -38,14 +38,25 @@ REGISTER = (
 )
 
 
+DRAFT_FIELDS = {"Codice": "NUOVA-RECLAMO", "Origine": "Bozza del classificatore", "Denominazione": "Reclami per cadute",
+                "Finalità": "Gestione dei reclami dei cittadini", "Base giuridica": "", "Interessati": "Cittadini",
+                "Percorsi dichiarati": "fileserver/URP/Reclami", "Gruppo di accesso": "GG_URP",
+                "Categorie particolari dichiarate": "SALUTE", "Diffusione": "NO",
+                "Tipologie documentali tipiche": "reclamo", "Parole chiave": "caduta, marciapiede"}
+DRAFTS = [{"id": "0123456789abcdef", "codice": "NUOVA-RECLAMO", "documenti": ["fileserver/URP/Reclami/reclamo_117.eml"],
+           "campi": DRAFT_FIELDS, "da_verificare": ["Base giuridica", "Fonti normative"], "modello": True}]
+
+
 @pytest.fixture
 def settings(tmp_path):
     preds = tmp_path / "pred.json"
     preds.write_text(json.dumps(PREDS), encoding="utf-8")
     reg = tmp_path / "registro.csv"
     reg.write_text(REGISTER, encoding="utf-8")
+    drafts = tmp_path / "bozze.json"
+    drafts.write_text(json.dumps(DRAFTS), encoding="utf-8")
     return Settings(predictions=preds, register=reg, db=tmp_path / "decisioni.sqlite3", ente="Comune di Prova",
-                    secret=b"segreto-di-test")
+                    secret=b"segreto-di-test", drafts=drafts)
 
 
 class Client(TestClient):
@@ -284,6 +295,72 @@ def test_file_names_with_html_stay_text(settings):
     settings.predictions.write_text(json.dumps(evil), encoding="utf-8")
     html = TestClient(create_app(settings)).get("/documenti").text
     assert "<img src=x" not in html and "<b>" not in html and "&lt;img" in html
+
+
+DRAFT_URL = "/bozze/0123456789abcdef"
+
+
+def draft_form(client, **fields):
+    data = {"csrf": token(client.get("/bozze").text), "azione": "APPROVA", "denominazione": "Reclami per cadute",
+            "finalita": "Gestione dei reclami", "base_giuridica": "Art. 6, par. 1, lett. e) GDPR"}
+    return {**data, **fields}
+
+
+def test_drafts_page_shows_proposal_and_fields_to_check(client):
+    html = client.get("/bozze").text
+    assert "NUOVA-RECLAMO" in html and "Reclami per cadute" in html and "GG_URP" in html
+    assert "Da verificare" in html
+    # i documenti che hanno originato la bozza sono collegati
+    assert doc_url(client, "reclamo_117.eml") in html
+    # ogni campo del modulo ha la sua etichetta
+    for name in re.findall(r'<(?:input|textarea)[^>]*\bid="([^"]+)"', html):
+        assert f'<label for="{name}"' in html
+
+
+def test_rpd_approves_draft_with_edits_and_exports_register_row(client):
+    r = client.post(DRAFT_URL, data=draft_form(client, denominazione="Reclami per cadute su marciapiedi",
+                                                conservazione_anni="5"), follow_redirects=False)
+    assert r.status_code == 303
+    assert "Approvata" in client.get("/bozze").text
+    csv_text = client.get("/bozze/approvate.csv").text
+    header, row = csv_text.lstrip("\ufeff").splitlines()[:2]
+    assert header.startswith("Codice;Origine;Denominazione;") and header.endswith("Parole chiave")
+    assert "NUOVA-RECLAMO;" in row and "Reclami per cadute su marciapiedi" in row and "fileserver/URP/Reclami" in row
+    assert ";5;" in row
+
+
+def test_discarded_draft_is_not_exported(client):
+    assert client.post(DRAFT_URL, data=draft_form(client, azione="SCARTA"), follow_redirects=False).status_code == 303
+    assert "Scartata" in client.get("/bozze").text
+    assert "NUOVA-RECLAMO" not in client.get("/bozze/approvate.csv").text
+
+
+def test_draft_decision_is_validated(client):
+    assert client.post(DRAFT_URL, data={"azione": "APPROVA"}).status_code == 403
+    assert client.post(DRAFT_URL, data=draft_form(client), headers={"Origin": "https://attacco.example"}).status_code == 403
+    assert client.post("/bozze/ffffffffffffffff", data=draft_form(client)).status_code == 404
+    assert client.post(DRAFT_URL, data=draft_form(client, azione="FORSE")).status_code == 400
+    # la base giuridica la sceglie l'RPD: senza non si approva
+    assert client.post(DRAFT_URL, data=draft_form(client, base_giuridica="")).status_code == 400
+    assert client.post(DRAFT_URL, data=draft_form(client, conservazione_anni="dieci")).status_code == 400
+
+
+def test_draft_export_blocks_formula_injection(client):
+    client.post(DRAFT_URL, data=draft_form(client, denominazione="=HYPERLINK(\"x\")"))
+    csv_text = client.get("/bozze/approvate.csv").text
+    assert "'=HYPERLINK" in csv_text and ";=HYPERLINK" not in csv_text
+
+
+def test_operator_cannot_decide_drafts(settings, tmp_path):
+    c = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
+    auth = _auth("ufficio", "pw-op-123")
+    assert 'name="azione"' not in c.get("/bozze", headers=auth).text
+    assert c.post(DRAFT_URL, headers=auth, data={"csrf": "x", "azione": "SCARTA"}).status_code == 403
+
+
+def test_without_drafts_file_page_explains_how_to_create_them(settings, tmp_path):
+    c = Client(create_app(Settings(**{**settings.__dict__, "drafts": tmp_path / "manca.json"})))
+    assert "make drafts" in c.get("/bozze").text
 
 
 def test_dashboard_puts_urgent_documents_first(client):
