@@ -2,6 +2,11 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/ui-refresh: le informazioni importanti per prime
+- Richiesta dell'utente: UI più attuale e che metta in evidenza ciò che conta. Dalle schermate: nel cruscotto i numeri da cui partire erano allo stesso livello dell'elenco delle 30 schede, che occupava metà pagina; nel documento esito, problemi e dati trovati erano sparsi in tre punti, e 12 righe di codici fiscali spingevano in basso il resto.
+- Cruscotto: "Da guardare subito" (quattro numeri, 5 documenti più urgenti), esiti in una barra unica, schede oltre l'ottava in un pannello. Documento: riquadro del verdetto in alto, valori mascherati in un pannello oltre 5 righe. Dettagli in `docs/ui.md`.
+- Decisione: nessun dato nuovo né calcolo nuovo; il cruscotto riusa l'ordine della coda (`queue_of`) per i più urgenti.
+
 ## 2026-10-29 — chore/llm-model-make: scelta del modello da `make`
 - `make score LLM=qwen3:1.7b` (o `LLM=qwen3:8b`) accende il modello locale sui casi dubbi; `make score` senza `LLM` resta con le sole regole. Il modello passa a `CLASSIFIER_LLM_MODEL`, già letto dalla pipeline: nessuna modifica al codice Python.
 - Misure con `qwen3:1.7b` (Quadro T1000 4 GB, tutto in GPU; circa 11 minuti per sviluppo + validation, contro meno di 2 minuti con le sole regole): sviluppo 88,3 → **91,6**, validation 90,1 → **88,3**. Stesso schema del modello 8b: migliora sviluppo, peggiora validation.

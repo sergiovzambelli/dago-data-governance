@@ -56,6 +56,14 @@ Dove Bootstrap Italia non bastava per leggibilità o accessibilità, `ui/static/
 - **Cruscotto**: avanzamento della validazione e pulsante per iniziare; problemi e schede come barre con il numero scritto. L'avviso di modalità locale compare solo qui, non su ogni pagina.
 - **Inventario**: filtri attivi elencati, ognuno da togliere da solo. **Ricerca**: esempi cliccabili. **Registro**: date `29/10/2026 14:01 UTC` e azioni a parole.
 
+## Le informazioni importanti per prime
+
+Secondo giro sulla UI: ogni pagina mostra in alto ciò su cui l'RPD deve agire, il dettaglio sotto.
+
+- **Cruscotto**: "Da guardare subito" con quattro numeri grandi (non conformi, senza scheda, con categorie particolari, percentuale validata) e i 5 documenti più urgenti della coda con i motivi. Gli esiti sono una sola barra divisa in proporzione, con la legenda cliccabile. Le schede mostrano le prime 8; le altre in un pannello da aprire.
+- **Documento**: il verdetto in alto riassume esito, numero e nome dei problemi, scheda, categorie particolari e dati trovati per tipo (es. "Codice fiscale × 12"). La tabella dei valori mascherati è chiusa in un pannello se supera 5 righe.
+- **Aspetto**: sfondo grigio chiaro con riquadri bianchi arrotondati e ombra leggera, colori degli esiti invariati (contrasto già misurato).
+
 ## Sicurezza
 
 - Senza file degli utenti la UI si rifiuta di partire su un indirizzo non locale. Con il file: autenticazione HTTP Basic, password PBKDF2-SHA256 (310.000 iterazioni) e confronto a tempo costante.

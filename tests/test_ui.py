@@ -284,3 +284,18 @@ def test_file_names_with_html_stay_text(settings):
     settings.predictions.write_text(json.dumps(evil), encoding="utf-8")
     html = TestClient(create_app(settings)).get("/documenti").text
     assert "<img src=x" not in html and "<b>" not in html and "&lt;img" in html
+
+
+def test_dashboard_puts_urgent_documents_first(client):
+    html = client.get("/").text
+    assert "Da guardare subito" in html
+    urgent = html[html.index("Da guardare subito"):html.index("Documenti per esito")]
+    assert urgent.index("scansione_0412.pdf") < urgent.index("reclamo_117.eml")
+    assert re.search(r">\s*1\s*</[^>]+>\s*<[^>]+>\s*Con categorie particolari", html)
+
+
+def test_document_verdict_says_what_matters(client):
+    html = client.get(doc_url(client, "scansione_0412.pdf")).text
+    assert "2 problemi da risolvere" in html
+    assert "1 dato personale" in html
+    assert html.index("2 problemi da risolvere") < html.index("La tua decisione")
