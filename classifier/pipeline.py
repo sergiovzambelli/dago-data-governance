@@ -7,6 +7,9 @@ import json
 import sys
 from pathlib import Path
 
+from classifier.entities import find_entities
+from classifier.extract import extract_text
+
 
 def _sha256(path):
     h = hashlib.sha256()
@@ -23,17 +26,21 @@ def classify(root):
         # niente link simbolici: potrebbero portare fuori dalla cartella analizzata
         if path.is_symlink() or not path.is_file():
             continue
-        # shortcut: baseline costante (classe più frequente in sviluppo); i passi successivi la sostituiscono
+        text = extract_text(path)
+        entities = find_entities(text)
+        # senza testo (scansione, file illeggibile) non si può escludere la presenza di dati personali
+        personal = bool(entities) or not text.strip()
+        # shortcut: con dati personali l'esito è sempre CONFORME; i passi successivi lo sostituiscono
         results.append({
             "file": path.relative_to(root).as_posix(),
             "sha256": _sha256(path),
-            "dati_personali": True,
-            "entita": [],
+            "dati_personali": personal,
+            "entita": entities,
             "categorie_particolari": [],
             "livello": None,
             "proposte": [],
             "scheda": None,
-            "esito": "CONFORME",
+            "esito": "CONFORME" if personal else "NESSUN_DATO_PERSONALE",
             "scostamenti": [],
         })
     return results
