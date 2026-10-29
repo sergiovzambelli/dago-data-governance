@@ -76,9 +76,11 @@ def test_missing_and_wrong_predictions(labels):
     assert m["precisione_entita"] == pytest.approx(2 / 3)
 
 
-def test_unknown_file_in_predictions_is_rejected(labels):
-    with pytest.raises(ValueError, match="z.pdf"):
-        score(labels, [pred("z.pdf", "CONFORME")])
+def test_unlabelled_files_are_ignored_with_warning(labels, capsys):
+    # es. sviluppo/LEGGIMI.txt: non ha etichetta, non deve cambiare il punteggio
+    base = score(labels, [pred("d.txt", "NESSUN_DATO_PERSONALE")])
+    assert score(labels, [pred("d.txt", "NESSUN_DATO_PERSONALE"), pred("z.pdf", "CONFORME", entita=1)]) == base
+    assert "1 file senza etichetta" in capsys.readouterr().err
 
 
 def test_cli_prints_json(labels, tmp_path):

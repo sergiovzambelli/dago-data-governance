@@ -40,11 +40,11 @@ def _f1(tp, fp, fn):
 
 
 def score(labels, predictions):
-    preds = {}
-    for p in predictions:
-        if p.get("file") not in labels:
-            raise ValueError(f"file non presente nelle etichette: {p.get('file')!r}")
-        preds[p["file"]] = p
+    # i file senza etichetta (es. LEGGIMI.txt) non entrano in nessuna metrica
+    preds = {p.get("file"): p for p in predictions}
+    unlabelled = preds.keys() - labels.keys()
+    if unlabelled:
+        print(f"attenzione: {len(unlabelled)} file senza etichetta ignorati", file=sys.stderr)
 
     esito_ok = cat_found = cat_total = top3_ok = top3_total = 0
     sm = [0, 0, 0]  # tp, fp, fn
