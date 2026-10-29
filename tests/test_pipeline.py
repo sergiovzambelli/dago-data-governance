@@ -93,3 +93,16 @@ def test_proposals_also_without_personal_data_but_no_record(tmp_path):
     (r,) = classify(root, load_register(reg))
     assert r["esito"] == "NESSUN_DATO_PERSONALE" and r["scheda"] is None
     assert [p["scheda"] for p in r["proposte"]] == ["T-PER-02"]
+
+
+def test_personal_document_without_matching_record_is_missing_record(tmp_path):
+    reg = tmp_path / "registro.csv"
+    reg.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche\n"
+                   "T-PER-07;Personale/Permessi;congedo, legge 104;Istanza\n", encoding="utf-8")
+    root = tmp_path / "share"
+    (root / "Ambiente").mkdir(parents=True)
+    (root / "Ambiente" / "esposto.txt").write_text("Esposto per rumori, C.F. BLDSLV66A68E625M, in congedo")
+    (r,) = classify(root, load_register(reg))
+    assert r["esito"] == "SCHEDA_MANCANTE" and r["scheda"] is None
+    # la scheda più vicina resta tra le proposte, per il controllo dell'RPD
+    assert [p["scheda"] for p in r["proposte"]] == ["T-PER-07"]

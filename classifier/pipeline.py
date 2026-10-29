@@ -10,7 +10,7 @@ from pathlib import Path
 from classifier.categories import find_categories
 from classifier.entities import find_entities
 from classifier.extract import extract_text
-from classifier.matching import load_register, match
+from classifier.matching import is_missing_record, load_register, match
 
 
 def _sha256(path):
@@ -38,7 +38,10 @@ def classify(root, register=()):
         rel = path.relative_to(root).as_posix()
         # proposte anche senza dati personali: se quel giudizio è sbagliato (es. soli nomi) restano utili
         proposals = match(register, rel, text)
-        # shortcut: con dati personali l'esito è sempre CONFORME; i passi successivi lo sostituiscono
+        # senza registro non si può dire che manca la scheda
+        missing = personal and bool(register) and is_missing_record(register, rel, text)
+        # shortcut: con dati personali e una scheda l'esito è sempre CONFORME; i controlli lo sostituiscono
+        esito = "SCHEDA_MANCANTE" if missing else "CONFORME" if personal else "NESSUN_DATO_PERSONALE"
         results.append({
             "file": rel,
             "sha256": _sha256(path),
@@ -47,8 +50,9 @@ def classify(root, register=()):
             "categorie_particolari": categories,
             "livello": None,
             "proposte": proposals,
-            "scheda": proposals[0]["scheda"] if proposals and personal else None,
-            "esito": "CONFORME" if personal else "NESSUN_DATO_PERSONALE",
+            # con SCHEDA_MANCANTE la più vicina resta tra le proposte, per il controllo dell'RPD
+            "scheda": proposals[0]["scheda"] if proposals and personal and not missing else None,
+            "esito": esito,
             "scostamenti": [],
         })
     return results

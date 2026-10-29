@@ -2,6 +2,15 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/missing-record: esito SCHEDA_MANCANTE
+- `matching.is_missing_record`: un documento con dati personali è SCHEDA_MANCANTE se nessuna scheda ha indizi, oppure se la migliore ha **al massimo una parola chiave** e il file **non** sta in una sua cartella dichiarata. In quel caso `scheda` resta vuota; la scheda più vicina resta tra le proposte, per il controllo dell'RPD.
+- Si contano le parole chiave e non il punteggio: il punteggio è una somma di pesi non normalizzata, che cambia con il registro.
+- Regole provate su sviluppo (F1 SCHEDA_MANCANTE): punteggio della prima < 3,1 → 0,74; ≤ 1 parola chiave e fuori cartella → **0,755**; ≤ 2 parole chiave e fuori cartella → 0,806.
+- Decisione: scelta la soglia 1. Con 2 i falsi positivi in più sono documenti fuori posto (LUOGO_NON_DICHIARATO) con testo chiaro, es. richiesta di cremazione in `Condivisa`: perderebbero la scheda che serve ai controlli di conformità (prossima PR).
+- Restano 6 SCHEDA_MANCANTE non riconosciute (domande ERP e SAD che citano "ISEE" o "residenza" insieme ad altre parole chiave) e 7 falsi positivi (soprattutto documenti fuori posto con una sola parola chiave, es. log VPN in `Condivisa`).
+- `data/pred_*.json` aggiornati applicando la regola alle predizioni salvate (la regola usa solo parole chiave e cartella della prima proposta, già presenti nella motivazione): su Windows mancavano markitdown e OCR per rigenerarli.
+- Punteggio: sviluppo 59,4 → **73,2** (F1 0,755, esito 0,64), validation 57,9 → **72,9** (F1 0,80, esito 0,58).
+
 ## 2026-10-29 — feat/matching: abbinamento al registro dei trattamenti
 - `classifier/matching.py`: per ogni scheda, somma dei pesi delle parole chiave e tipologie documentali trovate nel testo (peso più alto per le parole rare tra le schede, `log(1 + N/df)`) + bonus 2 se il file sta in una cartella dichiarata. Top-3 con punteggio e motivazione ("cartella dichiarata; parole chiave: …").
 - Misure su sviluppo per scegliere: solo percorso top-3 0,87; solo parole chiave 0,95; insieme 0,97. Il peso del percorso (da 0,5 a 8) non cambia la top-3: scelto 2, così il testo può battere una cartella sbagliata (documenti con LUOGO_NON_DICHIARATO).

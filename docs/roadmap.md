@@ -22,19 +22,19 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #8 | feat/categories-ext | Dizionari estesi, categorie art. 9 nuove, EML decodificate con allegati, caselle `☐` | 35,6 | 35,2 |
 | #9 | feat/ocr | OCR (ocrmypdf, tesseract `ita`) per scansioni e foto | 39,9 | 38,7 |
 | #10 | chore/roadmap | Questo file | – | – |
-| #11 | feat/matching | Top-3 schede da parole chiave pesate + cartella dichiarata, con motivazione | **59,4** | **57,9** |
+| #11 | feat/matching | Top-3 schede da parole chiave pesate + cartella dichiarata, con motivazione | 59,4 | 57,9 |
+| – | feat/missing-record | SCHEDA_MANCANTE se la scheda migliore ha ≤ 1 parola chiave ed è fuori dalle cartelle dichiarate | **73,2** | **72,9** |
 
-Metriche dopo #11 (sviluppo): esito 0,52 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0 · F1 scostamenti 0 · precisione entità 1,0.
+Metriche dopo feat/missing-record (sviluppo): esito 0,64 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0 · precisione entità 1,0.
 
 ## Da fare (in ordine)
 
-1. **feat/missing-record** — soglia sotto cui l'esito è SCHEDA_MANCANTE (tarata solo su sviluppo; colonna "Scheda più vicina" per controllo). I punteggi di `matching.py` non sono normalizzati (somma di pesi): valutare punteggio della prima, distacco dalla seconda o normalizzazione. Metriche: F1 SCHEDA_MANCANTE (15), esito.
-2. **feat/compliance** — le 5 regole deterministiche (CATEGORIA_NON_DICHIARATA, LUOGO_NON_DICHIARATO, ACCESSO_ECCESSIVO con `permessi_cartelle.csv`, CONSERVAZIONE_SCADUTA con data di riferimento 28/10/2026, DIFFUSIONE_NON_PREVISTA) → CONFORME / NON_CONFORME. Metrica: F1 scostamenti (15), esito.
-3. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
-4. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
-5. **LLM locale (Ollama, opzionale)** — categorie implicite e abbinamenti incerti.
-6. **UI** — FastAPI + Jinja2 + Bootstrap Italia 2.x: inventario, coda di validazione, cruscotto, ricerca, registro decisioni RPD.
-7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
+1. **feat/compliance** — le 5 regole deterministiche (CATEGORIA_NON_DICHIARATA, LUOGO_NON_DICHIARATO, ACCESSO_ECCESSIVO con `permessi_cartelle.csv`, CONSERVAZIONE_SCADUTA con data di riferimento 28/10/2026, DIFFUSIONE_NON_PREVISTA) → CONFORME / NON_CONFORME. Metrica: F1 scostamenti (15), esito.
+2. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
+3. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
+4. **LLM locale (Ollama, opzionale)** — categorie implicite e abbinamenti incerti.
+5. **UI** — FastAPI + Jinja2 + Bootstrap Italia 2.x: inventario, coda di validazione, cruscotto, ricerca, registro decisioni RPD.
+6. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 
 ## Decisioni prese
 
@@ -52,3 +52,4 @@ Metriche dopo #11 (sviluppo): esito 0,52 · categorie 0,98 · scheda top-3 0,97 
 - **PR in pila**: aprire sempre con base `main`, anche se il branch parte da un'altra PR non ancora unita (il diff si riduce da solo dopo l'unione). Con base su un altro branch la #5 è finita dentro `feat/extract` invece che su `main` ed è servita la #6 per recuperarla.
 - **Dipendenze di sistema**: `sudo apt install tesseract-ocr tesseract-ocr-ita ocrmypdf` (Debian 12). Senza, l'OCR resta vuoto ma tutto il resto funziona.
 - `sviluppo/LEGGIMI.txt` non ha etichetta: lo scorer lo ignora con un avviso.
+- **Windows**: `test_classify_skips_symlinks_outside_root` richiede il permesso di creare link simbolici (modalità sviluppatore) e senza markitdown installato la pipeline non parte. Lo scorer usa solo la libreria standard: `python -m classifier.scorer` funziona ovunque sulle `data/pred_*.json` salvate.

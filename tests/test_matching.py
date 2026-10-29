@@ -1,6 +1,6 @@
 import pytest
 
-from classifier.matching import load_register, match
+from classifier.matching import is_missing_record, load_register, match
 
 HEADER = "Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche"
 ROWS = [
@@ -58,3 +58,21 @@ def test_register_without_required_columns_is_rejected(tmp_path):
     p.write_text("Codice;Altro\nT-1;x\n", encoding="utf-8")
     with pytest.raises(ValueError, match="Percorsi dichiarati"):
         load_register(p)
+
+
+def test_no_proposal_means_missing_record(register):
+    assert is_missing_record(register, "fileserver/Ambiente/esposto.eml", "rumori notturni in via Grande")
+
+
+def test_single_keyword_outside_declared_folders_is_missing_record(register):
+    # domanda di un servizio non censito che cita per caso "congedo"
+    assert is_missing_record(register, "fileserver/Condivisa/domanda.pdf", "chiedo il servizio, sono in congedo")
+
+
+def test_declared_folder_is_never_missing_record(register):
+    assert not is_missing_record(register, "fileserver/Educazione/x.pdf", "testo qualunque")
+
+
+def test_two_keywords_in_wrong_folder_keep_their_record(register):
+    # documento fuori posto (LUOGO_NON_DICHIARATO): il testo basta per riconoscere la scheda
+    assert not is_missing_record(register, "fileserver/Condivisa/x.pdf", "istanza legge 104 e congedo")
