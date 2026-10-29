@@ -32,7 +32,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
 | – | feat/records | UI: pagina Schede (crea, modifica, archivia, ripristina, storico, esporta il registro in CSV) | – | – |
 | #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
-| – | feat/doc-view | Dettaglio documento come Prova un file: testo evidenziato (solo RPD, riletto dalla cartella analizzata) e card di scelta per le schede mancanti | – | – |
+| #27 | feat/doc-view | Dettaglio documento come Prova un file: testo evidenziato (solo RPD, riletto dalla cartella analizzata) e card di scelta per le schede mancanti | – | – |
 | – | feat/try-file-visual | Prova un file: testo con evidenziati dati personali, categorie e parole chiave; senza scheda l'RPD sceglie tra le 3 proposte o crea una nuova scheda già compilata, e il documento entra nell'inventario | – (invariato) | – (invariato) |
 | – | feat/try-file | UI: pagina "Prova un file", carica un documento e mostra i passi dell'analisi (testo, dati, categorie, schede, esito) senza salvarlo | – (invariato) | – (invariato) |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
