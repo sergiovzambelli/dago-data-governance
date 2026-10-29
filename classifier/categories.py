@@ -7,7 +7,7 @@ import re
 # shortcut: dizionari ricavati dal dataset di sviluppo; i casi più impliciti richiedono il LLM locale
 PATTERNS = {
     "SALUTE": [
-        r"invalidit[àa]", r"disabilit[àa]", r"handicap", r"non autosufficien\w*", r"l(?:egge|\.)\s*104",
+        r"invalidit[àa]", r"\binvalid[oaie]\b", r"disabilit[àa]", r"\bdisabile\b", r"handicap", r"non autosufficien\w*", r"l(?:egge|\.)\s*104",
         r"diagnos\w*", r"patologi\w*", r"malatti\w*", r"infermit[àa]", r"ipertension\w*", r"diabet\w*",
         r"\w*chirurgi\w*", r"ricover\w*", r"pronto soccorso", r"prognosi", r"referto", r"affett[oa] da",
         r"trattamento sanitario obbligatorio", r"\bTSO\b", r"psichiatr\w*", r"terapi\w*",
@@ -16,6 +16,10 @@ PATTERNS = {
         r"disturb\w* specific\w*", r"spese sanitarie",
         r"medico (?:competente|curante)", r"mio medico", r"certificat\w* medic\w*", r"inidone\w*",
         r"limitazioni", r"equo indennizzo",
+        r"non vedente", r"non udente", r"indennit[àa] di accompagnamento", r"oncolog\w*", r"tumor\w*",
+        r"dialis\w*", r"demenz\w*", r"alzheimer", r"autismo", r"autistic\w*", r"salute mentale", r"\bSerD\b",
+        r"\bRSA\b", r"assistenza domiciliare integrata", r"assegno di cura", r"riabilitazion\w*",
+        r"esenzione ticket", r"visita specialistica", r"vaccin\w*",
     ],
     "GIUDIZIARI": [
         r"casellario", r"procedimento penale", r"notizia di reato", r"per il reato", r"reato di",
@@ -24,23 +28,36 @@ PATTERNS = {
         r"detenut[oaie]", r"casa circondariale", r"carcer\w*",
         r"procura della repubblica", r"requisiti morali", r"antimafia", r"misure di prevenzione",
         r"sentenza", r"art\.\s?(?:80|94) d\.\s?lgs",
+        r"imputat[oaie]\b", r"misur\w* cautelar\w*", r"arresti domiciliari", r"messa alla prova",
+        r"lavori di pubblica utilit[àa]", r"decreto penale", r"patteggiament\w*", r"\barrestat[oaie]\b",
     ],
     "RELIGIOSE": [
         r"religios\w*", r"rito (?:islamico|ebraico|cattolico|ortodosso|evangelico|buddista|induista)",
         r"islam\w*", r"musulman\w*", r"ebrai\w*", r"induis\w*", r"buddis\w*", r"halal", r"kosher",
         r"ramadan", r"ministro di culto",
+        # anche (anzi soprattutto) la scelta di non avvalersene rivela un dato religioso
+        r"(?:non )?(?:si )?avval\w* dell'insegnamento della religione cattolica", r"religione cattolica", r"testimoni di geova", r"battesim\w*",
+        r"matrimonio concordatario",
     ],
     "SINDACALE": [
         # "sindacale" da solo vuol dire anche "del sindaco"
         r"organizzazione sindacale", r"delega sindacale", r"iscrizione sindacale", r"sindacato",
-        r"\b(?:CGIL|CISL|UIL)\b", r"associazione per la cremazione",
+        r"\b(?:CGIL|CISL|UIL|UGL|CISAL|FIALS)\b", r"associazione per la cremazione",
+        r"permess\w* sindacal\w*", r"(?:quota|trattenuta) sindacale",
     ],
+    # categorie art. 9 assenti dalle etichette del kit: nomi scelti da noi
+    "ORIENTAMENTO_SESSUALE": [r"unione civile", r"unioni civili", r"orientamento sessuale"],
+    "ORIGINE_ETNICA": [r"origine (?:etnica|razziale)", r"\betni[ac]\w*", r"comunit[àa] (?:rom|sinti)", r"\bsinti\b"],
+    "POLITICHE": [r"opinion\w* politic\w*", r"iscritt[oa] al partito", r"partito politico", r"militanza politica"],
+    "BIOMETRICI": [r"impronte digitali", r"biometric\w*", r"riconoscimento facciale"],
+    "GENETICI": [r"genetic[oaih]\w*", r"\bDNA\b"],
 }
 # gli spazi valgono anche come a capo (PDF)
 _RE = {cat: re.compile("|".join(rf"(?:{p})".replace(" ", r"\s+") for p in pats), re.I)
        for cat, pats in PATTERNS.items()}
-# "non" poco prima, nella stessa frase: "non sono presenti persone con invalidità"
-_NEGATION = re.compile(r"\bnon\b[^.;\n]{0,40}$", re.I)
+# "non" poco prima, nella stessa frase ("non sono presenti persone con invalidità"),
+# o casella non spuntata di un modulo ("☐ iscrizione ad associazione per la cremazione")
+_NEGATION = re.compile(r"(?:\bnon\b[^.;\n]{0,40}|☐[^☐☑☒\n]{0,30})$", re.I)
 
 
 def find_categories(text):

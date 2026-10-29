@@ -25,3 +25,4 @@ _Nessuno ancora (vedi `flussi.md`)._
 | T-010 | Entità | I | Valori in chiaro (CF, IBAN) esposti nell'export o nei log | l'export contiene solo il valore mascherato e la posizione; nessun log dei valori | chiusa | feat/entities |
 | T-011 | Entità | D | Testo costruito per far esplodere le regex (ReDoS) | regex senza quantificatori annidati ambigui, finestre limitate (`{0,60}`) | chiusa | feat/entities |
 | T-012 | Categorie | I | Evidenza della categoria (es. diagnosi) esposta a chi non deve vederla | l'evidenza è solo la parola chiave trovata, non il contesto; filtro per ruolo da fare in UI | aperta | feat/categories |
+| T-013 | Estrazione EML | T/D | Allegato con nome malevolo (`../../x`) o email annidate all'infinito | dal nome dell'allegato si usa solo l'estensione, file scritto in una cartella temporanea; massimo 3 livelli di annidamento | chiusa | feat/categories-ext |
