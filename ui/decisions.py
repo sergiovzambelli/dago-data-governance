@@ -43,6 +43,18 @@ CREATE TRIGGER IF NOT EXISTS schede_no_update BEFORE UPDATE ON schede
 BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
 CREATE TRIGGER IF NOT EXISTS schede_no_delete BEFORE DELETE ON schede
 BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
+-- documenti analizzati da "Prova un file" e aggiunti all'inventario: solo la predizione, mai il file né il testo
+CREATE TABLE IF NOT EXISTS caricati (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    quando TEXT NOT NULL,
+    utente TEXT NOT NULL,
+    documento TEXT NOT NULL,
+    predizione TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS caricati_no_update BEFORE UPDATE ON caricati
+BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
+CREATE TRIGGER IF NOT EXISTS caricati_no_delete BEFORE DELETE ON caricati
+BEGIN SELECT RAISE(ABORT, 'registro in sola aggiunta'); END;
 """
 FIELDS = ("id", "quando", "utente", "documento", "sha256", "azione", "esito", "scheda", "nota")
 
@@ -87,6 +99,18 @@ class DecisionLog:
         with self._db() as db:
             rows = db.execute("SELECT quando, utente, codice, azione, campi FROM schede ORDER BY id").fetchall()
         return [{"quando": q, "utente": u, "codice": c, "azione": a, "campi": json.loads(f)} for q, u, c, a, f in rows]
+
+    def add_upload(self, user, prediction):
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        with self._db() as db:
+            db.execute("INSERT INTO caricati (quando, utente, documento, predizione) VALUES (?, ?, ?, ?)",
+                       (now, user, prediction["file"], json.dumps(prediction, ensure_ascii=False)))
+
+    def uploads(self):
+        """Predizioni dei documenti caricati, l'ultima per percorso."""
+        with self._db() as db:
+            rows = db.execute("SELECT predizione FROM caricati ORDER BY id").fetchall()
+        return list({p["file"]: p for p in (json.loads(r) for r, in rows)}.values())
 
     def all(self):
         with self._db() as db:

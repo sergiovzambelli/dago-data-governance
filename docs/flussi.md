@@ -127,8 +127,13 @@ flowchart LR
     REG[registro in uso<br/>CSV + versioni] --> TMP
     TMP --> EX[extract_text<br/>OCR se serve] --> AN[analyze: entità · categorie<br/>schede · controlli]
     PERM[(permessi_cartelle.csv)] --> AN
-    AN -->|pagina no-store, nulla salvato| U
+    AN -->|pagina no-store: testo evidenziato,<br/>analisi firmata HMAC se manca la scheda| U
     TMP -.->|cancellata a fine richiesta| X[ ]
+    U -->|"POST /prova/salva: scheda proposta o NUOVA<br/>ruolo rpd + CSRF + firma valida"| S{scelta}
+    S -->|NUOVA: bozza da classifier.drafts| SCH[(tabella schede: CREA)]
+    S -->|predizione mascherata| CAR[(tabella caricati)]
+    S -->|CONFERMA dell'RPD| DEC[(tabella decisioni)]
+    CAR --> INV[inventario, coda, cruscotto]
 ```
 
 ## Bozze di nuove schede (feat/draft-records)

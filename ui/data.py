@@ -69,7 +69,10 @@ def _list(value, field, file):
 
 def load_predictions(path):
     """Legge e valida il JSON della pipeline: i campi inattesi vengono scartati, quelli sbagliati bloccano l'avvio."""
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    return parse_predictions(json.loads(path.read_text(encoding="utf-8")))
+
+
+def parse_predictions(raw):
     if not isinstance(raw, list):
         raise ValueError("predizioni: atteso un elenco di documenti")
     docs, seen = [], set()
@@ -254,6 +257,20 @@ def priority(doc):
     if "DIFFUSIONE_NON_PREVISTA" in doc["scostamenti"]:
         reasons.append("pubblicato")
     return {"livello": level[0], "colore": level[1], "motivi": reasons}
+
+
+def highlight(text, spans):
+    """Testo a pezzi [(testo, tipo o None, etichetta)]. spans: (inizio, fine, tipo, etichetta), a parità di
+    inizio vince il primo dell'elenco; quelli sovrapposti a uno già preso si scartano."""
+    order = sorted(enumerate(spans), key=lambda x: (x[1][0], x[0]))
+    out, pos = [], 0
+    for _, (start, end, kind, label) in order:
+        if start < pos or end > len(text) or start >= end:
+            continue
+        out += [(text[pos:start], None, "")] if start > pos else []
+        out.append((text[start:end], kind, label))
+        pos = end
+    return out + ([(text[pos:], None, "")] if pos < len(text) else [])
 
 
 def split_path(path):

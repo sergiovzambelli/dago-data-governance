@@ -2,6 +2,16 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/try-file-visual: il file evidenziato e la scelta della scheda
+- Richiesta dell'utente: vedere il file con evidenziate le informazioni trovate; se la scheda manca, proporre le tre schede o "Nuova scheda", che crea una scheda già compilata.
+- Testo estratto con evidenziati dati personali (rosso), categorie particolari (viola) e parole chiave delle schede proposte (blu). Ogni tipo ha anche un bordo diverso e un'etichetta per i lettori di schermo: il colore non è l'unico segnale.
+- Decisione (dell'utente): scegliere una scheda **aggiunge il documento all'inventario**, già validato dall'RPD. Si conserva solo la predizione (valori mascherati, nessun testo né file) nella tabella `caricati`, in sola aggiunta; la decisione va nel registro delle decisioni con una nota sull'origine.
+- L'analisi torna dal browser firmata (HMAC con la chiave del server e il nome dell'utente): il server non tiene stato tra il caricamento e la scelta, e nessuno può cambiare esito, scheda o percorso nel modulo. Dopo un riavvio senza `UI_SEGRETO` la firma non vale più: si ricarica il file.
+- La scelta sta subito sotto l'esito, a tutta larghezza: una card per proposta (codice, nome, barra della quota degli indizi, esito che ne deriverebbe, pulsante "Usa questa scheda" in fondo) e una card tratteggiata per la nuova scheda (richiesta dell'utente: più visibile e ben definita).
+- Per ogni scheda proposta la pagina mostra già l'esito che avrebbe il documento ("con questa scheda: non conforme: luogo non dichiarato").
+- Nuova scheda: compilata con `classifier/drafts.py` (cartella, gruppo di accesso, categorie rilevate, diffusione NO, tipologia e parole chiave dal nome del file), codice `NUOVA-…` reso valido e unico. Base giuridica e finalità restano all'RPD, che viene portato sulla scheda appena creata. Modello locale non usato qui.
+- Un file caricato con lo stesso percorso di uno analizzato dalla pipeline lo sostituisce nell'inventario.
+
 ## 2026-10-29 — feat/try-file: provare un file dalla UI
 - Richiesta dell'utente: una nuova pagina dove caricare un file e vedere l'elaborazione fatta su di esso.
 - Pagina **Prova un file** (`/prova`, solo RPD): carica il file, cartella sul file server facoltativa, e mostra in ordine testo estratto (primi 5000 caratteri), dati personali mascherati, categorie particolari, tre schede più vicine con motivazione, esito e scostamenti.
