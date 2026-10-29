@@ -30,10 +30,11 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 | **Cruscotto** `/` | documenti per esito, scostamento e scheda; elenco dei documenti senza scheda. Conta i valori dopo la validazione |
 | **Coda di validazione** `/coda` | documenti con dati personali non ancora validati, ordinati per rischio (esito, scostamenti, categorie particolari, esposizione) |
 | **Inventario** `/documenti` | filtri per esito, scheda e scostamento; 50 righe per pagina |
-| **Documento** `/documenti/<id>` | evidenze: entità mascherate con posizione e confidenza, categorie, tre proposte con punteggio e motivazione, scostamenti spiegati con l'azione suggerita, scheda abbinata. Modulo di conferma o correzione e storico |
+| **Documento** `/documenti/<id>` | evidenze: entità mascherate con posizione e confidenza, categorie, tre proposte con quota degli indizi (%) e motivazione, scostamenti spiegati con l'azione suggerita, scheda abbinata. Modulo di conferma o correzione e storico |
 | **Ricerca** `/ricerca` | per percorso, scheda, esito, scostamento, categoria, tipo di entità, motivazione. Il testo integrale non è indicizzato (la specifica chiede di non conservare copie integrali) |
 | **Schede** `/schede` | registro dei trattamenti in uso: elenco con documenti abbinati e stato, nuova scheda (`/schede/nuova`), modifica, archiviazione e ripristino (`/schede/<codice>`), storico per scheda, esportazione `/schede/registro.csv` con tutte le colonne del registro |
 | **Bozze di schede** `/bozze` | una bozza di scheda per tipo di documento senza scheda: l'RPD corregge i testi e approva o scarta; `/bozze/approvate.csv` scarica le approvate con le colonne del registro |
+| **Prova un file** `/prova` | solo RPD: carica un file (cartella facoltativa) e vede il testo estratto con evidenziati dati personali, categorie particolari e parole chiave, le schede proposte, esito e scostamenti. Se la scheda manca sceglie una delle tre proposte (con l'esito che ne deriverebbe) oppure "Nuova scheda", già compilata: il documento entra nell'inventario come validato (`/prova/salva`). File e testo non vengono mai salvati. Serve `requirements.txt` oltre a `requirements-ui.txt`; permessi da `UI_PERMESSI` (predefinito: quelli del kit) |
 | **Registro decisioni** `/decisioni` | tutte le conferme e correzioni, in sola aggiunta |
 | **Esportazione** `/esporta.json`, `/esporta.csv` | risultati con le correzioni dell'RPD applicate |
 

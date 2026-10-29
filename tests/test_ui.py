@@ -461,3 +461,94 @@ def test_register_export_has_all_columns_and_no_formulas(client):
     header, *rows = text.splitlines()
     assert header.startswith("Codice;Origine;Denominazione;") and header.endswith("Parole chiave")
     assert any(r.startswith("T-URP-02;") and "'=HYPERLINK" in r for r in rows)
+
+
+def test_try_file_shows_each_step_without_saving(client, settings):
+    pytest.importorskip("markitdown")
+    page = client.get("/prova").text
+    assert 'type="file"' in page and "<label" in page
+    before = settings.predictions.read_text(encoding="utf-8")
+    r = client.post("/prova", data={"csrf": token(page), "cartella": "fileserver/Personale/Permessi"},
+                    files={"file": ("congedo.txt", "Richiesta di permesso. C.F. CSMPRZ97B66G702K".encode())})
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    assert "Richiesta di permesso" in r.text  # testo estratto
+    assert "Codice fiscale" in r.text and "CSM************K" in r.text  # entità mascherate
+    assert "T-PER-07" in r.text and "Conforme" in r.text  # scheda ed esito
+    assert "100% degli indizi" in r.text and "punteggio" not in r.text  # quota leggibile, non il punteggio grezzo
+    assert settings.predictions.read_text(encoding="utf-8") == before  # niente salvato
+
+
+def test_try_file_requires_rpd_csrf_and_a_small_file(client, monkeypatch):
+    t = token(client.get("/prova").text)
+    assert client.post("/prova", data={"csrf": "x"}, files={"file": ("a.txt", b"x")}).status_code == 403
+    assert client.post("/prova", data={"csrf": t}, files={"file": ("", b"")}).status_code == 400
+    monkeypatch.setattr("ui.app.MAX_UPLOAD", 10)
+    assert client.post("/prova", data={"csrf": t}, files={"file": ("a.txt", b"x" * 11)}).status_code == 400
+    r = client.post("/prova", data={"csrf": t, "cartella": "../etc"}, files={"file": ("a.txt", b"x")})
+    assert r.status_code == 400
+
+
+def test_proposals_show_share_of_evidence(client, settings):
+    preds = json.loads(settings.predictions.read_text(encoding="utf-8"))
+    preds[0]["proposte"] = [{"scheda": "T-PER-07", "punteggio": 3.0, "motivazione": "a"},
+                            {"scheda": "T-POL-02", "punteggio": 1.0, "motivazione": "b"}]
+    settings.predictions.write_text(json.dumps(preds), encoding="utf-8")
+    html = client.get(doc_url(client, "scansione_0412.pdf")).text
+    assert "75% degli indizi" in html and "25% degli indizi" in html
+
+
+@pytest.fixture
+def try_client(settings):
+    """Registro con parole chiave: servono a evidenziarle e all'abbinamento."""
+    pytest.importorskip("markitdown")
+    settings.register.write_text(
+        "Codice;Denominazione;Finalità;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche;Diffusione\n"
+        "T-PER-07;Permessi;Permessi;fileserver/Personale/Permessi;permesso, congedo;richiesta;NO\n", encoding="utf-8")
+    settings.permissions = None
+    return Client(create_app(settings))
+
+
+def upload(client, text, folder):
+    page = client.get("/prova").text
+    return client.post("/prova", data={"csrf": token(page), "cartella": folder},
+                       files={"file": ("richiesta.txt", text.encode())})
+
+
+def test_try_file_highlights_what_was_found(try_client):
+    html = upload(try_client, "Richiesta di permesso per malattia. C.F. CSMPRZ97B66G702K",
+                  "fileserver/Personale/Permessi").text
+    assert re.search(r'<mark class="hl hl-entita"[^>]*>CSMPRZ97B66G702K</mark>', html)
+    assert re.search(r'<mark class="hl hl-chiave"[^>]*>permesso</mark>', html)
+    assert re.search(r'<mark class="hl hl-categoria"[^>]*>malattia</mark>', html)
+    assert "Usa questa scheda" not in html  # la scheda c'è: niente scelta
+
+
+def save_choice(client, html, scheda):
+    analysis = re.search(r'name="analisi" value="([^"]+)"', html).group(1)
+    return client.post("/prova/salva", data={"csrf": token(html), "analisi": analysis, "scheda": scheda},
+                       follow_redirects=False)
+
+
+def test_missing_record_operator_picks_one_and_document_enters_inventory(try_client):
+    html = upload(try_client, "Domanda di permesso. C.F. CSMPRZ97B66G702K", "fileserver/Altro").text
+    assert "Scheda mancante" in html and "Usa questa scheda" in html and "Nuova scheda" in html
+    r = save_choice(try_client, html, "T-PER-07")
+    assert r.status_code == 303 and r.headers["location"].startswith("/documenti/")
+    doc = try_client.get(r.headers["location"]).text
+    assert "fileserver/Altro" in doc and "T-PER-07" in doc and "Luogo non dichiarato" in doc and "Validato" in doc
+    assert "richiesta.txt" in try_client.get("/documenti").text
+
+
+def test_missing_record_new_record_is_prefilled(try_client):
+    html = upload(try_client, "Domanda di permesso. C.F. CSMPRZ97B66G702K", "fileserver/Altro").text
+    r = save_choice(try_client, html, "NUOVA")
+    assert r.status_code == 303 and r.headers["location"].startswith("/schede/")
+    page = try_client.get(r.headers["location"]).text
+    assert "fileserver/Altro" in page and "richiesta" in page  # cartella e tipologia già compilate
+    assert "richiesta.txt" in try_client.get("/documenti", params={"esito": "CONFORME"}).text
+
+
+def test_save_choice_rejects_tampered_analysis(try_client):
+    html = upload(try_client, "Domanda di permesso. C.F. CSMPRZ97B66G702K", "fileserver/Altro").text
+    html = re.sub(r'(name="analisi" value=")([^"]{5})', r"\1AAAAA", html)
+    assert save_choice(try_client, html, "T-PER-07").status_code == 400

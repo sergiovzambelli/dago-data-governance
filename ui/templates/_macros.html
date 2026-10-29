@@ -45,3 +45,8 @@
   </tbody>
 </table>
 {% endmacro %}
+
+{# quota degli indizi (cartella + parole chiave) che punta a questa scheda, sul totale delle proposte #}
+{% macro share(p, proposals) %}{% set total = proposals|sum(attribute="punteggio") %}{% if p.punteggio is not none and total %}<span class="hint">{{ "%.0f"|format(p.punteggio / total * 100) }}% degli indizi</span>{% endif %}{% endmacro %}
+
+{% macro share_hint() %}<p class="hint">La percentuale indica quanta parte degli indizi trovati (cartella dichiarata e parole chiave) punta a ciascuna scheda. Non è la probabilità che la scheda sia giusta.</p>{% endmacro %}

@@ -260,3 +260,30 @@ a.fig:hover { text-decoration: underline; text-decoration-thickness: 2px; text-u
   margin-bottom: .75rem; cursor: default; }
 .field select { display: block; width: 100%; max-width: 12rem; border: 1px solid var(--sep); border-radius: 12px;
   padding: .55rem .9rem; font-size: 1rem; color: var(--ink); background: var(--card); }
+
+/* Prova un file: testo estratto scorrevole, non allarga la pagina */
+.extracted { max-height: 32rem; overflow: auto; white-space: pre-wrap; word-break: break-word; background: #fff;
+  border: 1px solid #d9dadb; padding: 1.25rem; border-radius: .75rem; font-size: .9rem; line-height: 1.7; }
+/* evidenziazioni: sfondo chiaro con testo scuro (contrasto AA) e un bordo diverso per tipo, non solo il colore */
+.hl { color: #1a1a1a; padding: 0 .15em; border-radius: .2em; }
+.hl-entita { background: #fde2e1; border-bottom: 2px solid #c0392b; }
+.hl-categoria { background: #ece3fb; border-bottom: 2px double #6a3fb5; }
+.hl-chiave { background: #dcebfb; border-bottom: 2px dotted #0066cc; }
+.hl-legend { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .875rem; }
+
+/* scelta della scheda quando manca: una card per proposta, pulsante in fondo sempre allineato */
+.choice { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem;
+  margin: 1.5rem 0; border-top: 4px solid var(--amber); }
+.choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.choice-card { display: flex; flex-direction: column; border: 1px solid var(--sep); border-radius: var(--radius);
+  padding: 1rem 1.1rem; background: var(--card); }
+.choice-card:focus-within, .choice-card:hover { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.choice-new { border-style: dashed; background: var(--page); }
+.choice-kicker { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-bottom: .25rem; }
+.choice-title { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin-bottom: .75rem; }
+.choice-title .rec-code { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .2rem; }
+.choice-card p { line-height: 1.4; }
+.share-bar { height: 6px; background: var(--fill); border-radius: 3px; margin-bottom: .4rem; overflow: hidden; }
+.share-bar span { display: block; height: 100%; background: var(--blue); }
+.choice-new dt { color: var(--muted); font-weight: 400; }
+.choice-new dd { margin-bottom: .4rem; }

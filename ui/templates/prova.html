@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, outcome, record as record_name, share, share_hint %}
+{% block title %}Prova un file{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Prova un file</li>
+{% endblock %}
+{% block content %}
+<h1>Prova un file</h1>
+<p>Carica un documento per vedere come lo analizza il classificatore: nel testo sono evidenziate le informazioni trovate.
+  Il file non viene salvato; se manca la scheda puoi sceglierne una e aggiungere il documento all'inventario.</p>
+
+<form method="post" action="/prova" enctype="multipart/form-data" class="block">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="row">
+    <div class="col-md-6 field">
+      <label for="p-file">File da analizzare (massimo 20 MB)</label>
+      <input type="file" id="p-file" name="file" required aria-describedby="p-file-aiuto">
+      <p id="p-file-aiuto" class="hint">PDF, DOCX, XLSX, CSV, TXT, EML, ODT o immagini. Le scansioni possono richiedere qualche minuto.</p>
+    </div>
+    <div class="col-md-6 field">
+      <label for="p-cartella">Cartella sul file server (facoltativa)</label>
+      <input type="text" id="p-cartella" name="cartella" maxlength="300" value="{{ rel|cartella if result else '' }}"
+             aria-describedby="p-cartella-aiuto">
+      <p id="p-cartella-aiuto" class="hint">Ad esempio fileserver/Personale/Permessi: serve ad abbinare la scheda e a controllare luogo e accessi.</p>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Analizza</button>
+</form>
+
+{% if result %}
+<section class="verdict verdict-{{ result.esito|lower }}" aria-labelledby="h-esito">
+  <div class="verdict-main">
+    <p class="verdict-kicker">{{ rel|spezza }}</p>
+    <h2 id="h-esito" class="verdict-title">{{ outcomes[result.esito][0] }}</h2>
+    <p class="verdict-lead">
+      {% if result.scostamenti %}{% for s in result.scostamenti %}{{ deviations[s][0] }}{{ ", " if not loop.last }}{% endfor %}.
+      {% elif result.esito == "SCHEDA_MANCANTE" %}Nessuna scheda del registro descrive questo documento: scegline una qui sotto o creane una nuova.
+      {% elif result.esito == "NESSUN_DATO_PERSONALE" %}Nel documento non sono stati trovati dati personali.
+      {% else %}Il documento rispetta ciò che la scheda dichiara.{% endif %}
+    </p>
+  </div>
+  <dl class="verdict-facts">
+    <div><dt>Scheda</dt><dd>{{ record_name(result.scheda) }}</dd></div>
+    <div><dt>Dati personali</dt><dd>{{ result.entita|length or "Nessuno" }}</dd></div>
+    <div><dt>Categorie particolari</dt><dd>{% for c in result.categorie_particolari %}{{ categories.get(c, c) }}{{ ", " if not loop.last }}{% else %}Nessuna{% endfor %}</dd></div>
+  </dl>
+</section>
+
+{% if choice %}
+<section class="choice" aria-labelledby="h-scelta">
+  <h2 id="h-scelta" class="h4 mt-0">Scegli la scheda per questo documento</h2>
+  <p class="mb-3">La scelta aggiunge il documento all'inventario come validato da te. Il testo del file non viene conservato.</p>
+  <form method="post" action="/prova/salva">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="analisi" value="{{ analisi }}">
+    <div class="choice-grid">
+      {% for p in result.proposte %}
+      {% set opt = choice.opzioni[p.scheda] %}
+      {% set total = result.proposte|sum(attribute="punteggio") %}
+      {% set pct = (p.punteggio / total * 100)|round|int if total else 0 %}
+      <div class="choice-card">
+        <p class="choice-kicker">Proposta {{ loop.index }}</p>
+        <h3 class="choice-title"><span class="rec-code">{{ p.scheda }}</span> {{ schede[p.scheda].denominazione if schede.get(p.scheda) }}</h3>
+        <div class="share-bar" aria-hidden="true"><span style="width: {{ pct }}%"></span></div>
+        <p class="hint mb-2">{{ pct }}% degli indizi · {{ p.motivazione or "—" }}</p>
+        <p class="mb-3">Con questa scheda: {{ outcome(opt.esito) }}
+          {% if opt.scostamenti %}<span class="d-block hint">{% for s in opt.scostamenti %}{{ deviations[s][0] }}{{ ", " if not loop.last }}{% endfor %}</span>{% endif %}</p>
+        <button type="submit" class="btn btn-primary w-100 mt-auto" name="scheda" value="{{ p.scheda }}">Usa questa scheda<span class="visually-hidden"> {{ p.scheda }}</span></button>
+      </div>
+      {% endfor %}
+      <div class="choice-card choice-new">
+        <p class="choice-kicker">Oppure</p>
+        <h3 class="choice-title">Nuova scheda <span class="rec-code">{{ choice.nuova.Codice }}</span></h3>
+        <dl class="small mb-3">
+          <dt>Cartella</dt><dd><code>{{ choice.nuova["Percorsi dichiarati"] or "—" }}</code></dd>
+          <dt>Categorie particolari</dt><dd>{{ choice.nuova["Categorie particolari dichiarate"] }}</dd>
+          <dt>Parole chiave</dt><dd>{{ choice.nuova["Parole chiave"] }}</dd>
+        </dl>
+        <p class="mb-3">Con la nuova scheda: {{ outcome(choice.opzioni.NUOVA.esito) }}</p>
+        <button type="submit" class="btn btn-outline-primary w-100 mt-auto" name="scheda" value="NUOVA">Crea la nuova scheda già compilata</button>
+      </div>
+    </div>
+    {% if result.proposte %}{{ share_hint() }}{% endif %}
+  </form>
+</section>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-8">
+    <section class="block" aria-labelledby="h-testo">
+      <h2 id="h-testo" class="h4">Il file, con ciò che è stato trovato</h2>
+      <ul class="hl-legend" aria-label="Legenda">
+        <li><mark class="hl hl-entita">Dato personale</mark></li>
+        <li><mark class="hl hl-categoria">Categoria particolare</mark></li>
+        <li><mark class="hl hl-chiave">Parola chiave di una scheda</mark></li>
+      </ul>
+      {% if chars %}
+      <p class="hint">{{ chars }} caratteri estratti{% if chars > 5000 %}, qui i primi 5000{% endif %}.</p>
+      <div class="extracted" tabindex="0" role="region" aria-label="Testo estratto dal file">
+        {%- for part, kind, label in segments -%}
+        {%- if kind -%}<mark class="hl hl-{{ kind }}" title="{{ label }}">{{ part }}</mark><span class="visually-hidden"> ({{ label }})</span>
+        {%- else -%}{{ part }}{%- endif -%}
+        {%- endfor -%}
+      </div>
+      {% else %}
+      <p>Nessun testo leggibile: per prudenza il file è trattato come documento con dati personali.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="col-lg-4">
+    {% if not choice %}
+    <section class="block" aria-labelledby="h-schede">
+      <h2 id="h-schede" class="h4">Schede più vicine</h2>
+      {% if result.proposte %}{{ share_hint() }}{% endif %}
+      {% if result.proposte %}
+      <ol class="proposals">
+        {% for p in result.proposte %}
+        <li><span class="fw-semibold">{{ record_name(p.scheda) }}</span> {{ share(p, result.proposte) }}
+          <span class="d-block">{{ p.motivazione or "—" }}</span></li>
+        {% endfor %}
+      </ol>
+      {% else %}<p>Nessuna scheda con indizi nel testo o nel percorso.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if result.scostamenti %}
+    <section class="block" aria-labelledby="h-problemi">
+      <h2 id="h-problemi" class="h4">Problemi rispetto alla scheda</h2>
+      {% for s in result.scostamenti %}
+      <p class="mb-2"><span class="fw-semibold">{{ icon("it-error", "icon-sm") }} {{ deviations[s][0] }}:</span> {{ deviations[s][1] }}</p>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if result.entita %}
+    <section class="block" aria-labelledby="h-dati">
+      <h2 id="h-dati" class="h4">Dati personali (mascherati)</h2>
+      <ul class="list-unstyled">
+        {% for e in result.entita %}<li>{{ entity_types.get(e.tipo, e.tipo) }}: <code>{{ e.valore_mascherato }}</code></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

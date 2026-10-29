@@ -13,6 +13,24 @@ Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 - Fuori: RAG su normativa e conservazione (nel kit non c'è un massimario né un piano di conservazione: senza fonte il modello inventerebbe); codice della bozza compatibile con la pagina Schede (`NUOVA-CONCESSIONE-LOCULO` non rispetta il formato dei codici).
 - Punteggio invariato: la pipeline non cambia.
 
+## 2026-10-29 — feat/try-file-visual: il file evidenziato e la scelta della scheda
+- Richiesta dell'utente: vedere il file con evidenziate le informazioni trovate; se la scheda manca, proporre le tre schede o "Nuova scheda", che crea una scheda già compilata.
+- Testo estratto con evidenziati dati personali (rosso), categorie particolari (viola) e parole chiave delle schede proposte (blu). Ogni tipo ha anche un bordo diverso e un'etichetta per i lettori di schermo: il colore non è l'unico segnale.
+- Decisione (dell'utente): scegliere una scheda **aggiunge il documento all'inventario**, già validato dall'RPD. Si conserva solo la predizione (valori mascherati, nessun testo né file) nella tabella `caricati`, in sola aggiunta; la decisione va nel registro delle decisioni con una nota sull'origine.
+- L'analisi torna dal browser firmata (HMAC con la chiave del server e il nome dell'utente): il server non tiene stato tra il caricamento e la scelta, e nessuno può cambiare esito, scheda o percorso nel modulo. Dopo un riavvio senza `UI_SEGRETO` la firma non vale più: si ricarica il file.
+- La scelta sta subito sotto l'esito, a tutta larghezza: una card per proposta (codice, nome, barra della quota degli indizi, esito che ne deriverebbe, pulsante "Usa questa scheda" in fondo) e una card tratteggiata per la nuova scheda (richiesta dell'utente: più visibile e ben definita).
+- Per ogni scheda proposta la pagina mostra già l'esito che avrebbe il documento ("con questa scheda: non conforme: luogo non dichiarato").
+- Nuova scheda: compilata con `classifier/drafts.py` (cartella, gruppo di accesso, categorie rilevate, diffusione NO, tipologia e parole chiave dal nome del file), codice `NUOVA-…` reso valido e unico. Base giuridica e finalità restano all'RPD, che viene portato sulla scheda appena creata. Modello locale non usato qui.
+- Un file caricato con lo stesso percorso di uno analizzato dalla pipeline lo sostituisce nell'inventario.
+
+## 2026-10-29 — feat/try-file: provare un file dalla UI
+- Richiesta dell'utente: una nuova pagina dove caricare un file e vedere l'elaborazione fatta su di esso.
+- Pagina **Prova un file** (`/prova`, solo RPD): carica il file, cartella sul file server facoltativa, e mostra in ordine testo estratto (primi 5000 caratteri), dati personali mascherati, categorie particolari, tre schede più vicine con motivazione, esito e scostamenti.
+- `classifier/pipeline.py`: il corpo del ciclo diventa `analyze(rel, text, …)`, usato sia da `classify` sia dalla UI. Predizioni di sviluppo identiche byte per byte.
+- Decisioni: il file sta solo in una cartella temporanea cancellata subito dopo, con nome fisso (dall'utente si prende solo l'estensione); niente nell'inventario né nel database. Si usa il registro in uso nella UI (con le modifiche delle Schede). Modello locale spento in questa pagina.
+- Richiesta dell'utente: il punteggio delle schede non si capiva. Ora la UI (anche nel dettaglio documento) mostra la quota degli indizi: punteggio della scheda diviso la somma delle proposte, in percentuale, con una riga che dice che non è una probabilità. Il punteggio grezzo resta nel JSON.
+- Decisione che cambia una regola precedente: la UI ora importa da `classifier/` (solo in questa pagina, con import al momento della richiesta: senza `requirements.txt` le altre pagine funzionano) e mostra il testo del documento a chi lo ha caricato (T-041).
+
 ## 2026-10-29 — feat/records: gestione delle schede del registro
 - Richiesta dell'utente: una pagina per vedere le schede del registro, crearne di nuove, modificarle, archiviarle.
 - Decisioni (dell'utente): salvataggio in SQLite con storico, il CSV del registro resta com'è; eliminare = archiviare, con ripristino; nuova PR da `main`.

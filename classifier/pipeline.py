@@ -41,53 +41,56 @@ def _ask_model(llm, records, proposals, text):
     return [first, *rest][:3], False
 
 
+def analyze(rel, text, register=(), permissions=(), llm=None):
+    """Predizione per un file già estratto, senza "file" e "sha256". rel: percorso nel file server."""
+    records = {r["codice"]: r for r in register}
+    entities = find_entities(text)
+    categories = sorted(c["categoria"] for c in find_categories(text))
+    # senza testo (scansione, file illeggibile) non si può escludere la presenza di dati personali;
+    # una categoria particolare descritta riguarda una persona anche senza identificativi
+    # shortcut: un modulo in bianco che nomina una categoria risulta "con dati personali"
+    personal = bool(entities or categories) or not text.strip()
+    # proposte anche senza dati personali: se quel giudizio è sbagliato (es. soli nomi) restano utili
+    proposals = match(register, rel, text)
+    # senza registro non si può dire che manca la scheda
+    missing = personal and bool(register) and is_missing_record(register, rel, text)
+    # caso dubbio: decide il modello locale, se c'è e risponde; altrimenti restano le regole
+    if llm and personal and register and text.strip() and is_doubtful(register, rel, text):
+        answer = _ask_model(llm, records, proposals, text)
+        if answer:
+            proposals, missing = answer
+    # con SCHEDA_MANCANTE la più vicina resta tra le proposte, per il controllo dell'RPD
+    record = records[proposals[0]["scheda"]] if proposals and personal and not missing else None
+    # i controlli confrontano il documento con la sua scheda: senza scheda non ci sono scostamenti
+    deviations = check(record, rel, categories, permissions, document_date(rel, text)) if record else []
+    if missing:
+        esito = "SCHEDA_MANCANTE"
+    elif personal:
+        esito = "NON_CONFORME" if deviations else "CONFORME"
+    else:
+        esito = "NESSUN_DATO_PERSONALE"
+    return {
+        "dati_personali": personal,
+        "entita": entities,
+        "categorie_particolari": categories,
+        "livello": None,
+        "proposte": proposals,
+        "scheda": record["codice"] if record else None,
+        "esito": esito,
+        "scostamenti": deviations,
+    }
+
+
 def classify(root, register=(), permissions=(), llm=None):
     root = Path(root)
-    records = {r["codice"]: r for r in register}
     results = []
     for path in sorted(root.rglob("*")):
         # niente link simbolici: potrebbero portare fuori dalla cartella analizzata
         if path.is_symlink() or not path.is_file():
             continue
-        text = extract_text(path)
-        entities = find_entities(text)
-        categories = sorted(c["categoria"] for c in find_categories(text))
-        # senza testo (scansione, file illeggibile) non si può escludere la presenza di dati personali;
-        # una categoria particolare descritta riguarda una persona anche senza identificativi
-        # shortcut: un modulo in bianco che nomina una categoria risulta "con dati personali"
-        personal = bool(entities or categories) or not text.strip()
         rel = path.relative_to(root).as_posix()
-        # proposte anche senza dati personali: se quel giudizio è sbagliato (es. soli nomi) restano utili
-        proposals = match(register, rel, text)
-        # senza registro non si può dire che manca la scheda
-        missing = personal and bool(register) and is_missing_record(register, rel, text)
-        # caso dubbio: decide il modello locale, se c'è e risponde; altrimenti restano le regole
-        if llm and personal and register and text.strip() and is_doubtful(register, rel, text):
-            answer = _ask_model(llm, records, proposals, text)
-            if answer:
-                proposals, missing = answer
-        # con SCHEDA_MANCANTE la più vicina resta tra le proposte, per il controllo dell'RPD
-        record = records[proposals[0]["scheda"]] if proposals and personal and not missing else None
-        # i controlli confrontano il documento con la sua scheda: senza scheda non ci sono scostamenti
-        deviations = check(record, rel, categories, permissions, document_date(rel, text)) if record else []
-        if missing:
-            esito = "SCHEDA_MANCANTE"
-        elif personal:
-            esito = "NON_CONFORME" if deviations else "CONFORME"
-        else:
-            esito = "NESSUN_DATO_PERSONALE"
-        results.append({
-            "file": rel,
-            "sha256": _sha256(path),
-            "dati_personali": personal,
-            "entita": entities,
-            "categorie_particolari": categories,
-            "livello": None,
-            "proposte": proposals,
-            "scheda": record["codice"] if record else None,
-            "esito": esito,
-            "scostamenti": deviations,
-        })
+        results.append({"file": rel, "sha256": _sha256(path),
+                        **analyze(rel, extract_text(path), register, permissions, llm)})
     return results
 
 

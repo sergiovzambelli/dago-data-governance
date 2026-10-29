@@ -96,7 +96,7 @@ flowchart TB
 
 ## Interfaccia web (ui/)
 
-Dettagli in [ui.md](ui.md). La UI legge solo i file prodotti dal classificatore: nessun import da `classifier/`.
+Dettagli in [ui.md](ui.md). La UI legge i file prodotti dal classificatore; solo la pagina "Prova un file" lo chiama direttamente (`classifier.pipeline.analyze`).
 
 ```mermaid
 flowchart LR
@@ -116,6 +116,24 @@ flowchart LR
     PAG --> SCH -->|versioni, solo aggiunte| DB
     REG -.->|mai scritto| SCH
     DB -->|CSV + versioni| REGOUT["/schede/registro.csv"] -.->|a mano| PIPE
+```
+
+### Prova un file (feat/try-file)
+
+```mermaid
+flowchart LR
+    U((RPD)) -->|confine di fiducia: file caricato<br/>ruolo rpd + CSRF + Origin, max 20 MB| P["POST /prova"]
+    P -->|nome fisso + estensione| TMP[(cartella temporanea)]
+    REG[registro in uso<br/>CSV + versioni] --> TMP
+    TMP --> EX[extract_text<br/>OCR se serve] --> AN[analyze: entità · categorie<br/>schede · controlli]
+    PERM[(permessi_cartelle.csv)] --> AN
+    AN -->|pagina no-store: testo evidenziato,<br/>analisi firmata HMAC se manca la scheda| U
+    TMP -.->|cancellata a fine richiesta| X[ ]
+    U -->|"POST /prova/salva: scheda proposta o NUOVA<br/>ruolo rpd + CSRF + firma valida"| S{scelta}
+    S -->|NUOVA: bozza da classifier.drafts| SCH[(tabella schede: CREA)]
+    S -->|predizione mascherata| CAR[(tabella caricati)]
+    S -->|CONFERMA dell'RPD| DEC[(tabella decisioni)]
+    CAR --> INV[inventario, coda, cruscotto]
 ```
 
 ## Bozze di nuove schede (feat/draft-records, feat/semantic-drafts)

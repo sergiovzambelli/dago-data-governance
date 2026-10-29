@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icon, outcome, record as record_name, status %}
+{% from "_macros.html" import icon, outcome, record as record_name, share, share_hint, status %}
 {% block title %}{{ doc.file|nome_file }}{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
@@ -171,11 +171,12 @@
   <section aria-labelledby="h-proposte" class="block">
     <h2 id="h-proposte" class="h4">Perché questa scheda</h2>
     {% if doc.proposte %}
+    {{ share_hint() }}
     <ol class="proposals">
       {% for p in doc.proposte %}
       <li>
         <span class="fw-semibold">{{ record_name(p.scheda) }}</span>
-        {% if p.punteggio is not none %}<span class="hint">punteggio {{ "%.1f"|format(p.punteggio) }}</span>{% endif %}
+        {{ share(p, doc.proposte) }}
         <span class="d-block">{{ p.motivazione or "—" }}</span>
       </li>
       {% endfor %}
