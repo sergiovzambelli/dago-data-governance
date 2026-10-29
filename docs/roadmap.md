@@ -32,6 +32,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
 | – | feat/records | UI: pagina Schede (crea, modifica, archivia, ripristina, storico, esporta il registro in CSV) | – | – |
 | #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
+| – | feat/no-location-check | Tolto il controllo LUOGO_NON_DICHIARATO (classificatore e UI), su decisione dell'utente | 86,3 | 86,7 |
 | – | feat/try-file-visual | Prova un file: testo con evidenziati dati personali, categorie e parole chiave; senza scheda l'RPD sceglie tra le 3 proposte o crea una nuova scheda già compilata, e il documento entra nell'inventario | – (invariato) | – (invariato) |
 | – | feat/try-file | UI: pagina "Prova un file", carica un documento e mostra i passi dell'analisi (testo, dati, categorie, schede, esito) senza salvarlo | – (invariato) | – (invariato) |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
@@ -49,6 +50,8 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 
 ## Decisioni prese
+
+- Niente controllo del luogo (LUOGO_NON_DICHIARATO), decisione dell'utente: costa circa 2 punti su sviluppo e 3,4 su validation (F1 scostamenti), perché le etichette della giuria lo contengono ancora. Le cartelle dichiarate restano per abbinare la scheda.
 
 - Un file senza testo leggibile non è mai "senza dati personali" (meglio un falso allarme che un dato ignorato).
 - Una categoria particolare descritta rende il documento "con dati personali" anche senza identificativi.

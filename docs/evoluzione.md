@@ -2,13 +2,19 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/no-location-check: niente più errore di luogo
+- Richiesta dell'utente: togliere il controllo di dove stanno i documenti e non mostrare più l'errore di luogo. Scelta dell'utente tra tre opzioni (solo Prova un file, solo UI, anche classificatore): **anche nel classificatore**.
+- `classifier/compliance.py` non produce più LUOGO_NON_DICHIARATO; la UI non lo conosce più (anche nelle predizioni vecchie viene ignorato). Le cartelle dichiarate restano: servono all'abbinamento della scheda e a decidere SCHEDA_MANCANTE.
+- Misura (`make score`, sole regole): sviluppo 88,3 → **86,3**, validation 90,1 → **86,7**. Cala F1 scostamenti (sviluppo 0,75 → 0,65) e un po' l'esito (0,83 → 0,81): i documenti fuori posto che avevano solo questo problema ora risultano conformi, mentre le etichette della giuria li danno non conformi. Lo scorer non cambia.
+- Predizioni `data/pred_*.json` rigenerate.
+
 ## 2026-10-29 — feat/try-file-visual: il file evidenziato e la scelta della scheda
 - Richiesta dell'utente: vedere il file con evidenziate le informazioni trovate; se la scheda manca, proporre le tre schede o "Nuova scheda", che crea una scheda già compilata.
 - Testo estratto con evidenziati dati personali (rosso), categorie particolari (viola) e parole chiave delle schede proposte (blu). Ogni tipo ha anche un bordo diverso e un'etichetta per i lettori di schermo: il colore non è l'unico segnale.
 - Decisione (dell'utente): scegliere una scheda **aggiunge il documento all'inventario**, già validato dall'RPD. Si conserva solo la predizione (valori mascherati, nessun testo né file) nella tabella `caricati`, in sola aggiunta; la decisione va nel registro delle decisioni con una nota sull'origine.
 - L'analisi torna dal browser firmata (HMAC con la chiave del server e il nome dell'utente): il server non tiene stato tra il caricamento e la scelta, e nessuno può cambiare esito, scheda o percorso nel modulo. Dopo un riavvio senza `UI_SEGRETO` la firma non vale più: si ricarica il file.
 - La scelta sta subito sotto l'esito, a tutta larghezza: una card per proposta (codice, nome, barra della quota degli indizi, esito che ne deriverebbe, pulsante "Usa questa scheda" in fondo) e una card tratteggiata per la nuova scheda (richiesta dell'utente: più visibile e ben definita).
-- Per ogni scheda proposta la pagina mostra già l'esito che avrebbe il documento ("con questa scheda: non conforme: luogo non dichiarato").
+- Per ogni scheda proposta la pagina mostra già l'esito che avrebbe il documento ("con questa scheda: non conforme: accesso eccessivo").
 - Nuova scheda: compilata con `classifier/drafts.py` (cartella, gruppo di accesso, categorie rilevate, diffusione NO, tipologia e parole chiave dal nome del file), codice `NUOVA-…` reso valido e unico. Base giuridica e finalità restano all'RPD, che viene portato sulla scheda appena creata. Modello locale non usato qui.
 - Un file caricato con lo stesso percorso di uno analizzato dalla pipeline lo sostituisce nell'inventario.
 
