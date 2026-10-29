@@ -38,14 +38,35 @@ def load_register(path):
     } for r in rows]
 
 
-def match(register, file_path, text, k=3):
-    proposals = []
+def _evidence(register, file_path, text):
+    """Per ogni scheda con qualche indizio: (punteggio, codice, termini trovati, sta in una cartella dichiarata)."""
+    out = []
     for rec in register:
         found = [(t, w) for t, regex, w in rec["termini"] if regex.search(text)]
         in_folder = any(file_path.startswith(p + "/") for p in rec["percorsi"])
         score = sum(w for _, w in found) + (PATH_BONUS if in_folder else 0)
         if score > 0:
-            reasons = (["cartella dichiarata"] if in_folder else []) + \
-                      ([f"parole chiave: {', '.join(t for t, _ in found)}"] if found else [])
-            proposals.append({"scheda": rec["codice"], "punteggio": round(score, 2), "motivazione": "; ".join(reasons)})
-    return sorted(proposals, key=lambda p: -p["punteggio"])[:k]
+            out.append((score, rec["codice"], found, in_folder))
+    return sorted(out, key=lambda e: -e[0])
+
+
+def match(register, file_path, text, k=3):
+    proposals = []
+    for score, code, found, in_folder in _evidence(register, file_path, text)[:k]:
+        reasons = (["cartella dichiarata"] if in_folder else []) + \
+                  ([f"parole chiave: {', '.join(t for t, _ in found)}"] if found else [])
+        proposals.append({"scheda": code, "punteggio": round(score, 2), "motivazione": "; ".join(reasons)})
+    return proposals
+
+
+def is_missing_record(register, file_path, text):
+    """Nessuna scheda copre il documento: la migliore ha al massimo una parola chiave e il file non è nella sua cartella.
+
+    Si contano le parole e non il punteggio, che non è normalizzato e cambia con il registro.
+    """
+    # tarato su sviluppo: soglia 1 → F1 SCHEDA_MANCANTE 0,755; con 2 sale a 0,806 ma i falsi positivi in più sono
+    # documenti fuori posto (LUOGO_NON_DICHIARATO) con testo chiaro, che perderebbero la scheda per i controlli
+    # shortcut: una sola parola chiave non distingue un servizio non censito da un documento povero di testo;
+    # da rivedere con l'LLM locale o con parole chiave più ricche nel registro
+    ev = _evidence(register, file_path, text)
+    return not ev or (len(ev[0][2]) <= 1 and not ev[0][3])

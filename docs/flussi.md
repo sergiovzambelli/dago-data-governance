@@ -80,7 +80,7 @@ flowchart TB
     REG --> RULES
     PERM --> RULES
     ESITO -->|nessuna entità| E0[NESSUN_DATO_PERSONALE]
-    ESITO -->|nessuna scheda sopra soglia| E1[SCHEDA_MANCANTE]
+    ESITO -->|scheda migliore: ≤ 1 parola chiave e fuori cartella| E1[SCHEDA_MANCANTE]
     ESITO -->|0 scostamenti| E2[CONFORME]
     ESITO -->|≥1 scostamento| E3[NON_CONFORME]
     E0 & E1 & E2 & E3 --> DB
