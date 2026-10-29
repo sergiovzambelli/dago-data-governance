@@ -17,9 +17,29 @@ def test_classify_lists_every_file_with_relative_path_and_sha256(tmp_path):
     assert set(out) == {"fileserver/Ufficio/a.txt", "b.csv"}
     a = out["fileserver/Ufficio/a.txt"]
     assert a["sha256"] == hashlib.sha256(b"ciao").hexdigest()
-    # baseline: classe più frequente nel dataset di sviluppo, nessuna evidenza
-    assert a["esito"] == "CONFORME"
-    assert a["entita"] == [] and a["proposte"] == [] and a["scostamenti"] == []
+    assert a["proposte"] == [] and a["scostamenti"] == []
+
+
+def test_text_without_entities_has_no_personal_data(tmp_path):
+    (tmp_path / "avviso.txt").write_text("Chiusura uffici il 2 giugno.")
+    (r,) = classify(tmp_path)
+    assert r["esito"] == "NESSUN_DATO_PERSONALE"
+    assert r["dati_personali"] is False and r["entita"] == []
+
+
+def test_text_with_entities_is_personal(tmp_path):
+    (tmp_path / "domanda.txt").write_text("Richiedente C.F. BLDSLV66A68E625M")
+    (r,) = classify(tmp_path)
+    assert r["dati_personali"] is True
+    assert r["esito"] == "CONFORME"
+    assert [e["tipo"] for e in r["entita"]] == ["CODICE_FISCALE"]
+
+
+def test_unreadable_file_is_not_declared_free_of_personal_data(tmp_path):
+    # senza testo (es. scansione senza OCR) non possiamo dire che non ci sono dati
+    (tmp_path / "scan.odt").write_bytes(b"non leggibile")
+    (r,) = classify(tmp_path)
+    assert r["dati_personali"] is True and r["esito"] == "CONFORME"
 
 
 def test_classify_skips_symlinks_outside_root(tmp_path):

@@ -22,3 +22,5 @@ _Nessuno ancora (vedi `flussi.md`)._
 | T-007 | Estrazione | D | ODT costruito come zip bomb o XML "billion laughs" | `content.xml` oltre 50 MB scartato; XML letto con `defusedxml` | chiusa | feat/extract |
 | T-008 | Estrazione | T | File malevolo che sfrutta un difetto dei parser (pdfminer, mammoth, openpyxl) | versioni fissate in `requirements.txt`; errori trasformati in testo vuoto; da isolare in container senza rete (deploy) | aperta | feat/extract |
 | T-009 | Dipendenze | T | Pacchetto PyPI compromesso o aggiornato di nascosto | versioni fissate; hash (`--require-hashes`) da aggiungere | aperta | feat/extract |
+| T-010 | Entità | I | Valori in chiaro (CF, IBAN) esposti nell'export o nei log | l'export contiene solo il valore mascherato e la posizione; nessun log dei valori | chiusa | feat/entities |
+| T-011 | Entità | D | Testo costruito per far esplodere le regex (ReDoS) | regex senza quantificatori annidati ambigui, finestre limitate (`{0,60}`) | chiusa | feat/entities |
