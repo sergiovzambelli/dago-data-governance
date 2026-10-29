@@ -2,6 +2,13 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/entities: dati personali con regole
+- `classifier/entities.py`: codice fiscale e IBAN con verifica del carattere di controllo (scritta a mano, niente dipendenze), email, telefono, data di nascita, nome dopo Sig./Sig.ra, indirizzo IP, matricola. Ogni entità ha tipo, posizione, valore mascherato e confidenza.
+- La pipeline estrae il testo e cerca le entità: nessuna entità in un testo leggibile → `NESSUN_DATO_PERSONALE`. Un file senza testo (scansione) resta "con dati personali", perché non si può escludere.
+- Punteggio: sviluppo **9,3 → 19,9**, validation **8,7 → 18,7**. Precisione entità 1,0; tutti i 13 documenti senza dati personali riconosciuti.
+- Scartata la regola "Nome Cognome" con le maiuscole: colpiva 12 dei 13 documenti senza dati personali (delibere, ordinanze). I nomi liberi richiedono un modello (spaCy, PR futura).
+- Restano 20+ documenti con soli nomi o indirizzi classificati per errore come senza dati personali.
+
 ## 2026-10-29 — feat/extract: estrazione del testo
 - `classifier/extract.py`: `extract_text(file)` restituisce il testo. PDF con testo, DOCX, XLSX, CSV, TXT ed EML passano da markitdown; gli ODT da `zipfile` + `defusedxml`, senza dipendenze nuove.
 - Copertura sul dataset di sviluppo: 131/155 file con testo. I 24 vuoti sono 23 PDF scansionati e 1 JPG: servirà l'OCR (PR successiva).
