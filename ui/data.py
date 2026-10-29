@@ -275,6 +275,13 @@ def split_path(path):
     return folder, name
 
 
+def sector(path):
+    """Settore = cartella sotto il server (fileserver/Sociale/... → Sociale); "" se il file non è in una cartella."""
+    # shortcut: presume percorsi <server>/<settore>/..., come nel kit; da configurare per ente se cambia la struttura
+    parts = path.split("/")
+    return parts[1] if len(parts) > 2 else ""
+
+
 def when(iso):
     """2026-10-29T14:01:05+00:00 → 29/10/2026 14:01 UTC."""
     try:

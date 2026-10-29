@@ -21,7 +21,7 @@ from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, DRAFT_ACTIONS, DRAFT_EDITA
                      NO_LIMIT, OUTCOMES, RECORD_ACTIONS, RECORD_CODE, RECORD_HINTS, RECORD_LONG, RECORD_REQUIRED,
                      RECORD_SECTIONS, REGISTER_COLUMNS, apply_decision, apply_records, clean_record, highlight,
                      load_drafts, load_predictions, load_register, parse_predictions, priority, record_view, risk,
-                     split_path, when)
+                     sector, split_path, when)
 from ui.decisions import DecisionLog
 from ui.security import HEADERS, LOCAL_USER, ROLES, Csrf, check_basic_auth, load_users
 
@@ -167,23 +167,32 @@ def create_app(settings):
         by_deviation = Counter(s for d in docs for s in d["scostamenti"])
         by_record = Counter(d["scheda"] for d in docs if d["scheda"])
         missing = [d for d in docs if d["esito"] == "SCHEDA_MANCANTE"]
+        by_sector = {}
+        for d in docs:
+            by_sector.setdefault(sector(d["file"]), Counter())[d["esito"]] += 1
         return page(request, "cruscotto.html", nav="cruscotto", docs=docs, by_outcome=by_outcome,
+                    by_sector=sorted(by_sector.items(), key=lambda s: (not s[0], s[0].lower())),
                     by_deviation=by_deviation, by_record=by_record.most_common(), missing=missing,
                     validated=sum(d["validato"] for d in docs), register=store.register,
                     personal=sum(d["dati_personali"] for d in docs), urgent=queue_of(docs)[:5],
                     sensitive=sum(bool(d["categorie_particolari"]) for d in docs))
 
     @app.get("/documenti", response_class=HTMLResponse)
-    def inventory(request: Request, esito: str = "", scheda: str = "", scostamento: str = "", pagina: int = 1):
+    def inventory(request: Request, esito: str = "", scheda: str = "", scostamento: str = "", settore: str = "",
+                  pagina: int = 1):
+        all_docs = documents()
+        sectors = sorted({sector(d["file"]) for d in all_docs} - {""}, key=str.lower)
         if (esito and esito not in OUTCOMES) or (scostamento and scostamento not in DEVIATIONS) \
-                or (scheda and scheda not in store.register) or not 1 <= pagina <= 10_000:
+                or (scheda and scheda not in store.register) or (settore and settore not in sectors) \
+                or not 1 <= pagina <= 10_000:
             raise HTTPException(400, "Filtro non valido.")
-        docs = [d for d in documents() if (not esito or d["esito"] == esito)
-                and (not scheda or d["scheda"] == scheda) and (not scostamento or scostamento in d["scostamenti"])]
+        docs = [d for d in all_docs if (not esito or d["esito"] == esito)
+                and (not scheda or d["scheda"] == scheda) and (not scostamento or scostamento in d["scostamenti"])
+                and (not settore or sector(d["file"]) == settore)]
         pages = max(1, -(-len(docs) // PAGE_SIZE))
         return page(request, "inventario.html", nav="documenti", docs=docs[(pagina - 1) * PAGE_SIZE:pagina * PAGE_SIZE],
-                    total=len(docs), pagina=min(pagina, pages), pages=pages, register=store.register,
-                    filters={"esito": esito, "scheda": scheda, "scostamento": scostamento})
+                    total=len(docs), pagina=min(pagina, pages), pages=pages, register=store.register, sectors=sectors,
+                    filters={"esito": esito, "scheda": scheda, "scostamento": scostamento, "settore": settore})
 
     @app.get("/documenti/{doc_id}", response_class=HTMLResponse)
     def detail(request: Request, doc_id: str):
