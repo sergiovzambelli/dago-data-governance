@@ -262,5 +262,11 @@ a.fig:hover { text-decoration: underline; text-decoration-thickness: 2px; text-u
   padding: .55rem .9rem; font-size: 1rem; color: var(--ink); background: var(--card); }
 
 /* Prova un file: testo estratto scorrevole, non allarga la pagina */
-.extracted { max-height: 20rem; overflow: auto; white-space: pre-wrap; word-break: break-word; background: #f5f5f7; padding: 1rem; border-radius: .5rem; font-size: .875rem; }
-.steps > li { margin-bottom: 1.5rem; }
+.extracted { max-height: 32rem; overflow: auto; white-space: pre-wrap; word-break: break-word; background: #fff;
+  border: 1px solid #d9dadb; padding: 1.25rem; border-radius: .75rem; font-size: .9rem; line-height: 1.7; }
+/* evidenziazioni: sfondo chiaro con testo scuro (contrasto AA) e un bordo diverso per tipo, non solo il colore */
+.hl { color: #1a1a1a; padding: 0 .15em; border-radius: .2em; }
+.hl-entita { background: #fde2e1; border-bottom: 2px solid #c0392b; }
+.hl-categoria { background: #ece3fb; border-bottom: 2px double #6a3fb5; }
+.hl-chiave { background: #dcebfb; border-bottom: 2px dotted #0066cc; }
+.hl-legend { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .875rem; }

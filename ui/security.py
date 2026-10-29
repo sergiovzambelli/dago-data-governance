@@ -66,3 +66,19 @@ class Csrf:
 
     def valid(self, user, token):
         return bool(token) and hmac.compare_digest(self.token(user), token)
+
+    def _mac(self, user, payload):
+        return hmac.new(self.secret, b"analisi:" + user["nome"].encode("utf-8") + b":" + payload,
+                        hashlib.sha256).hexdigest()
+
+    def sign(self, user, data):
+        """Dati che tornano dal browser senza poter essere cambiati (es. l'analisi di un file caricato)."""
+        payload = base64.urlsafe_b64encode(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+        return payload.decode() + "." + self._mac(user, payload)
+
+    def unsign(self, user, signed):
+        """I dati firmati, oppure None se manomessi, di un altro utente o firmati prima di un riavvio."""
+        payload, _, mac = (signed if isinstance(signed, str) else "").encode().rpartition(b".")
+        if not payload or not hmac.compare_digest(self._mac(user, payload).encode(), mac):
+            return None
+        return json.loads(base64.urlsafe_b64decode(payload))
