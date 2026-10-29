@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_macros.html" import outcome, record as record_name %}
+{% block title %}Prova un file{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Prova un file</li>
+{% endblock %}
+{% block content %}
+<h1>Prova un file</h1>
+<p>Carica un documento per vedere passo per passo come lo analizza il classificatore.
+  Il file non viene salvato e il risultato non entra nell'inventario.</p>
+
+<form method="post" action="/prova" enctype="multipart/form-data" class="block">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="field">
+    <label for="p-file">File da analizzare (massimo 20 MB)</label>
+    <input type="file" id="p-file" name="file" required aria-describedby="p-file-aiuto">
+    <p id="p-file-aiuto" class="hint">PDF, DOCX, XLSX, CSV, TXT, EML, ODT o immagini. Le scansioni possono richiedere qualche minuto.</p>
+  </div>
+  <div class="field">
+    <label for="p-cartella">Cartella sul file server (facoltativa)</label>
+    <input type="text" id="p-cartella" name="cartella" maxlength="300" value="{{ rel|cartella if result else '' }}"
+           aria-describedby="p-cartella-aiuto">
+    <p id="p-cartella-aiuto" class="hint">Ad esempio fileserver/Personale/Permessi: serve ad abbinare la scheda e a controllare luogo e accessi.</p>
+  </div>
+  <button type="submit" class="btn btn-primary">Analizza</button>
+</form>
+
+{% if result %}
+<h2 class="h3">Risultato per {{ rel|spezza }}</h2>
+<ol class="steps">
+  <li>
+    <h3 class="h5">Testo estratto</h3>
+    {% if chars %}
+    <p>{{ chars }} caratteri{% if chars > text|length %}, qui i primi {{ text|length }}{% endif %}.</p>
+    <pre class="extracted" tabindex="0" aria-label="Testo estratto dal file">{{ text }}</pre>
+    {% else %}
+    <p>Nessun testo leggibile: per prudenza il file è trattato come documento con dati personali.</p>
+    {% endif %}
+  </li>
+  <li>
+    <h3 class="h5">Dati personali</h3>
+    {% if result.entita %}
+    <table class="doc-table">
+      <caption class="visually-hidden">Dati trovati, mostrati solo in forma mascherata</caption>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Valore (mascherato)</th><th scope="col">Posizione nel testo</th></tr></thead>
+      <tbody>
+      {% for e in result.entita %}
+        <tr>
+          <td data-label="Tipo">{{ entity_types.get(e.tipo, e.tipo) }}</td>
+          <td data-label="Valore (mascherato)"><code>{{ e.valore_mascherato }}</code></td>
+          <td data-label="Posizione nel testo">{{ "carattere " ~ e.inizio if e.inizio is not none else "—" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>Nessun identificativo trovato.</p>
+    {% endif %}
+  </li>
+  <li>
+    <h3 class="h5">Categorie particolari</h3>
+    {% if result.categorie_particolari %}
+    <ul class="tag-list">{% for c in result.categorie_particolari %}<li class="tag tag-strong">{{ categories.get(c, c) }}</li>{% endfor %}</ul>
+    {% else %}<p>Nessuna.</p>{% endif %}
+  </li>
+  <li>
+    <h3 class="h5">Schede più vicine</h3>
+    {% if result.proposte %}
+    <ol class="proposals">
+      {% for p in result.proposte %}
+      <li><span class="fw-semibold">{{ record_name(p.scheda) }}</span>
+        <span class="hint">punteggio {{ "%.1f"|format(p.punteggio) }}</span>
+        <span class="d-block">{{ p.motivazione or "—" }}</span></li>
+      {% endfor %}
+    </ol>
+    {% else %}<p>Nessuna scheda con indizi nel testo o nel percorso.</p>{% endif %}
+  </li>
+  <li>
+    <h3 class="h5">Esito</h3>
+    <p>{{ outcome(result.esito) }} · scheda: {{ record_name(result.scheda) }}</p>
+    {% for s in result.scostamenti %}
+    <p class="mb-1"><span class="fw-semibold">{{ deviations[s][0] }}:</span> {{ deviations[s][1] }}</p>
+    {% endfor %}
+  </li>
+</ol>
+{% endif %}
+{% endblock %}

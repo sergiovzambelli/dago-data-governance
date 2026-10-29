@@ -2,6 +2,7 @@
 import csv
 import io
 import re
+import tempfile
 from collections import Counter
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import UploadFile
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ui.config import LOOPBACK
@@ -26,6 +29,9 @@ PAGE_SIZE = 50
 MAX_NOTE = 500
 MAX_QUERY = 100
 ID_RE = re.compile(r"^[0-9a-f]{16}$")
+MAX_UPLOAD = 20 * 1024 * 1024
+MAX_TEXT_SHOWN = 5000
+FOLDER_RE = re.compile(r"^[\w .()-]+(/[\w .()-]+)*$")
 
 
 def _cell(v):
@@ -243,6 +249,55 @@ def create_app(settings):
                                  *(p["motivazione"] for p in d["proposte"])]).lower()
             results = [d for d in documents() if all(t in haystack(d) for t in terms)]
         return page(request, "ricerca.html", nav="ricerca", q=q, results=results)
+
+    @app.get("/prova", response_class=HTMLResponse)
+    def try_form(request: Request):
+        return page(request, "prova.html", nav="prova", result=None)
+
+    @app.post("/prova", response_class=HTMLResponse)
+    async def try_file(request: Request):
+        """Analizza un file caricato e mostra ogni passo. Il file resta solo in una cartella temporanea."""
+        form = await request.form()
+        guard(request, form.get("csrf", ""), "analizzare un file")
+        file, cartella = form.get("file"), form.get("cartella", "")
+        # import qui: il resto della UI funziona anche senza le dipendenze del classificatore (requirements.txt)
+        try:
+            from classifier.compliance import load_permissions
+            from classifier.extract import extract_text
+            from classifier.matching import load_register as load_rules
+            from classifier.pipeline import analyze
+        except ImportError:
+            raise HTTPException(503, "Analisi non disponibile: installa le dipendenze del classificatore "
+                                     "(requirements.txt).")
+
+        name = Path(file.filename or "").name.strip()[:200] if isinstance(file, UploadFile) else ""
+        if not name or not isinstance(cartella, str):
+            raise HTTPException(400, "Scegli un file da analizzare.")
+        folder = cartella.strip().strip("/")[:300]
+        if folder and (not FOLDER_RE.match(folder) or ".." in folder.split("/")):
+            raise HTTPException(400, "Cartella non valida: usa un percorso come fileserver/Personale/Permessi.")
+        data = await file.read(MAX_UPLOAD + 1)
+        if len(data) > MAX_UPLOAD:
+            raise HTTPException(400, f"File troppo grande: massimo {MAX_UPLOAD // (1024 * 1024)} MB.")
+        rel = f"{folder}/{name}" if folder else name
+
+        def run():  # estrazione e OCR possono durare minuti: fuori dal ciclo degli eventi
+            with tempfile.TemporaryDirectory() as tmp:
+                # il nome sul disco è fisso: dall'utente si prende solo l'estensione, che sceglie l'estrattore
+                path = Path(tmp) / ("file" + "".join(c for c in Path(name).suffix if c.isalnum() or c == ".")[:10])
+                path.write_bytes(data)
+                reg = Path(tmp) / "registro.csv"
+                reg.write_bytes(export_register().body)  # registro in uso, con le modifiche fatte nella UI
+                text = extract_text(path)
+                perms = load_permissions(settings.permissions) if settings.permissions and \
+                    settings.permissions.exists() else ()
+                return text, analyze(rel, text, load_rules(reg), perms)
+
+        text, result = await run_in_threadpool(run)
+        response = page(request, "prova.html", nav="prova", result=result, rel=rel, chars=len(text),
+                        text=text[:MAX_TEXT_SHOWN])
+        response.headers["Cache-Control"] = "no-store"  # la pagina contiene il testo del documento
+        return response
 
     @app.get("/decisioni", response_class=HTMLResponse)
     def decisions(request: Request):

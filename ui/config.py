@@ -11,6 +11,8 @@ LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 class Settings:
     predictions: Path = Path("data/pred_sviluppo.json")
     register: Path | None = KIT / "Registro_trattamenti.csv"
+    # permessi delle cartelle, per i controlli della pagina "Prova un file"; se manca nessun gruppo ha accesso
+    permissions: Path | None = KIT / "permessi_cartelle.csv"
     # bozze di nuove schede (make drafts); se il file manca la pagina spiega come crearlo
     drafts: Path = Path("data/bozze_sviluppo.json")
     db: Path = Path("ui/var/decisioni.sqlite3")
@@ -26,10 +28,12 @@ class Settings:
     def from_env(cls):
         env = os.environ.get
         register = env("UI_REGISTRO", str(cls.register))
+        permissions = env("UI_PERMESSI", str(cls.permissions))
         users = env("UI_UTENTI")
         secret = env("UI_SEGRETO")
         return cls(predictions=Path(env("UI_PREDIZIONI", str(cls.predictions))),
                    register=Path(register) if register else None,
+                   permissions=Path(permissions) if permissions else None,
                    drafts=Path(env("UI_BOZZE", str(cls.drafts))),
                    db=Path(env("UI_DB", str(cls.db))),
                    ente=env("UI_ENTE", cls.ente),
