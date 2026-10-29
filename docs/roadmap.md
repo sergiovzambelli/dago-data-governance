@@ -23,7 +23,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #9 | feat/ocr | OCR (ocrmypdf, tesseract `ita`) per scansioni e foto | 39,9 | 38,7 |
 | #10 | chore/roadmap | Questo file | – | – |
 | #11 | feat/matching | Top-3 schede da parole chiave pesate + cartella dichiarata, con motivazione | 59,4 | 57,9 |
-| – | feat/missing-record | SCHEDA_MANCANTE se la scheda migliore ha ≤ 1 parola chiave ed è fuori dalle cartelle dichiarate | **73,2** | **72,9** |
+| #12 | feat/missing-record | SCHEDA_MANCANTE se la scheda migliore ha ≤ 1 parola chiave ed è fuori dalle cartelle dichiarate | **73,2** | **72,9** |
 
 Metriche dopo feat/missing-record (sviluppo): esito 0,64 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0 · precisione entità 1,0.
 
