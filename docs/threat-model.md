@@ -14,5 +14,5 @@ _Nessuno ancora (vedi `flussi.md`)._
 | ID | Componente | STRIDE | Minaccia | Mitigazione | Stato | PR |
 |----|------------|--------|----------|-------------|-------|----|
 | T-001 | Repository | I | Segreti committati per errore | `.env` escluso da git | chiusa | chore/kit-data |
-| T-002 | `data/` | I | Dati personali o etichette riservate committati | `data/` in `.gitignore`, rigenerato con `make data` | chiusa | chore/kit-data |
+| T-002 | `data/` | I | Dati personali o etichette riservate pubblicati su GitHub | rischio accettato dal team: dati sintetici (LEGGIMI del kit), zip già nel repo | accettata | chore/kit-data |
 | T-003 | `make data` | T | Archivio zip con percorsi `..` o assoluti (zip-slip) | estrazione con `zipfile` di Python, che li scarta | chiusa | chore/kit-data |

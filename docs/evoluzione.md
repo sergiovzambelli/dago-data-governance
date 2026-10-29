@@ -4,7 +4,7 @@ Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
 ## 2026-10-29 — chore/kit-data: estrazione dati del kit
 - `make data` estrae il kit in `data/` e il validation set in `data/validation/`.
-- `data/` è escluso da git: contiene dati personali (sintetici) e le etichette riservate di valutazione; si rigenera dal file zip già presente in `info/`.
+- `data/` è versionato su GitHub (scelta del team): i dati personali sono sintetici e lo zip del kit era già nel repo; `make data` lo rigenera.
 - Uso dei dati: `Etichette_sviluppo` per mettere a punto, `Etichette_valutazione_RISERVATO` solo per misurare.
 - Nota: `sviluppo/LEGGIMI.txt` non ha etichetta (155 file etichettati su 156).
 
