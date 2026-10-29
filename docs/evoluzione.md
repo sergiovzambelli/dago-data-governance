@@ -2,6 +2,14 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/categories: categorie particolari e giudiziarie
+- `classifier/categories.py`: dizionari di espressioni per SALUTE, GIUDIZIARI, RELIGIOSE, SINDACALE, con evidenza e posizione nel testo. Coprono anche i casi solo descritti ("cardiochirurgia", "Servizio per le dipendenze", "rito islamico", "associazione per la cremazione").
+- Regole contro i falsi allarmi: negazione vicina ("non sono presenti persone con invalidità"), "ordinanza sindacale" (= del sindaco) esclusa, spazi che valgono anche come a capo nei PDF.
+- Decisione: chi dichiara l'assenza di condanne per i reati dell'art. 80/94 del codice appalti dà comunque un dato giudiziario (come nelle etichette); "non aver riportato condanne" generico no.
+- Decisione: una categoria particolare descritta rende il documento "con dati personali" anche senza identificativi. Costo: i moduli in bianco che nominano una categoria (2 file) risultano con dati personali.
+- Sui file con testo il richiamo è 73/73 (sviluppo) e 34/34 (validation); le categorie mancanti sono nelle scansioni (serve OCR).
+- Punteggio: sviluppo **19,9 → 35,4**, validation **18,7 → 34,9**.
+
 ## 2026-10-29 — feat/entities: dati personali con regole
 - `classifier/entities.py`: codice fiscale e IBAN con verifica del carattere di controllo (scritta a mano, niente dipendenze), email, telefono, data di nascita, nome dopo Sig./Sig.ra, indirizzo IP, matricola. Ogni entità ha tipo, posizione, valore mascherato e confidenza.
 - La pipeline estrae il testo e cerca le entità: nessuna entità in un testo leggibile → `NESSUN_DATO_PERSONALE`. Un file senza testo (scansione) resta "con dati personali", perché non si può escludere.

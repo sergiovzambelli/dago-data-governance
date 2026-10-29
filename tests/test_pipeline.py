@@ -59,3 +59,11 @@ def test_cli_writes_json(tmp_path):
         capture_output=True, text=True, check=True,
     ).stdout
     assert [r["file"] for r in json.loads(out)] == ["a.txt"]
+
+
+def test_special_category_makes_document_personal(tmp_path):
+    # nessun codice fiscale, ma descrive la salute di una persona
+    (tmp_path / "relazione.txt").write_text("Il padre è affetto da distrofia muscolare.")
+    (r,) = classify(tmp_path)
+    assert r["dati_personali"] is True and r["esito"] == "CONFORME"
+    assert r["categorie_particolari"] == ["SALUTE"]

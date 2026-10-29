@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from classifier.categories import find_categories
 from classifier.entities import find_entities
 from classifier.extract import extract_text
 
@@ -28,15 +29,18 @@ def classify(root):
             continue
         text = extract_text(path)
         entities = find_entities(text)
-        # senza testo (scansione, file illeggibile) non si può escludere la presenza di dati personali
-        personal = bool(entities) or not text.strip()
+        categories = sorted(c["categoria"] for c in find_categories(text))
+        # senza testo (scansione, file illeggibile) non si può escludere la presenza di dati personali;
+        # una categoria particolare descritta riguarda una persona anche senza identificativi
+        # shortcut: un modulo in bianco che nomina una categoria risulta "con dati personali"
+        personal = bool(entities or categories) or not text.strip()
         # shortcut: con dati personali l'esito è sempre CONFORME; i passi successivi lo sostituiscono
         results.append({
             "file": path.relative_to(root).as_posix(),
             "sha256": _sha256(path),
             "dati_personali": personal,
             "entita": entities,
-            "categorie_particolari": [],
+            "categorie_particolari": categories,
             "livello": None,
             "proposte": [],
             "scheda": None,
