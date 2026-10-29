@@ -133,3 +133,27 @@ def test_document_older_than_retention_is_not_compliant(tmp_path):
     (root / "Verbali" / "verbale_ZTL_20170316_840.txt").write_text("Verbale, targa AB123CD, C.F. BLDSLV66A68E625M")
     (r,) = classify(root, load_register(reg))
     assert r["esito"] == "NON_CONFORME" and r["scostamenti"] == ["CONSERVAZIONE_SCADUTA"]
+
+
+class _ModelSaysLogs:
+    def verify(self, record, text):
+        return (record["codice"] == "T-SIS-02", "estratto dei log VPN")
+
+    def pick(self, records, text):
+        return "T-SIS-02"
+
+
+def test_local_model_resolves_doubtful_record(tmp_path):
+    reg = tmp_path / "registro.csv"
+    reg.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche\n"
+                   "T-PER-07;Personale/Permessi;congedo;Istanza\n"
+                   "T-SIS-02;Sicurezza;VPN;Estratto dei log\n", encoding="utf-8")
+    root = tmp_path / "share"
+    (root / "Condivisa").mkdir(parents=True)
+    # nessuna parola chiave: per le sole regole è SCHEDA_MANCANTE
+    (root / "Condivisa" / "accessi.txt").write_text("utente mario.rossi@comune.it collegato da 10.0.0.7")
+    (r,) = classify(root, load_register(reg), llm=_ModelSaysLogs())
+    # con la scheda trovata partono i controlli: il file non sta nella cartella dichiarata
+    assert r["scheda"] == "T-SIS-02" and r["scostamenti"] == ["LUOGO_NON_DICHIARATO"]
+    assert r["proposte"][0]["scheda"] == "T-SIS-02"
+    assert "modello locale: estratto dei log VPN" in r["proposte"][0]["motivazione"]

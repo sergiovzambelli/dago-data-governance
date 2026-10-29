@@ -96,3 +96,12 @@ def test_register_reads_retention_years(tmp_path):
                  "T-1;a;x;y;10\nT-2;b;x;y;Illimitata / non calcolabile\nT-3;c;x;y;\n", encoding="utf-8")
     recs = {r["codice"]: r["conservazione_anni"] for r in load_register(p)}
     assert recs == {"T-1": 10, "T-2": None, "T-3": None}
+
+
+def test_doubtful_match(register):
+    from classifier.matching import is_doubtful
+    assert is_doubtful(register, "fileserver/Condivisa/x.pdf", "nessun indizio")
+    # due parole chiave fuori cartella: la scheda c'è, ma va verificata
+    assert is_doubtful(register, "fileserver/Condivisa/x.pdf", "istanza legge 104 e congedo")
+    assert not is_doubtful(register, "fileserver/Condivisa/x.pdf", "legge 104, congedo, permesso")
+    assert not is_doubtful(register, "fileserver/Personale/Permessi/x.pdf", "congedo")
