@@ -32,6 +32,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
 | – | feat/records | UI: pagina Schede (crea, modifica, archivia, ripristina, storico, esporta il registro in CSV) | – | – |
 | #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
+| – | feat/doc-view | Dettaglio documento come Prova un file: testo evidenziato (solo RPD, riletto dalla cartella analizzata) e card di scelta per le schede mancanti | – | – |
 | – | feat/try-file-visual | Prova un file: testo con evidenziati dati personali, categorie e parole chiave; senza scheda l'RPD sceglie tra le 3 proposte o crea una nuova scheda già compilata, e il documento entra nell'inventario | – (invariato) | – (invariato) |
 | – | feat/try-file | UI: pagina "Prova un file", carica un documento e mostra i passi dell'analisi (testo, dati, categorie, schede, esito) senza salvarlo | – (invariato) | – (invariato) |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
@@ -65,5 +66,6 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 - **PR in pila**: aprire sempre con base `main`, anche se il branch parte da un'altra PR non ancora unita (il diff si riduce da solo dopo l'unione). Con base su un altro branch la #5 è finita dentro `feat/extract` invece che su `main` ed è servita la #6 per recuperarla.
 - **Dipendenze di sistema**: `sudo apt install tesseract-ocr tesseract-ocr-ita ocrmypdf` (Debian 12). Senza, l'OCR resta vuoto ma tutto il resto funziona.
 - **Modelli piccoli e esempi**: dando a qwen3:1.7b una scheda di esempio "per lo stile", ne copia denominazione e finalità. Niente esempi nel prompt, solo i documenti.
+- **Test della UI**: con il Python di sistema `tests/test_ui.py` viene saltato in blocco (manca fastapi) e pytest mostra solo "1 skipped". Lanciare `.venv/bin/python -m pytest`.
 - `sviluppo/LEGGIMI.txt` non ha etichetta: lo scorer lo ignora con un avviso.
 - **Windows**: `test_classify_skips_symlinks_outside_root` richiede il permesso di creare link simbolici (modalità sviluppatore) e senza markitdown installato la pipeline non parte. Lo scorer usa solo la libreria standard: `python -m classifier.scorer` funziona ovunque sulle `data/pred_*.json` salvate.

@@ -136,6 +136,25 @@ flowchart LR
     CAR --> INV[inventario, coda, cruscotto]
 ```
 
+### Dettaglio documento con il file (feat/doc-view)
+
+Stessa vista di "Prova un file", ma il file viene dalla cartella analizzata dalla pipeline.
+
+```mermaid
+flowchart LR
+    U((RPD)) -->|"GET /documenti/&lt;id&gt;"| D{ruolo rpd<br/>e UI_DOCUMENTI?}
+    D -->|no: operatore| M[solo valori mascherati]
+    D -->|sì| P{percorso risolto<br/>dentro la cartella?<br/>≤ 20 MB}
+    FS[(cartella analizzata<br/>sola lettura)] --> P
+    P -->|no| E[File non disponibile]
+    P -->|sì| H{SHA-256 come<br/>nell'analisi?}
+    H -->|no| W[avviso: file cambiato<br/>niente card di scelta]
+    H -->|sì| AN[extract_text + analyze<br/>come Prova un file]
+    W --> AN
+    AN -->|pagina no-store: testo evidenziato;<br/>card firmate HMAC se scheda mancante| U
+    U -->|"POST /prova/salva"| S[(caricati + decisioni)]
+```
+
 ## Bozze di nuove schede (feat/draft-records, feat/semantic-drafts)
 
 ```mermaid

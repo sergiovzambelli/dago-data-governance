@@ -2,6 +2,14 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/doc-view: il dettaglio documento come Prova un file
+- Richiesta dell'utente: un file aperto dal cruscotto (o da coda e inventario) deve essere mostrato come in Prova un file.
+- Decisioni (dell'utente): sì al testo evidenziato nel dettaglio, solo per l'RPD; per i documenti senza scheda, le stesse card di scelta.
+- Il file viene riletto dalla cartella analizzata (`UI_DOCUMENTI`, predefinita la cartella `sviluppo` del kit), estratto e rianalizzato con la stessa funzione di Prova un file (`analysis()` in `ui/app.py`, estratta da `/prova`). Parti di pagina comuni in `ui/templates/_file.html`. Le card passano da `/prova/salva`, già firmato: la nota della decisione dice da dove arriva la scelta.
+- Sicurezza: percorso risolto anche nei link simbolici e accettato solo dentro la cartella; massimo 20 MB; l'operatore vede solo i valori mascherati; pagina `no-store`, testo mai salvato. Se l'impronta SHA-256 non coincide più con quella dell'analisi compare un avviso e le card non vengono mostrate.
+- Verifica sul kit: la rianalisi della UI coincide con `pred_sviluppo.json` su 156 documenti su 156; pagina in 0,1 s (3 s la prima volta, 0,6 s per una scansione con OCR).
+- Trovato: senza `.venv` i test della UI vengono saltati in blocco (`importorskip("fastapi")`). Il "1 skipped" delle PR precedenti era tutta `tests/test_ui.py`: si lanciano con `.venv/bin/python -m pytest`.
+
 ## 2026-10-29 — feat/semantic-drafts: gruppi per contenuto e schede simili (RAG sul registro)
 - Richiesta dell'utente: il raggruppamento per nome file è grezzo; provare raggruppamento semantico e RAG. Decisione (dell'utente): una sola PR.
 - Embedding locali con Ollama `bge-m3` (multilingue), stesso `OllamaClient` solo verso host locali. `make drafts` usa `EMBED=bge-m3` di default; senza modello, o se gli embedding falliscono (avviso su stderr), si torna ai gruppi per nome file.
