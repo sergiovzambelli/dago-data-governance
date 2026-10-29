@@ -574,3 +574,76 @@ def test_save_choice_rejects_tampered_analysis(try_client):
     html = upload(try_client, "Domanda di permesso. C.F. CSMPRZ97B66G702K", "fileserver/Altro").text
     html = re.sub(r'(name="analisi" value=")([^"]{5})', r"\1AAAAA", html)
     assert save_choice(try_client, html, "T-PER-07").status_code == 400
+
+
+DOC_TEXT = "Reclamo: chiedo un permesso per la caduta, malattia. C.F. CSMPRZ97B66G702K"
+
+
+@pytest.fixture
+def doc_settings(settings, tmp_path):
+    """Cartella analizzata con il file del reclamo (scheda mancante), come la vede la pipeline."""
+    import hashlib
+    pytest.importorskip("markitdown")
+    root = tmp_path / "analizzata"
+    path = root / "fileserver/URP/Reclami/reclamo_117.txt"
+    path.parent.mkdir(parents=True)
+    path.write_text(DOC_TEXT, encoding="utf-8")
+    preds = json.loads(settings.predictions.read_text(encoding="utf-8"))
+    preds[2] |= {"file": "fileserver/URP/Reclami/reclamo_117.txt", "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+    settings.predictions.write_text(json.dumps(preds), encoding="utf-8")
+    settings.register.write_text(
+        "Codice;Denominazione;Finalità;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche;Diffusione\n"
+        "T-PER-07;Permessi;Permessi;fileserver/Personale/Permessi;permesso, congedo;richiesta;NO\n", encoding="utf-8")
+    settings.permissions = None
+    settings.documents = root
+    return settings
+
+
+def test_document_page_shows_the_file_like_try_file(doc_settings):
+    c = Client(create_app(doc_settings))
+    r = c.get(doc_url(c, "reclamo_117.txt"))
+    assert r.headers["cache-control"] == "no-store"  # la pagina contiene il testo del documento
+    assert "Il file, con ciò che è stato trovato" in r.text
+    assert re.search(r'<mark class="hl hl-entita"[^>]*>CSMPRZ97B66G702K</mark>', r.text)
+    assert re.search(r'<mark class="hl hl-chiave"[^>]*>permesso</mark>', r.text)
+    # scheda mancante: le stesse card di Prova un file
+    assert "Usa questa scheda" in r.text and "Nuova scheda" in r.text
+
+
+def test_document_page_choice_validates_the_document(doc_settings):
+    c = Client(create_app(doc_settings))
+    url = doc_url(c, "reclamo_117.txt")
+    r = save_choice(c, c.get(url).text, "T-PER-07")
+    assert r.status_code == 303 and r.headers["location"].startswith(url)
+    page = c.get(url).text
+    assert "Validato" in page and "T-PER-07" in page and "Conforme" in page
+    assert len(re.findall(r"reclamo_117\.txt", c.get("/documenti").text)) >= 1
+    assert c.get("/documenti", params={"esito": "SCHEDA_MANCANTE"}).text.count("reclamo_117.txt") == 0
+
+
+def test_document_page_hides_the_text_from_operators(doc_settings, tmp_path):
+    c = Client(create_app(Settings(**{**doc_settings.__dict__, "users_file": _users_file(tmp_path)})))
+    auth = _auth("ufficio", "pw-op-123")
+    page = c.get(doc_url(c, "reclamo_117.txt", headers=auth), headers=auth).text
+    assert "CSMPRZ97B66G702K" not in page and "Usa questa scheda" not in page
+
+
+def test_document_page_warns_if_the_file_changed_or_is_missing(doc_settings):
+    c = Client(create_app(doc_settings))
+    url = doc_url(c, "reclamo_117.txt")
+    (doc_settings.documents / "fileserver/URP/Reclami/reclamo_117.txt").write_text("altro testo", encoding="utf-8")
+    page = c.get(url).text
+    assert "è cambiato dopo l'analisi" in page and "Usa questa scheda" not in page
+    (doc_settings.documents / "fileserver/URP/Reclami/reclamo_117.txt").unlink()
+    assert "File non disponibile" in c.get(url).text
+
+
+def test_document_page_never_reads_outside_the_analysed_folder(doc_settings, tmp_path):
+    (tmp_path / "segreto.txt").write_text("SEGRETO", encoding="utf-8")
+    preds = json.loads(doc_settings.predictions.read_text(encoding="utf-8"))
+    preds[3]["file"] = "../segreto.txt"
+    doc_settings.predictions.write_text(json.dumps(preds), encoding="utf-8")
+    c = Client(create_app(doc_settings))
+    html = c.get("/documenti").text
+    for url in set(re.findall(r'href="(/documenti/[0-9a-f]{16})"', html)):
+        assert "SEGRETO" not in c.get(url).text

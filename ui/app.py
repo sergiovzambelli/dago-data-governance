@@ -195,18 +195,26 @@ def create_app(settings):
                     filters={"esito": esito, "scheda": scheda, "scostamento": scostamento, "settore": settore})
 
     @app.get("/documenti/{doc_id}", response_class=HTMLResponse)
-    def detail(request: Request, doc_id: str):
+    async def detail(request: Request, doc_id: str):
         doc = find(doc_id)
+        user = request.state.user
+        # testo integrale solo all'RPD (eccezione a T-031, come Prova un file)
+        # shortcut: estrazione (e OCR delle scansioni) a ogni apertura, nessuna cache per non conservare il testo;
+        # se le scansioni rendono la pagina lenta, caricare il testo a richiesta
+        view = await run_in_threadpool(file_view, doc, user) if user["ruolo"] == "rpd" and settings.documents else {}
         history = [d for d in log.all() if d["documento"] == doc["file"]]
         queue = queue_of(documents())
         ids = [d["id"] for d in queue]
         position = ids.index(doc_id) + 1 if doc_id in ids else None
         # il prossimo dopo questo nella coda; per un documento già validato, il primo della coda
         following = ids[position:] if position else ids
-        return page(request, "documento.html", nav="coda" if position else "documenti", doc=doc, history=history,
-                    record=store.register.get(doc["scheda"] or ""), register=store.register,
-                    can_decide=request.state.user["ruolo"] == "rpd", position=position, queue_size=len(ids),
-                    next_id=following[0] if following else None)
+        response = page(request, "documento.html", nav="coda" if position else "documenti", doc=doc, history=history,
+                        record=store.register.get(doc["scheda"] or ""), register=store.register,
+                        can_decide=user["ruolo"] == "rpd", position=position, queue_size=len(ids),
+                        next_id=following[0] if following else None, **view)
+        if "segments" in view:
+            response.headers["Cache-Control"] = "no-store"  # la pagina contiene il testo del documento
+        return response
 
     @app.post("/documenti/{doc_id}/decisione")
     def decide(request: Request, doc_id: str, csrf_token: str = Form("", alias="csrf"), azione: str = Form(""),
@@ -265,6 +273,73 @@ def create_app(settings):
             results = [d for d in documents() if all(t in haystack(d) for t in terms)]
         return page(request, "ricerca.html", nav="ricerca", q=q, results=results)
 
+    def analysis(rel, text, sha, origin):
+        """Analisi del testo come nella pipeline: (esito, testo evidenziato, scelta della scheda se manca)."""
+        from classifier.categories import find_categories
+        from classifier.compliance import check, load_permissions
+        from classifier.dates import document_date
+        from classifier.drafts import build_drafts
+        from classifier.matching import load_register as load_rules
+        from classifier.pipeline import analyze
+
+        def outcome(record, categories):
+            deviations = check(record, rel, categories, perms, document_date(rel, text))
+            return {"esito": "NON_CONFORME" if deviations else "CONFORME", "scostamenti": deviations}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            reg = Path(tmp) / "registro.csv"
+            reg.write_bytes(export_register().body)  # registro in uso, con le modifiche fatte nella UI
+            perms = load_permissions(settings.permissions) if settings.permissions and \
+                settings.permissions.exists() else ()
+            rules = {r["codice"]: r for r in load_rules(reg)}
+            result = analyze(rel, text, list(rules.values()), perms)
+            shown = text[:MAX_TEXT_SHOWN]
+            spans = [(e["inizio"], e["fine"], "entita", ENTITY_TYPES.get(e["tipo"], e["tipo"]))
+                     for e in result["entita"]]
+            spans += [(m.start(), m.end(), "chiave", f"parola chiave di {p['scheda']}")
+                      for p in result["proposte"] for _, regex, _ in rules[p["scheda"]]["termini"]
+                      for m in regex.finditer(shown)]
+            spans += [(c["inizio"], c["fine"], "categoria", CATEGORIES.get(c["categoria"], c["categoria"]))
+                      for c in find_categories(text)]
+            choice = None
+            if result["esito"] == "SCHEDA_MANCANTE":
+                # esito con ciascuna scheda proposta e con una scheda nuova: firmati, tornano con la scelta
+                options = {p["scheda"]: outcome(rules[p["scheda"]], result["categorie_particolari"])
+                           for p in result["proposte"]}
+                draft = build_drafts([{**result, "file": rel}], {rel: text}, perms)[0]["campi"]
+                key = re.findall(r"[A-Z0-9]+", draft["Tipologie documentali tipiche"].upper())
+                draft["Codice"] = "NUOVA-" + ("-".join(k[:6] for k in key[:2]) or "DOC")
+                draft["Denominazione"] = draft["Denominazione"] or draft["Tipologie documentali tipiche"].capitalize()
+                (Path(tmp) / "nuova.csv").write_bytes(_csv(REGISTER_COLUMNS, [[draft[c] for c in REGISTER_COLUMNS]],
+                                                           "nuova.csv").body)
+                options["NUOVA"] = outcome(load_rules(Path(tmp) / "nuova.csv")[0], result["categorie_particolari"])
+                choice = {"predizione": {"file": rel, "sha256": sha, **result}, "opzioni": options, "nuova": draft,
+                          "origine": origin}
+        return result, highlight(shown, spans), choice
+
+    def file_view(doc, user):
+        """Il file del documento riletto dalla cartella analizzata, evidenziato come in Prova un file. Mai salvato."""
+        root = settings.documents.resolve()
+        path = (root / doc["file"]).resolve()
+        # resolve segue anche i link: fuori dalla cartella analizzata non si legge nulla
+        if not path.is_relative_to(root) or not path.is_file():
+            return {"file_error": "File non disponibile nella cartella analizzata."}
+        if path.stat().st_size > MAX_UPLOAD:
+            return {"file_error": f"File oltre {MAX_UPLOAD // (1024 * 1024)} MB: non viene mostrato."}
+        try:
+            from classifier.extract import extract_text
+        except ImportError:
+            return {"file_error": "Analisi non disponibile: installa le dipendenze del classificatore."}
+        sha = hashlib.sha256(path.read_bytes()).hexdigest()
+        text = extract_text(path)
+        result, segments, choice = analysis(doc["file"], text, sha, "dettaglio documento")
+        changed = sha != doc["sha256"]
+        # la scelta vale per il file analizzato: se è cambiato, o la scheda c'è già, niente card
+        if changed or doc["esito"] != "SCHEDA_MANCANTE":
+            choice = None
+        return {"chars": len(text), "segments": segments, "choice": choice, "file_changed": changed,
+                "result": result, "analisi": csrf.sign(user, choice) if choice else ""}
+
     @app.get("/prova", response_class=HTMLResponse)
     def try_form(request: Request):
         return page(request, "prova.html", nav="prova", result=None)
@@ -277,13 +352,8 @@ def create_app(settings):
         file, cartella = form.get("file"), form.get("cartella", "")
         # import qui: il resto della UI funziona anche senza le dipendenze del classificatore (requirements.txt)
         try:
-            from classifier.categories import find_categories
-            from classifier.compliance import check, load_permissions
-            from classifier.dates import document_date
-            from classifier.drafts import build_drafts
             from classifier.extract import extract_text
-            from classifier.matching import load_register as load_rules
-            from classifier.pipeline import analyze
+            from classifier.pipeline import analyze  # noqa: F401  (lo usa analysis(): qui si verifica che ci sia)
         except ImportError:
             raise HTTPException(503, "Analisi non disponibile: installa le dipendenze del classificatore "
                                      "(requirements.txt).")
@@ -299,46 +369,13 @@ def create_app(settings):
             raise HTTPException(400, f"File troppo grande: massimo {MAX_UPLOAD // (1024 * 1024)} MB.")
         rel = f"{folder}/{name}" if folder else name
 
-        def outcome(record, text, categories, perms):
-            deviations = check(record, rel, categories, perms, document_date(rel, text))
-            return {"esito": "NON_CONFORME" if deviations else "CONFORME", "scostamenti": deviations}
-
         def run():  # estrazione e OCR possono durare minuti: fuori dal ciclo degli eventi
             with tempfile.TemporaryDirectory() as tmp:
                 # il nome sul disco è fisso: dall'utente si prende solo l'estensione, che sceglie l'estrattore
                 path = Path(tmp) / ("file" + "".join(c for c in Path(name).suffix if c.isalnum() or c == ".")[:10])
                 path.write_bytes(data)
-                reg = Path(tmp) / "registro.csv"
-                reg.write_bytes(export_register().body)  # registro in uso, con le modifiche fatte nella UI
                 text = extract_text(path)
-                perms = load_permissions(settings.permissions) if settings.permissions and \
-                    settings.permissions.exists() else ()
-                rules = {r["codice"]: r for r in load_rules(reg)}
-                result = analyze(rel, text, list(rules.values()), perms)
-                shown = text[:MAX_TEXT_SHOWN]
-                spans = [(e["inizio"], e["fine"], "entita", ENTITY_TYPES.get(e["tipo"], e["tipo"]))
-                         for e in result["entita"]]
-                spans += [(m.start(), m.end(), "chiave", f"parola chiave di {p['scheda']}")
-                          for p in result["proposte"] for _, regex, _ in rules[p["scheda"]]["termini"]
-                          for m in regex.finditer(shown)]
-                spans += [(c["inizio"], c["fine"], "categoria", CATEGORIES.get(c["categoria"], c["categoria"]))
-                          for c in find_categories(text)]
-                choice = None
-                if result["esito"] == "SCHEDA_MANCANTE":
-                    # esito con ciascuna scheda proposta e con una scheda nuova: firmati, tornano con la scelta
-                    options = {p["scheda"]: outcome(rules[p["scheda"]], text, result["categorie_particolari"], perms)
-                               for p in result["proposte"]}
-                    draft = build_drafts([{**result, "file": rel}], {rel: text}, perms)[0]["campi"]
-                    key = re.findall(r"[A-Z0-9]+", draft["Tipologie documentali tipiche"].upper())
-                    draft["Codice"] = "NUOVA-" + ("-".join(k[:6] for k in key[:2]) or "DOC")
-                    draft["Denominazione"] = draft["Denominazione"] or draft["Tipologie documentali tipiche"].capitalize()
-                    (Path(tmp) / "nuova.csv").write_bytes(_csv(REGISTER_COLUMNS, [[draft[c] for c in REGISTER_COLUMNS]],
-                                                               "nuova.csv").body)
-                    options["NUOVA"] = outcome(load_rules(Path(tmp) / "nuova.csv")[0], text,
-                                               result["categorie_particolari"], perms)
-                    choice = {"predizione": {"file": rel, "sha256": hashlib.sha256(data).hexdigest(), **result},
-                              "opzioni": options, "nuova": draft}
-                return text, result, highlight(shown, spans), choice
+            return (text, *analysis(rel, text, hashlib.sha256(data).hexdigest(), "Prova un file"))
 
         text, result, segments, choice = await run_in_threadpool(run)
         user = request.state.user
@@ -368,7 +405,7 @@ def create_app(settings):
         log.add_upload(user["nome"], prediction)
         doc = parse_predictions([prediction])[0]
         log.add(user["nome"], doc, "CONFERMA", option["esito"], code,
-                "Scheda scelta da Prova un file (proposta del sistema: scheda mancante)")
+                f"Scheda scelta da {choice.get('origine', 'Prova un file')} (proposta del sistema: scheda mancante)")
         if form.get("scheda") == "NUOVA":
             return RedirectResponse(f"/schede/{code}?salvata=1", status_code=303)
         return RedirectResponse(f"/documenti/{doc['id']}?registrata=1", status_code=303)

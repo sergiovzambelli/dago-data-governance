@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icon, outcome, record as record_name, share, share_hint, status %}
+{% from "_file.html" import file_text, record_choice with context %}
 {% block title %}{{ doc.file|nome_file }}{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
@@ -47,6 +48,8 @@
       {% elif doc.dati_personali %}Sì, senza valori leggibili{% else %}Nessuno{% endif %}</dd></div>
   </dl>
 </section>
+
+{% if can_decide and choice %}{{ record_choice(result, choice, analisi) }}{% endif %}
 
 {% if can_decide %}
 <section class="decision" aria-labelledby="h-decisione">
@@ -112,6 +115,18 @@
 
 <div class="row">
 <div class="col-lg-8">
+  {% if file_changed %}
+  <div class="alert alert-warning" role="alert">Il file è cambiato dopo l'analisi: il testo qui sotto è quello attuale,
+    esito e proposte sono quelli dell'analisi. Rilancia l'analisi prima di scegliere la scheda.</div>
+  {% endif %}
+  {% if segments is defined %}{{ file_text(chars, segments) }}
+  {% elif file_error %}
+  <section class="block" aria-labelledby="h-testo">
+    <h2 id="h-testo" class="h4">Il file, con ciò che è stato trovato</h2>
+    <p>{{ file_error }}</p>
+  </section>
+  {% endif %}
+
   <section aria-labelledby="h-scostamenti" class="block">
     <h2 id="h-scostamenti" class="h4">Problemi rispetto alla scheda</h2>
     {% if doc.scostamenti %}

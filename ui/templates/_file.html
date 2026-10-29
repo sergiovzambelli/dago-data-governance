@@ -1,0 +1,63 @@
+{# Parti comuni a «Prova un file» e al dettaglio documento: stessa vista del file, stessa scelta della scheda. #}
+{% from "_macros.html" import outcome, share_hint %}
+
+{% macro record_choice(result, choice, analisi) %}
+<section class="choice" aria-labelledby="h-scelta">
+  <h2 id="h-scelta" class="h4 mt-0">Scegli la scheda per questo documento</h2>
+  <p class="mb-3">La scelta registra il documento nell'inventario come validato da te. Il testo del file non viene conservato.</p>
+  <form method="post" action="/prova/salva">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="analisi" value="{{ analisi }}">
+    <div class="choice-grid">
+      {% for p in result.proposte %}
+      {% set opt = choice.opzioni[p.scheda] %}
+      {% set total = result.proposte|sum(attribute="punteggio") %}
+      {% set pct = (p.punteggio / total * 100)|round|int if total else 0 %}
+      <div class="choice-card">
+        <p class="choice-kicker">Proposta {{ loop.index }}</p>
+        <h3 class="choice-title"><span class="rec-code">{{ p.scheda }}</span> {{ schede[p.scheda].denominazione if schede.get(p.scheda) }}</h3>
+        <div class="share-bar" aria-hidden="true"><span style="width: {{ pct }}%"></span></div>
+        <p class="hint mb-2">{{ pct }}% degli indizi · {{ p.motivazione or "—" }}</p>
+        <p class="mb-3">Con questa scheda: {{ outcome(opt.esito) }}
+          {% if opt.scostamenti %}<span class="d-block hint">{% for s in opt.scostamenti %}{{ deviations[s][0] }}{{ ", " if not loop.last }}{% endfor %}</span>{% endif %}</p>
+        <button type="submit" class="btn btn-primary w-100 mt-auto" name="scheda" value="{{ p.scheda }}">Usa questa scheda<span class="visually-hidden"> {{ p.scheda }}</span></button>
+      </div>
+      {% endfor %}
+      <div class="choice-card choice-new">
+        <p class="choice-kicker">Oppure</p>
+        <h3 class="choice-title">Nuova scheda <span class="rec-code">{{ choice.nuova.Codice }}</span></h3>
+        <dl class="small mb-3">
+          <dt>Cartella</dt><dd><code>{{ choice.nuova["Percorsi dichiarati"] or "—" }}</code></dd>
+          <dt>Categorie particolari</dt><dd>{{ choice.nuova["Categorie particolari dichiarate"] }}</dd>
+          <dt>Parole chiave</dt><dd>{{ choice.nuova["Parole chiave"] }}</dd>
+        </dl>
+        <p class="mb-3">Con la nuova scheda: {{ outcome(choice.opzioni.NUOVA.esito) }}</p>
+        <button type="submit" class="btn btn-outline-primary w-100 mt-auto" name="scheda" value="NUOVA">Crea la nuova scheda già compilata</button>
+      </div>
+    </div>
+    {% if result.proposte %}{{ share_hint() }}{% endif %}
+  </form>
+</section>
+{% endmacro %}
+
+{% macro file_text(chars, segments) %}
+<section class="block" aria-labelledby="h-testo">
+  <h2 id="h-testo" class="h4">Il file, con ciò che è stato trovato</h2>
+  <ul class="hl-legend" aria-label="Legenda">
+    <li><mark class="hl hl-entita">Dato personale</mark></li>
+    <li><mark class="hl hl-categoria">Categoria particolare</mark></li>
+    <li><mark class="hl hl-chiave">Parola chiave di una scheda</mark></li>
+  </ul>
+  {% if chars %}
+  <p class="hint">{{ chars }} caratteri estratti{% if chars > 5000 %}, qui i primi 5000{% endif %}.</p>
+  <div class="extracted" tabindex="0" role="region" aria-label="Testo estratto dal file">
+    {%- for part, kind, label in segments -%}
+    {%- if kind -%}<mark class="hl hl-{{ kind }}" title="{{ label }}">{{ part }}</mark><span class="visually-hidden"> ({{ label }})</span>
+    {%- else -%}{{ part }}{%- endif -%}
+    {%- endfor -%}
+  </div>
+  {% else %}
+  <p>Nessun testo leggibile: per prudenza il file è trattato come documento con dati personali.</p>
+  {% endif %}
+</section>
+{% endmacro %}
