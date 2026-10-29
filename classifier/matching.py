@@ -39,6 +39,8 @@ def load_register(path):
             x.strip().upper() for x in (r.get("Categorie particolari dichiarate") or "").split(","))
             if c and c != "NESSUNA"},
         "diffusione": (r.get("Diffusione") or "").strip().upper() == "SI",
+        # "Illimitata / non calcolabile" o vuoto: nessuna scadenza
+        "conservazione_anni": int(y) if (y := (r.get("Conservazione in anni") or "").strip()).isdigit() else None,
         # parole intere; lo spazio vale anche come a capo (PDF)
         "termini": [(t, re.compile(r"\b" + r"\s+".join(map(re.escape, t.split())) + r"\b", re.I),
                      math.log(1 + len(rows) / df[t])) for t in sorted(terms[r["Codice"]])],

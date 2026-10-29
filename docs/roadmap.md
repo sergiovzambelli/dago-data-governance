@@ -24,13 +24,14 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #10 | chore/roadmap | Questo file | – | – |
 | #11 | feat/matching | Top-3 schede da parole chiave pesate + cartella dichiarata, con motivazione | 59,4 | 57,9 |
 | #12 | feat/missing-record | SCHEDA_MANCANTE se la scheda migliore ha ≤ 1 parola chiave ed è fuori dalle cartelle dichiarate | 73,2 | 72,9 |
-| #13 | feat/compliance | 4 regole su 5: categoria, luogo, accesso, diffusione → NON_CONFORME | **84,9** | **87,4** |
+| #13 | feat/compliance | 4 regole su 5: categoria, luogo, accesso, diffusione → NON_CONFORME | 84,9 | 87,4 |
+| – | feat/retention | CONSERVAZIONE_SCADUTA con la data del documento (testo, nome file) | **88,3** | **90,1** |
 
-Metriche dopo feat/compliance (sviluppo): esito 0,77 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,61 · precisione entità 1,0.
+Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 
 ## Da fare (in ordine)
 
-1. **feat/retention** — CONSERVAZIONE_SCADUTA: data del documento letta nel testo + "Conservazione in anni" della scheda, rispetto al 28/10/2026; mai con conservazione illimitata. 13 casi su sviluppo. Nella stessa PR: "destinato alla pubblicazione" anche dal testo (determine all'albo, 5 casi di DIFFUSIONE_NON_PREVISTA). Metrica: F1 scostamenti (15), esito.
+1. **feat/publication** — "destinato alla pubblicazione" anche dal testo, non solo dalla cartella: determine all'albo (5 casi di DIFFUSIONE_NON_PREVISTA mancati su sviluppo). Metrica: F1 scostamenti (15), esito.
 2. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
 3. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
 4. **LLM locale (Ollama, opzionale)** — categorie implicite e abbinamenti incerti.

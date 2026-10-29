@@ -43,7 +43,7 @@ flowchart TB
         CAT[4 · Categorie particolari<br/>dizionari parole chiave]
         LVL[5 · Livello 0–3<br/>regole esplicite]
         MATCH[6 · Abbinamento scheda<br/>percorso + parole chiave BM25<br/>top-3 con soglia]
-        RULES[7 · regole di conformità<br/>Python puro · 4 su 5, manca conservazione]
+        RULES[7 · 5 regole di conformità<br/>Python puro · data del documento da testo o nome file]
         ESITO{Esito}
     end
 

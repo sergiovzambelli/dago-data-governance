@@ -88,3 +88,11 @@ def test_register_reads_declared_categories_and_diffusion(tmp_path):
     assert recs["T-1"]["categorie_dichiarate"] == {"ORIGINE_ETNICA", "SALUTE"} and recs["T-1"]["diffusione"]
     assert recs["T-2"]["categorie_dichiarate"] == set() and not recs["T-2"]["diffusione"]
     assert recs["T-3"]["categorie_dichiarate"] == {"ORIENTAMENTO_SESSUALE"} and not recs["T-3"]["diffusione"]
+
+
+def test_register_reads_retention_years(tmp_path):
+    p = tmp_path / "r.csv"
+    p.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche;Conservazione in anni\n"
+                 "T-1;a;x;y;10\nT-2;b;x;y;Illimitata / non calcolabile\nT-3;c;x;y;\n", encoding="utf-8")
+    recs = {r["codice"]: r["conservazione_anni"] for r in load_register(p)}
+    assert recs == {"T-1": 10, "T-2": None, "T-3": None}
