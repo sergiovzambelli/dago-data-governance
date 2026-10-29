@@ -2,6 +2,9 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — chore/roadmap: stato del progetto per ogni sessione
+- Nuovo `docs/roadmap.md`: PR fatte con punteggio, prossime PR in ordine, decisioni e regole pratiche. `AGENTS.md` chiede di leggerlo all'inizio di ogni sessione e di aggiornarlo in ogni PR.
+
 ## 2026-10-29 — feat/ocr: OCR per scansioni e foto
 - PDF senza strato di testo → `ocrmypdf --skip-text --sidecar` in italiano; immagini (JPG, PNG, TIFF) → `tesseract -l ita`.
 - Dipendenze di sistema (non pip): `tesseract-ocr`, `tesseract-ocr-ita`, `ocrmypdf` (Debian 12: tesseract 5.3.0, ocrmypdf 14.0.1). Se mancano, il file resta senza testo e la pipeline prosegue.

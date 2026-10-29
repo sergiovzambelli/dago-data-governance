@@ -45,6 +45,7 @@ Ogni PR che cambia il comportamento del progetto **deve** aggiornare, nella stes
 
 | File | Cosa contiene | Quando si aggiorna |
 |------|---------------|--------------------|
+| `docs/roadmap.md` | Stato delle PR, punteggi, prossimi passi, decisioni e regole pratiche. **Da leggere all'inizio di ogni sessione** | Ogni PR: la PR passa in "Fatte" con il punteggio |
 | `docs/evoluzione.md` | Diario del progetto: cosa è stato aggiunto, decisioni prese e perché | Ogni PR, una voce in cima |
 | `docs/flussi.md` | Diagrammi di flusso in Mermaid (utente, dati, componenti) | Ogni PR che aggiunge o cambia un flusso, una pagina, un'API o un componente |
 | `docs/threat-model.md` | Threat model STRIDE: asset, confini di fiducia, minacce, mitigazioni | Ogni PR che aggiunge dati, input, endpoint, integrazioni, dipendenze o permessi |
