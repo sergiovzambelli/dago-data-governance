@@ -45,8 +45,8 @@ def check(record, file_path, categories, permissions, doc_date=None):
     found = []
     if set(categories) - record["categorie_dichiarate"]:
         found.append("CATEGORIA_NON_DICHIARATA")
-    if not any(_under(file_path, p) for p in record["percorsi"]):
-        found.append("LUOGO_NON_DICHIARATO")
+    # niente LUOGO_NON_DICHIARATO: controllo tolto su decisione dell'utente; le cartelle dichiarate restano per
+    # l'abbinamento della scheda
     # shortcut: il livello di riservatezza non c'è ancora, ogni documento con dati personali vale come livello ≥ 2
     # (sviluppo: nessun falso positivo); da sostituire con il livello calcolato in feat/level
     if ALL_EMPLOYEES in _groups(permissions, file_path):

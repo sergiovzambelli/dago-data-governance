@@ -121,10 +121,6 @@
       <div class="issue">
         <h3 class="issue-title">{{ icon("it-error", "icon-sm") }} {{ title }}</h3>
         <p>{{ meaning }}</p>
-        {% if s == "LUOGO_NON_DICHIARATO" and record and record.percorsi %}
-        <p class="mb-1">Cartelle dichiarate nella scheda:</p>
-        <ul class="paths">{% for p in record.percorsi %}<li><code>{{ p }}</code></li>{% endfor %}</ul>
-        {% endif %}
         <p class="issue-action"><span class="fw-semibold">Cosa fare:</span> {{ action }}</p>
       </div>
       {% endfor %}

@@ -7,6 +7,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 
 - `make data` estrae il kit; `make score` (con `LLM=qwen3:1.7b` o `LLM=qwen3:8b` per il modello locale sui casi dubbi) analizza sviluppo e validation e stampa le 6 metriche della giuria e il totale su 100.
 - Pesi (specifica): esito 20 · richiamo categorie particolari 20 · scheda top-3 20 · F1 SCHEDA_MANCANTE 15 · F1 scostamenti 15 · precisione entità 10.
+- Lo scorer non misura LUOGO_NON_DICHIARATO (`IGNORED` in `classifier/scorer.py`), su decisione dell'utente.
 - **Si corregge guardando solo il dataset di sviluppo**; il validation set serve solo a misurare (altrimenti il suo punteggio non è più "alla cieca").
 
 ## Fatte
@@ -32,6 +33,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
 | – | feat/records | UI: pagina Schede (crea, modifica, archivia, ripristina, storico, esporta il registro in CSV) | – | – |
 | #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
+| #25 | feat/no-location-check | Tolto il controllo LUOGO_NON_DICHIARATO da classificatore, UI e scorer, su decisione dell'utente | 89,8 (86,3 con lo scorer di prima) | 90,4 (86,7 con lo scorer di prima) |
 | – | feat/try-file-visual | Prova un file: testo con evidenziati dati personali, categorie e parole chiave; senza scheda l'RPD sceglie tra le 3 proposte o crea una nuova scheda già compilata, e il documento entra nell'inventario | – (invariato) | – (invariato) |
 | – | feat/try-file | UI: pagina "Prova un file", carica un documento e mostra i passi dell'analisi (testo, dati, categorie, schede, esito) senza salvarlo | – (invariato) | – (invariato) |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
@@ -51,6 +53,7 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 
 ## Decisioni prese
 
+- Niente controllo del luogo (LUOGO_NON_DICHIARATO), decisione dell'utente, anche nello scorer: le etichette vengono lette senza il luogo e un documento non conforme solo per il luogo è atteso conforme. **I punteggi da qui in poi non sono confrontabili con quelli precedenti** né con una giuria che usa le etichette originali (con le etichette originali: 86,3 sviluppo, 86,7 validation). Le cartelle dichiarate restano per abbinare la scheda.
 - Un file senza testo leggibile non è mai "senza dati personali" (meglio un falso allarme che un dato ignorato).
 - Una categoria particolare descritta rende il documento "con dati personali" anche senza identificativi.
 - Precisione entità misurata per file (le etichette non hanno le posizioni).

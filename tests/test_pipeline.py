@@ -121,7 +121,7 @@ def test_document_outside_declared_folder_is_not_compliant(tmp_path):
     (root / "Varie" / "scan.txt").write_text("C.F. BLDSLV66A68E625M chiede congedo, legge 104")
     (r,) = classify(root, load_register(reg), load_permissions(perm))
     assert r["scheda"] == "T-PER-07" and r["esito"] == "NON_CONFORME"
-    assert r["scostamenti"] == ["LUOGO_NON_DICHIARATO", "ACCESSO_ECCESSIVO"]
+    assert r["scostamenti"] == ["ACCESSO_ECCESSIVO"]
 
 
 def test_document_older_than_retention_is_not_compliant(tmp_path):
@@ -153,7 +153,7 @@ def test_local_model_resolves_doubtful_record(tmp_path):
     # nessuna parola chiave: per le sole regole è SCHEDA_MANCANTE
     (root / "Condivisa" / "accessi.txt").write_text("utente mario.rossi@comune.it collegato da 10.0.0.7")
     (r,) = classify(root, load_register(reg), llm=_ModelSaysLogs())
-    # con la scheda trovata partono i controlli: il file non sta nella cartella dichiarata
-    assert r["scheda"] == "T-SIS-02" and r["scostamenti"] == ["LUOGO_NON_DICHIARATO"]
+    # con la scheda trovata partono i controlli: la cartella non dichiarata non è più uno scostamento
+    assert r["scheda"] == "T-SIS-02" and r["esito"] == "CONFORME" and r["scostamenti"] == []
     assert r["proposte"][0]["scheda"] == "T-SIS-02"
     assert "modello locale: estratto dei log VPN" in r["proposte"][0]["motivazione"]
