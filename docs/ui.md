@@ -27,9 +27,9 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 
 | Pagina | Requisito della specifica |
 |---|---|
-| **Cruscotto** `/` | documenti per esito, scostamento e scheda; elenco dei documenti senza scheda. Conta i valori dopo la validazione |
+| **Cruscotto** `/` | documenti per esito, scostamento, scheda e settore (cartella sotto il server: `fileserver/Sociale/…` → Sociale); elenco dei documenti senza scheda. Conta i valori dopo la validazione |
 | **Coda di validazione** `/coda` | documenti con dati personali non ancora validati, ordinati per rischio (esito, scostamenti, categorie particolari, esposizione) |
-| **Inventario** `/documenti` | filtri per esito, scheda e scostamento; 50 righe per pagina |
+| **Inventario** `/documenti` | filtri per esito, scheda, scostamento e settore; 50 righe per pagina |
 | **Documento** `/documenti/<id>` | evidenze: entità mascherate con posizione e confidenza, categorie, tre proposte con quota degli indizi (%) e motivazione, scostamenti spiegati con l'azione suggerita, scheda abbinata. Modulo di conferma o correzione e storico |
 | **Ricerca** `/ricerca` | per percorso, scheda, esito, scostamento, categoria, tipo di entità, motivazione. Il testo integrale non è indicizzato (la specifica chiede di non conservare copie integrali) |
 | **Schede** `/schede` | registro dei trattamenti in uso: elenco con documenti abbinati e stato, nuova scheda (`/schede/nuova`), modifica, archiviazione e ripristino (`/schede/<codice>`), storico per scheda, esportazione `/schede/registro.csv` con tutte le colonne del registro |

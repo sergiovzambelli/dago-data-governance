@@ -64,6 +64,29 @@
   </ul>
 </section>
 
+<section class="panel mb-4" aria-labelledby="h-settori">
+  <h2 id="h-settori" class="h5">Documenti per settore</h2>
+  <p class="hint">Il settore è la cartella del file server in cui si trova il documento.</p>
+  <table class="doc-table">
+    <caption class="visually-hidden">Documenti per settore ed esito</caption>
+    <thead><tr><th scope="col">Settore</th><th scope="col">File</th><th scope="col">Conformi</th>
+      <th scope="col">Non conformi</th><th scope="col">Senza scheda</th></tr></thead>
+    <tbody>
+    {% for name, n in by_sector %}
+      <tr>
+        <th scope="row">{% if name %}<a href="/documenti?settore={{ name|urlencode }}">{{ name }}</a>{% else %}Senza cartella{% endif %}</th>
+        <td data-label="File">{{ n.values()|sum }}</td>
+        <td data-label="Conformi">{{ n.get("CONFORME", 0) }}</td>
+        <td data-label="Non conformi">{{ n.get("NON_CONFORME", 0) }}</td>
+        <td data-label="Senza scheda">{{ n.get("SCHEDA_MANCANTE", 0) }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">Nessun documento.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
 {% set max_dev = (by_deviation.values()|max) if by_deviation else 1 %}
 <div class="row">
   <div class="col-lg-6 mb-4">

@@ -104,7 +104,7 @@ flowchart LR
     REG[(Registro_trattamenti.csv)] --> UI
     subgraph UI["ui/ — FastAPI + Jinja2 + Bootstrap Italia 2.18.3 (file locali)"]
         AUTH{utente?<br/>Basic + PBKDF2<br/>oppure solo 127.0.0.1}
-        PAG[cruscotto · coda · inventario<br/>documento · ricerca · registro]
+        PAG[cruscotto con settori · coda · inventario filtrabile per settore<br/>documento · ricerca · registro]
         DEC[decisione RPD<br/>ruolo rpd + token CSRF + Origin]
         SCH[schede: crea · modifica · archivia<br/>ruolo rpd + token CSRF + Origin]
         EXP[esporta JSON / CSV]
