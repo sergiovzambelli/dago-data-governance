@@ -43,6 +43,19 @@ Demo della specifica: dalla coda si apre un documento non conforme, poi uno senz
 - Accessibilità (WCAG 2.1 AA): `lang="it"`, link "Vai al contenuto principale", un solo `h1` per pagina, etichette su ogni campo, tabelle con `caption` e `scope`, esiti scritti a parole e non solo a colori, `aria-current` su navigazione e paginazione, nessuno scorrimento orizzontale a 375 px.
 - Testi in italiano semplice; ogni scostamento dice cosa significa e cosa può fare l'RPD.
 
+## Leggibilità e flusso di lavoro
+
+Dove Bootstrap Italia non bastava per leggibilità o accessibilità, `ui/static/ui.css` lo sostituisce (scelta dell'utente: la leggibilità prima dell'aderenza alla libreria).
+
+- **Colori degli esiti** propri, con contrasto misurato nel browser: "Scheda mancante" passa da 2,39:1 (badge di Bootstrap Italia con testo scuro) a 6,8:1; tutti i testi delle pagine principali sono ≥ 4,5:1.
+- **Tabelle**: nome del file in evidenza e cartella sotto, codice della scheda con il suo nome, problemi come etichette, stato a parole. I percorsi vanno a capo dopo `_`, `-`, `/`, `.` (`<wbr>`) invece che a metà parola. Sotto i 768 px ogni riga diventa una scheda con l'etichetta di ogni campo: niente scorrimento orizzontale.
+- **Coda**: numerata, priorità a parole (Alta, Media, Bassa) con i motivi (es. "3 scostamenti · Salute · aperto a tutti i dipendenti") al posto del punteggio, pulsante "Inizia dal primo", pagine da 50.
+- **Documento**: in alto la sintesi (esito, scheda, problemi, stato) e la posizione nella coda ("3 di 130 da validare"), con il link "Prossimo da validare". Poi la decisione: conferma con un clic, anche "e vai al prossimo"; la correzione sta in un pannello `<details>` aperto solo per le schede mancanti. Dopo il salvataggio il messaggio di conferma riceve il focus (`ui/static/ui.js`), così i lettori di schermo lo annunciano.
+- **Etichette dei campi** sempre visibili sopra il campo, al posto di quelle flottanti di Bootstrap Italia, che si sovrapponevano al testo.
+- I riquadri dei problemi sono in Titillium e non in Lora; il testo è lungo al massimo 75 caratteri per riga; il focus è un bordo giallo di 3 px su tutti gli elementi; con `prefers-reduced-motion` le animazioni sono spente.
+- **Cruscotto**: avanzamento della validazione e pulsante per iniziare; problemi e schede come barre con il numero scritto. L'avviso di modalità locale compare solo qui, non su ogni pagina.
+- **Inventario**: filtri attivi elencati, ognuno da togliere da solo. **Ricerca**: esempi cliccabili. **Registro**: date `29/10/2026 14:01 UTC` e azioni a parole.
+
 ## Sicurezza
 
 - Senza file degli utenti la UI si rifiuta di partire su un indirizzo non locale. Con il file: autenticazione HTTP Basic, password PBKDF2-SHA256 (310.000 iterazioni) e confronto a tempo costante.

@@ -48,14 +48,23 @@ def settings(tmp_path):
                     secret=b"segreto-di-test")
 
 
+class Client(TestClient):
+    """Toglie i punti di a capo <wbr> dei percorsi: i test confrontano il testo, non l'impaginazione."""
+
+    def request(self, *args, **kwargs):
+        r = super().request(*args, **kwargs)
+        r._content = r.content.replace(b"<wbr>", b"")
+        return r
+
+
 @pytest.fixture
 def client(settings):
-    return TestClient(create_app(settings))
+    return Client(create_app(settings))
 
 
 def doc_url(client, name, headers=None):
     html = client.get("/documenti", headers=headers).text
-    return re.search(r'href="(/documenti/[0-9a-f]+)"[^>]*>[^<]*' + re.escape(name), html).group(1)
+    return re.search(r'href="(/documenti/[0-9a-f]+)"[^>]*>(?:(?!</a>).)*?' + re.escape(name), html, re.S).group(1)
 
 
 def token(html):
@@ -136,7 +145,7 @@ def test_correction_is_logged_and_updates_dashboard(client):
     assert r.status_code == 303
     assert "Reclamo su incidente" in client.get(url).text
     log = client.get("/decisioni").text
-    assert "reclamo_117.eml" in log and "CORREZIONE" in log and "T-POL-02" in log
+    assert "reclamo_117.eml" in log and "Correzione" in log and "T-POL-02" in log
     # il documento esce dalla coda e il cruscotto conta l'esito corretto
     assert "reclamo_117.eml" not in client.get("/coda").text
     assert re.search(r"Scheda mancante\s*</[^>]+>\s*<[^>]+>\s*0\b", client.get("/").text)
@@ -182,17 +191,17 @@ def _auth(user, pw):
 
 
 def test_users_file_enforces_login(settings, tmp_path):
-    c = TestClient(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
+    c = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
     assert c.get("/").status_code == 401
     assert c.get("/", headers=_auth("rpd", "sbagliata")).status_code == 401
     assert c.get("/", headers=_auth("rpd", "pw-rpd-123")).status_code == 200
 
 
 def test_operator_cannot_record_decisions(settings, tmp_path):
-    c = TestClient(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
+    c = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
     url = doc_url(c, "reclamo_117.eml", headers=_auth("ufficio", "pw-op-123"))
     page = c.get(url, headers=_auth("ufficio", "pw-op-123")).text
-    assert "Registra la decisione" not in page
+    assert 'name="azione"' not in page
     r = c.post(url + "/decisione", headers=_auth("ufficio", "pw-op-123"),
                data={"csrf": "x", "azione": "CONFERMA"})
     assert r.status_code == 403
@@ -207,3 +216,71 @@ def test_malformed_predictions_are_rejected(settings):
     settings.predictions.write_text(json.dumps([{"file": 3}]), encoding="utf-8")
     with pytest.raises(ValueError, match="predizioni"):
         create_app(settings)
+
+
+# --- leggibilità e flusso di validazione ---
+
+def test_tables_separate_file_name_folder_and_record_name(client):
+    html = client.get("/documenti").text
+    assert '<span class="doc-name">reclamo_117.eml</span>' in html
+    assert '<span class="doc-folder">fileserver/URP/Reclami</span>' in html
+    assert "Permessi, congedi e assenze" in html  # nome della scheda, non solo il codice
+
+
+def test_tables_have_labels_for_small_screens(client):
+    html = client.get("/documenti").text
+    for label in ("Documento", "Esito", "Scheda", "Problemi", "Stato"):
+        assert f'data-label="{label}"' in html
+
+
+def test_queue_explains_priority(client):
+    html = client.get("/coda").text
+    row = html[html.index("scansione_0412.pdf"):html.index("reclamo_117.eml")]
+    assert "Alta" in row and "2 scostamenti" in row and "Salute" in row
+
+
+def test_document_shows_queue_position_and_next(client):
+    html = client.get(doc_url(client, "scansione_0412.pdf")).text
+    assert "1 di 3 da validare" in html
+    assert re.search(r'href="/documenti/[0-9a-f]+"[^>]*>\s*Prossimo da validare', html)
+
+
+def test_confirm_and_next_opens_next_document_in_queue(client):
+    first = doc_url(client, "scansione_0412.pdf")
+    r = client.post(first + "/decisione", follow_redirects=False,
+                    data={"csrf": token(client.get(first).text), "azione": "CONFERMA", "poi": "prossimo"})
+    assert r.status_code == 303
+    assert r.headers["location"].startswith(doc_url(client, "reclamo_117.eml"))
+    assert "registrata=1" in r.headers["location"]
+
+
+def test_correction_lives_in_a_collapsible_panel(client):
+    html = client.get(doc_url(client, "reclamo_117.eml")).text
+    assert "<details" in html and "Correggi esito o scheda" in html
+    assert "Conferma la proposta" in html
+
+
+def test_decision_log_is_readable(client):
+    url = doc_url(client, "reclamo_117.eml")
+    client.post(url + "/decisione", data={"csrf": token(client.get(url).text), "azione": "CONFERMA"})
+    html = client.get("/decisioni").text
+    assert re.search(r"\d{2}/\d{2}/\d{4} \d{2}:\d{2}", html)
+    assert "Conferma" in html and ">CONFERMA<" not in html
+
+
+def test_local_mode_notice_only_on_dashboard(client):
+    assert "Modalità locale" in client.get("/").text
+    assert "Modalità locale" not in client.get("/documenti").text
+
+
+def test_active_filters_can_be_removed_one_by_one(client):
+    html = client.get("/documenti", params={"esito": "CONFORME", "scheda": "T-PER-07"}).text
+    assert "Filtri attivi" in html
+    assert 'href="/documenti?scheda=T-PER-07"' in html  # togli l'esito, tieni la scheda
+
+
+def test_file_names_with_html_stay_text(settings):
+    evil = [{**PREDS[1], "file": 'fileserver/<img src=x onerror=alert(1)>/a_<b>.txt'}]
+    settings.predictions.write_text(json.dumps(evil), encoding="utf-8")
+    html = TestClient(create_app(settings)).get("/documenti").text
+    assert "<img src=x" not in html and "<b>" not in html and "&lt;img" in html

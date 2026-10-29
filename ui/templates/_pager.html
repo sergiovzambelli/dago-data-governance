@@ -1,0 +1,15 @@
+{# paginazione: base è l'URL con i parametri già presenti, finito con ? o & #}
+{% if pages > 1 %}
+<nav class="pagination-wrapper" aria-label="{{ label }}">
+  <ul class="pagination">
+    {% if pagina > 1 %}<li class="page-item"><a class="page-link" href="{{ base }}pagina={{ pagina - 1 }}">Precedente</a></li>{% endif %}
+    {% for n in range(1, pages + 1) %}
+    <li class="page-item">
+      <a class="page-link" href="{{ base }}pagina={{ n }}"{% if n == pagina %} aria-current="page"{% endif %}>
+        <span class="visually-hidden">Pagina </span>{{ n }}</a>
+    </li>
+    {% endfor %}
+    {% if pagina < pages %}<li class="page-item"><a class="page-link" href="{{ base }}pagina={{ pagina + 1 }}">Successiva</a></li>{% endif %}
+  </ul>
+</nav>
+{% endif %}

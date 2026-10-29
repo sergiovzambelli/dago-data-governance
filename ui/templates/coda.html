@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import doc_table %}
+{% from "_macros.html" import doc_table, icon %}
 {% block title %}Coda di validazione{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
@@ -7,9 +7,21 @@
 {% endblock %}
 {% block content %}
 <h1>Coda di validazione</h1>
-<p>Documenti con dati personali non ancora validati, dal più rischioso. La priorità cresce con l'esito (non conforme,
-  poi scheda mancante), il numero di scostamenti, le categorie particolari e l'esposizione (accesso eccessivo,
-  diffusione).</p>
-<p role="status">{{ docs|length }} documenti da validare.</p>
-{{ doc_table(docs, "Documenti da validare, in ordine di priorità", show_risk=risk) }}
+{% if request.query_params.get("finita") %}
+<div class="alert alert-success" role="alert" tabindex="-1" data-focus>Hai validato tutti i documenti della coda.</div>
+{% endif %}
+
+{% if total %}
+<p class="intro">
+  <strong>{{ total }}</strong> documenti con dati personali da validare:
+  {% for code in ["NON_CONFORME", "SCHEDA_MANCANTE", "CONFORME"] if by_outcome.get(code) %}
+  {{ by_outcome[code] }} {{ outcomes[code][0]|lower }}{{ ", " if not loop.last }}{% endfor %}.
+  Sono in ordine di priorità: prima quelli con più problemi, categorie particolari ed esposizione.
+</p>
+<p><a class="btn btn-primary" href="/documenti/{{ first.id }}">Inizia dal primo {{ icon("it-arrow-right", "icon-white icon-sm") }}</a></p>
+{{ doc_table(docs, "Documenti da validare, in ordine di priorità", with_priority=True, start=start) }}
+{% set base, label = "/coda?", "Pagine della coda" %}{% include "_pager.html" %}
+{% else %}
+<p class="intro">Nessun documento da validare.</p>
+{% endif %}
 {% endblock %}

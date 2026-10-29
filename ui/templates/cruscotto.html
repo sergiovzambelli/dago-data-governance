@@ -1,72 +1,80 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Cruscotto{% endblock %}
 {% block breadcrumb %}<li class="breadcrumb-item active" aria-current="page">Cruscotto</li>{% endblock %}
 {% block content %}
 <h1>Cruscotto</h1>
-<p class="lead">
-  Documenti analizzati: {{ docs|length }}, di cui {{ personal }} con dati personali.
-  Validati dall'RPD: {{ validated }}.
-</p>
+{% if local_mode %}
+<p class="notice">{{ icon("it-info-circle", "icon-sm") }}
+  <span>Modalità locale: la UI risponde solo da questo computer e non chiede le credenziali.
+  Per usarla in rete configura gli utenti con <code>python -m ui.users</code>.</span></p>
+{% endif %}
+
+{% set todo = personal - validated %}
+<section class="progress-box" aria-labelledby="h-avanzamento">
+  <h2 id="h-avanzamento" class="h4">Validazione</h2>
+  <p class="mb-2"><strong>{{ validated }}</strong> documenti validati su <strong>{{ personal }}</strong> con dati personali
+    ({{ docs|length }} file analizzati in tutto).</p>
+  <div class="meter" aria-hidden="true"><span style="--pct: {{ (100 * validated / personal)|round|int if personal else 0 }}%"></span></div>
+  {% if todo > 0 %}
+  <p class="mt-3 mb-0"><a class="btn btn-primary" href="/coda">Valida i documenti ({{ todo }} da fare) {{ icon("it-arrow-right", "icon-white icon-sm") }}</a></p>
+  {% else %}
+  <p class="mt-3 mb-0">Tutti i documenti con dati personali sono validati.</p>
+  {% endif %}
+</section>
 
 <h2 class="h4 mt-4">Documenti per esito</h2>
 <div class="row">
   {% for code, (label, color) in outcomes.items() %}
   <div class="col-12 col-sm-6 col-lg-3 mb-3">
-    <div class="card card-bg border-start border-{{ color }} border-4 h-100">
-      <div class="card-body">
-        <a class="text-decoration-none" href="/documenti?esito={{ code }}">
-          <h3 class="card-title h5">{{ label }}</h3>
-          <p class="stat-number mb-0">{{ by_outcome.get(code, 0) }}</p>
-        </a>
-      </div>
-    </div>
+    <a class="stat-card stat-{{ code|lower }}" href="/documenti?esito={{ code }}">
+      <h3 class="card-title h5">{{ label }}</h3>
+      <p class="stat-number mb-0">{{ by_outcome.get(code, 0) }}</p>
+    </a>
   </div>
   {% endfor %}
 </div>
 
+{% set max_dev = (by_deviation.values()|max) if by_deviation else 1 %}
 <div class="row mt-3">
   <div class="col-lg-6 mb-4">
-    <h2 class="h4">Scostamenti dalla scheda</h2>
-    <table class="table table-sm">
-      <caption>Documenti con ciascuno scostamento (un documento può averne più di uno)</caption>
-      <thead><tr><th scope="col">Scostamento</th><th scope="col" class="text-end">Documenti</th></tr></thead>
-      <tbody>
+    <h2 class="h4">Problemi rispetto alla scheda</h2>
+    <p class="hint">Un documento può averne più di uno.</p>
+    <ul class="bars">
       {% for code, (label, _, _) in deviations.items() %}
-        <tr>
-          <th scope="row"><a href="/documenti?scostamento={{ code }}">{{ label }}</a></th>
-          <td class="text-end">{{ by_deviation.get(code, 0) }}</td>
-        </tr>
+      {% set n = by_deviation.get(code, 0) %}
+      <li>
+        <a href="/documenti?scostamento={{ code }}"><span class="bar-label">{{ label }}</span><span class="bar-value">{{ n }}</span></a>
+        <span class="bar" aria-hidden="true"><span style="--pct: {{ (100 * n / max_dev)|round|int }}%"></span></span>
+      </li>
       {% endfor %}
-      </tbody>
-    </table>
+    </ul>
   </div>
   <div class="col-lg-6 mb-4">
     <h2 class="h4">Documenti per scheda</h2>
-    <table class="table table-sm">
-      <caption>Schede del registro con almeno un documento abbinato</caption>
-      <thead><tr><th scope="col">Scheda</th><th scope="col" class="text-end">Documenti</th></tr></thead>
-      <tbody>
+    <p class="hint">Schede del registro con almeno un documento abbinato.</p>
+    {% set max_rec = (by_record[0][1]) if by_record else 1 %}
+    <ul class="bars">
       {% for code, n in by_record %}
-        <tr>
-          <th scope="row"><a href="/documenti?scheda={{ code }}">{{ code }}</a>
-            {% if register.get(code) %}<span class="d-block small fw-normal">{{ register[code].denominazione }}</span>{% endif %}</th>
-          <td class="text-end">{{ n }}</td>
-        </tr>
+      <li>
+        <a href="/documenti?scheda={{ code }}"><span class="bar-label"><span class="rec-code">{{ code }}</span>
+          {% if register.get(code) %}<span class="rec-name">{{ register[code].denominazione }}</span>{% endif %}</span><span class="bar-value">{{ n }}</span></a>
+        <span class="bar" aria-hidden="true"><span style="--pct: {{ (100 * n / max_rec)|round|int }}%"></span></span>
+      </li>
       {% else %}
-        <tr><td colspan="2">Nessun documento abbinato.</td></tr>
+      <li>Nessun documento abbinato.</li>
       {% endfor %}
-      </tbody>
-    </table>
+    </ul>
   </div>
 </div>
 
 <h2 class="h4">Documenti senza scheda</h2>
-<p>Documenti con dati personali per cui nessuna scheda del registro descrive il trattamento: vanno abbinati a una scheda o
-  il registro va aggiornato.</p>
+<p>Hanno dati personali, ma nessuna scheda del registro descrive il trattamento: vanno abbinati a una scheda oppure il
+  registro va aggiornato.</p>
 {% if missing %}
-<ul class="link-list">
+<ul class="plain-list">
   {% for d in missing %}
-  <li><a class="list-item" href="/documenti/{{ d.id }}"><span>{{ d.file }}</span></a></li>
+  <li><a class="doc-link" href="/documenti/{{ d.id }}"><span class="doc-name">{{ d.file|nome_file|spezza }}</span> <span class="doc-folder">{{ d.file|cartella|spezza }}</span></a></li>
   {% endfor %}
 </ul>
 {% else %}
