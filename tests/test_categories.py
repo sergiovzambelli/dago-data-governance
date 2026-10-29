@@ -43,6 +43,8 @@ def test_detects_category_also_when_only_described(text, expected):
     "con facoltà di farsi assistere da un rappresentante sindacale",
     "Parcheggio Ospedale, 120 posti; protocollo Azienda USL Toscana",
     "Richiesta di copia del rapporto all'ufficio Infortunistica",
+    # casella non spuntata di un modulo: è un'opzione, non un fatto
+    "☐ iscrizione ad associazione per la cremazione  ☐ dichiarazione dei familiari",
 ])
 def test_no_false_alarms_on_ordinary_text(text):
     assert cats(text) == set()
@@ -53,3 +55,53 @@ def test_reports_evidence_with_position():
     (c,) = find_categories(text)
     assert c["categoria"] == "SALUTE"
     assert text[c["inizio"]:c["fine"]] == c["evidenza"] == "invalidità"
+
+
+@pytest.mark.parametrize("text, expected", [
+    # radici: non solo il sostantivo
+    ("il figlio è invalido civile", {"SALUTE"}),
+    ("assistenza al coniuge disabile", {"SALUTE"}),
+    ("titolare di indennità di accompagnamento", {"SALUTE"}),
+    ("in cura presso il reparto di oncologia", {"SALUTE"}),
+    ("affetta da demenza di tipo Alzheimer", {"SALUTE"}),
+    ("seguito dal Centro di salute mentale", {"SALUTE"}),
+    ("ospite di una RSA dal 2024", {"SALUTE"}),
+    ("chiede l'esenzione ticket per reddito", {"SALUTE"}),
+    ("l'imputato è sottoposto a misura cautelare", {"GIUDIZIARI"}),
+    ("ammesso alla messa alla prova", {"GIUDIZIARI"}),
+    ("non si avvale dell'insegnamento della religione cattolica", {"RELIGIOSE"}),
+    ("aderente ai testimoni di Geova, rifiuta trasfusioni", {"RELIGIOSE"}),
+    ("chiede permessi sindacali per il 3 marzo", {"SINDACALE"}),
+    # categorie art. 9 non presenti nelle etichette del kit
+    ("costituzione di unione civile tra le parti", {"ORIENTAMENTO_SESSUALE"}),
+    ("famiglia appartenente alla comunità rom", {"ORIGINE_ETNICA"}),
+    ("iscritto al partito dal 2010", {"POLITICHE"}),
+    ("acquisizione delle impronte digitali", {"BIOMETRICI"}),
+    ("esito del test genetico", {"GENETICI"}),
+])
+def test_extended_dictionaries(text, expected):
+    assert cats(text) == expected
+
+
+@pytest.mark.parametrize("text", [
+    "Modulo SI-07 Ticket n. 2026-1844",
+    "id_parcheggio;posti_totali;posti_disabili",
+    "Il treno è partito in ritardo; CD-ROM allegato; autista dello scuolabus",
+])
+def test_extended_dictionaries_no_false_alarms(text):
+    assert cats(text) == set()
+
+
+def _kit_documents_without_personal_data():
+    import csv
+    from pathlib import Path
+    from classifier.extract import extract_text
+    kit = Path("data/Kit_team_hackathon_sfida_5")
+    with open(kit / "Etichette_sviluppo.csv", encoding="utf-8-sig") as f:
+        rows = [r for r in csv.DictReader(f, delimiter=";") if r["Dati personali"] == "NO"]
+    return [(r["Percorso"], extract_text(kit / "sviluppo" / r["Percorso"])) for r in rows]
+
+
+@pytest.mark.parametrize("path, text", _kit_documents_without_personal_data())
+def test_no_category_in_kit_documents_without_personal_data(path, text):
+    assert cats(text) == set(), path

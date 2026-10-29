@@ -2,6 +2,15 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/categories-ext: dizionari estesi ed EML decodificate
+- EML lette con il modulo `email` della libreria standard: testo decodificato (prima "progn= osi"), intestazioni From/To/Cc/Subject/Date e **allegati** estratti a loro volta (massimo 3 livelli di email annidate).
+- Dizionari estesi con il lessico della PA: radici corrette (`invalido`, `disabile`), accompagnamento, oncologia, demenza, salute mentale, RSA, misure cautelari, messa alla prova, esonero IRC, testimoni di Geova, permessi sindacali e altre sigle.
+- Nuove categorie art. 9, assenti nelle etichette del kit, con nomi scelti da noi: ORIENTAMENTO_SESSUALE (unione civile), ORIGINE_ETNICA, POLITICHE, BIOMETRICI, GENETICI.
+- Casella non spuntata di un modulo (`☐ …`) trattata come negazione: i moduli in bianco non producono più categorie.
+- Test di regressione: nessuna categoria nei 13 documenti del kit senza dati personali.
+- Regola di metodo: da qui i dizionari si correggono solo guardando lo sviluppo; il validation serve solo a misurare.
+- Punteggio: sviluppo 35,4 → **35,6**, validation 34,9 → **35,2**. Il guadagno atteso è sui documenti mai visti della giuria.
+
 ## 2026-10-29 — feat/categories: categorie particolari e giudiziarie
 - `classifier/categories.py`: dizionari di espressioni per SALUTE, GIUDIZIARI, RELIGIOSE, SINDACALE, con evidenza e posizione nel testo. Coprono anche i casi solo descritti ("cardiochirurgia", "Servizio per le dipendenze", "rito islamico", "associazione per la cremazione").
 - Regole contro i falsi allarmi: negazione vicina ("non sono presenti persone con invalidità"), "ordinanza sindacale" (= del sindaco) esclusa, spazi che valgono anche come a capo nei PDF.
