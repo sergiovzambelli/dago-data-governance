@@ -25,13 +25,26 @@
   {% endif %}
 </div>
 
-<section class="summary" aria-labelledby="h-sintesi">
-  <h2 id="h-sintesi" class="visually-hidden">Sintesi</h2>
-  <dl class="summary-grid">
-    <div><dt>Esito {{ "validato" if doc.validato else "proposto" }}</dt><dd>{{ outcome(doc.esito) }}</dd></div>
+{% set n_dev = doc.scostamenti|length %}
+{% set n_ent = doc.entita|length %}
+<section class="verdict verdict-{{ doc.esito|lower }}" aria-labelledby="h-sintesi">
+  <div class="verdict-main">
+    <p class="verdict-kicker">Esito {{ "validato" if doc.validato else "proposto dal sistema" }} · {{ status(doc) }}</p>
+    <h2 id="h-sintesi" class="verdict-title">{{ outcomes[doc.esito][0] }}</h2>
+    <p class="verdict-lead">
+      {% if n_dev %}{{ n_dev }} problem{{ "a" if n_dev == 1 else "i" }} da risolvere:
+        {% for s in doc.scostamenti %}{{ deviations[s][0]|lower }}{{ ", " if not loop.last }}{% endfor %}.
+      {% elif doc.esito == "SCHEDA_MANCANTE" %}Nessuna scheda del registro descrive questo trattamento: scegline una o aggiorna il registro.
+      {% elif doc.esito == "NESSUN_DATO_PERSONALE" %}Nel documento non sono stati trovati dati personali.
+      {% else %}Il documento rispetta ciò che la scheda dichiara.{% endif %}
+    </p>
+  </div>
+  <dl class="verdict-facts">
     <div><dt>Scheda</dt><dd>{{ record_name(doc.scheda) }}</dd></div>
-    <div><dt>Problemi</dt><dd>{% if doc.scostamenti %}{{ doc.scostamenti|length }}{% else %}Nessuno{% endif %}</dd></div>
-    <div><dt>Stato</dt><dd>{{ status(doc) }}</dd></div>
+    <div><dt>Categorie particolari</dt><dd>{% if doc.categorie_particolari %}<ul class="tag-list">{% for c in doc.categorie_particolari %}<li class="tag tag-strong">{{ categories.get(c, c) }}</li>{% endfor %}</ul>{% else %}Nessuna{% endif %}</dd></div>
+    <div><dt>Dati personali</dt><dd>{% if n_ent %}{{ n_ent }} dat{{ "o personale" if n_ent == 1 else "i personali" }}
+      <span class="d-block hint">{% for g in doc.entita|groupby("tipo") %}{{ entity_types.get(g.grouper, g.grouper) }} × {{ g.list|length }}{{ " · " if not loop.last }}{% endfor %}</span>
+      {% elif doc.dati_personali %}Sì, senza valori leggibili{% else %}Nessuno{% endif %}</dd></div>
   </dl>
 </section>
 
@@ -102,6 +115,7 @@
   <section aria-labelledby="h-scostamenti" class="block">
     <h2 id="h-scostamenti" class="h4">Problemi rispetto alla scheda</h2>
     {% if doc.scostamenti %}
+      <div class="group">
       {% for s in doc.scostamenti %}
       {% set title, meaning, action = deviations[s] %}
       <div class="issue">
@@ -114,6 +128,7 @@
         <p class="issue-action"><span class="fw-semibold">Cosa fare:</span> {{ action }}</p>
       </div>
       {% endfor %}
+      </div>
     {% elif doc.esito == "SCHEDA_MANCANTE" %}
       <p>Nessuna scheda del registro descrive questo trattamento, quindi il controllo non si applica.
         Sotto trovi le schede più vicine: se una va bene, scegli «Correggi esito o scheda».</p>
@@ -126,11 +141,9 @@
 
   <section aria-labelledby="h-dati" class="block">
     <h2 id="h-dati" class="h4">Dati personali trovati</h2>
-    {% if doc.categorie_particolari %}
-    <p><span class="fw-semibold">Categorie particolari:</span></p>
-    <ul class="tag-list">{% for c in doc.categorie_particolari %}<li class="tag tag-strong">{{ categories.get(c, c) }}</li>{% endfor %}</ul>
-    {% endif %}
     {% if doc.entita %}
+    <details class="more"{% if n_ent <= 5 %} open{% endif %}>
+    <summary>Valori mascherati e posizione nel testo ({{ n_ent }})</summary>
     <table class="doc-table">
       <caption class="visually-hidden">Dati trovati, mostrati solo in forma mascherata</caption>
       <thead><tr><th scope="col">Tipo</th><th scope="col">Valore (mascherato)</th><th scope="col">Posizione nel testo</th><th scope="col">Affidabilità</th></tr></thead>
@@ -145,9 +158,12 @@
       {% endfor %}
       </tbody>
     </table>
+    </details>
     {% elif doc.dati_personali and not doc.categorie_particolari %}
     <p>Nessun dato leggibile: probabilmente è una scansione senza testo. Per prudenza viene trattato come documento con dati personali.</p>
-    {% elif not doc.dati_personali %}
+    {% elif doc.categorie_particolari %}
+    <p>Solo categorie particolari descritte nel testo, senza identificativi.</p>
+    {% else %}
     <p>Nessun dato trovato.</p>
     {% endif %}
   </section>
