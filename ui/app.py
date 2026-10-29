@@ -148,7 +148,8 @@ def create_app(settings):
         return page(request, "cruscotto.html", nav="cruscotto", docs=docs, by_outcome=by_outcome,
                     by_deviation=by_deviation, by_record=by_record.most_common(), missing=missing,
                     validated=sum(d["validato"] for d in docs), register=store.register,
-                    personal=sum(d["dati_personali"] for d in docs))
+                    personal=sum(d["dati_personali"] for d in docs), urgent=queue_of(docs)[:5],
+                    sensitive=sum(bool(d["categorie_particolari"]) for d in docs))
 
     @app.get("/documenti", response_class=HTMLResponse)
     def inventory(request: Request, esito: str = "", scheda: str = "", scostamento: str = "", pagina: int = 1):

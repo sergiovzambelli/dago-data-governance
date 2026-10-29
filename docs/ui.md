@@ -58,6 +58,17 @@ Dove Bootstrap Italia non bastava per leggibilità o accessibilità, `ui/static/
 - **Cruscotto**: avanzamento della validazione e pulsante per iniziare; problemi e schede come barre con il numero scritto. L'avviso di modalità locale compare solo qui, non su ogni pagina.
 - **Inventario**: filtri attivi elencati, ognuno da togliere da solo. **Ricerca**: esempi cliccabili. **Registro**: date `29/10/2026 14:01 UTC` e azioni a parole.
 
+## Le informazioni importanti per prime
+
+Secondo giro sulla UI, con il metodo della skill [apple-design](https://github.com/dickwu/apple-design-skill) (Human Interface Guidelines di Apple applicate a una web app: principi, colore, tipografia, layout, accessibilità). Ogni pagina mostra in alto ciò su cui l'RPD deve agire, il dettaglio sotto.
+
+- **Token** in `ui/static/ui.css`: sfondo raggruppato `#f5f5f7` e riquadri bianchi; testo `#1d1d1f` (16,8:1), secondario `#636366` (6,0:1). **Un colore, un significato**: blu `#0066cc` solo per link e azioni, rosso per non conforme e problemi, ambra per scheda mancante, verde per conforme e validato, grigio per nessun dato, viola `#6b3fa0` (7,4:1) per le categorie particolari, che prima condividevano il rosso con i problemi.
+- **Cruscotto**: l'elemento firma è una frase in italiano semplice, "35 non conformi, 27 senza scheda e 89 con categorie particolari", con ogni numero colorato che porta all'elenco. Sostituisce le tessere con il numero grande, che la skill indica come schema da template. Sotto c'è l'avanzamento della validazione con il pulsante per partire, poi "I più urgenti": i primi 5 della coda come lista raggruppata con chevron, cliccabile su tutta la riga. Gli esiti sono in una barra unica; le schede oltre l'ottava stanno in un pannello da aprire.
+- **Documento**: verdetto in alto (esito grande nel suo colore, frase con i problemi, a destra scheda, categorie e dati per tipo come lista raggruppata). Problemi in una lista unica con "Cosa fare" evidenziato. Valori mascherati in un pannello oltre 5 righe.
+- **Componenti**: intestazione con i temi chiari di Bootstrap Italia (`theme-light`, `theme-light-desk`), barra istituzionale blu invariata; pulsanti ed etichette a capsula; triangoli di apertura sui `<details>`; tabelle come liste raggruppate; etichette dei campi senza maiuscolo.
+- **Focus**: anello blu di 3 px (5,6:1 sul bianco) al posto di quello giallo (1,9:1, sotto il 3:1 richiesto per gli indicatori grafici).
+- Fuori: tema scuro (i componenti di Bootstrap Italia non lo prevedono), font: resta Titillium Web, carattere della PA.
+
 ## Sicurezza
 
 - Senza file degli utenti la UI si rifiuta di partire su un indirizzo non locale. Con il file: autenticazione HTTP Basic, password PBKDF2-SHA256 (310.000 iterazioni) e confronto a tempo costante.

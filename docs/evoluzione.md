@@ -12,6 +12,12 @@ Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 - Decisione (dell'utente): una sola PR per classificatore, UI e documentazione, invece delle due PR piccole previste da AGENTS.md.
 - Punteggio invariato: la pipeline non cambia.
 
+## 2026-10-29 — feat/ui-refresh: le informazioni importanti per prime
+- Richiesta dell'utente: UI più attuale e che metta in evidenza ciò che conta. Dalle schermate: nel cruscotto i numeri da cui partire erano allo stesso livello dell'elenco delle 30 schede; nel documento esito, problemi e dati trovati erano sparsi in tre punti, e 12 righe di codici fiscali spingevano in basso il resto.
+- Primo passo: "Da guardare subito" con i 5 più urgenti, verdetto in alto nel documento, valori mascherati in un pannello.
+- Secondo passo, su richiesta dell'utente ("non avere paura a stravolgere la visual"): stile rifatto con la skill apple-design (HIG di Apple come principi per il web). Frase di sintesi al posto delle tessere numeriche, liste raggruppate, un colore per significato (viola per le categorie particolari), intestazione chiara, focus blu. Dettagli e contrasti in `docs/ui.md`.
+- Decisione: Bootstrap Italia resta (griglia, icone, font, intestazione e piè di pagina istituzionali, temi chiari della libreria); cambia lo strato di stile sopra. Niente tema scuro: i componenti della libreria non lo supportano.
+
 ## 2026-10-29 — chore/llm-model-make: scelta del modello da `make`
 - `make score LLM=qwen3:1.7b` (o `LLM=qwen3:8b`) accende il modello locale sui casi dubbi; `make score` senza `LLM` resta con le sole regole. Il modello passa a `CLASSIFIER_LLM_MODEL`, già letto dalla pipeline: nessuna modifica al codice Python.
 - Misure con `qwen3:1.7b` (Quadro T1000 4 GB, tutto in GPU; circa 11 minuti per sviluppo + validation, contro meno di 2 minuti con le sole regole): sviluppo 88,3 → **91,6**, validation 90,1 → **88,3**. Stesso schema del modello 8b: migliora sviluppo, peggiora validation.

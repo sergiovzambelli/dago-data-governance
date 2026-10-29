@@ -361,3 +361,18 @@ def test_operator_cannot_decide_drafts(settings, tmp_path):
 def test_without_drafts_file_page_explains_how_to_create_them(settings, tmp_path):
     c = Client(create_app(Settings(**{**settings.__dict__, "drafts": tmp_path / "manca.json"})))
     assert "make drafts" in c.get("/bozze").text
+
+
+def test_dashboard_puts_urgent_documents_first(client):
+    html = client.get("/").text
+    assert "Da guardare subito" in html
+    urgent = html[html.index("Da guardare subito"):html.index("Documenti per esito")]
+    assert urgent.index("scansione_0412.pdf") < urgent.index("reclamo_117.eml")
+    assert re.search(r">\s*1\s*</span>\s*con categorie particolari", html)
+
+
+def test_document_verdict_says_what_matters(client):
+    html = client.get(doc_url(client, "scansione_0412.pdf")).text
+    assert "2 problemi da risolvere" in html
+    assert "1 dato personale" in html
+    assert html.index("2 problemi da risolvere") < html.index("La tua decisione")

@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icon %}
+{% from "_macros.html" import icon, outcome %}
 {% block title %}Cruscotto{% endblock %}
 {% block breadcrumb %}<li class="breadcrumb-item active" aria-current="page">Cruscotto</li>{% endblock %}
 {% block content %}
-<h1>Cruscotto</h1>
+<h1 class="mb-1">Cruscotto</h1>
+<p class="page-lead">{{ docs|length }} file analizzati, {{ personal }} con dati personali.</p>
 {% if local_mode %}
 <p class="notice">{{ icon("it-info-circle", "icon-sm") }}
   <span>Modalità locale: la UI risponde solo da questo computer e non chiede le credenziali.
@@ -11,73 +12,113 @@
 {% endif %}
 
 {% set todo = personal - validated %}
-<section class="progress-box" aria-labelledby="h-avanzamento">
-  <h2 id="h-avanzamento" class="h4">Validazione</h2>
-  <p class="mb-2"><strong>{{ validated }}</strong> documenti validati su <strong>{{ personal }}</strong> con dati personali
-    ({{ docs|length }} file analizzati in tutto).</p>
-  <div class="meter" aria-hidden="true"><span style="--pct: {{ (100 * validated / personal)|round|int if personal else 0 }}%"></span></div>
-  {% if todo > 0 %}
-  <p class="mt-3 mb-0"><a class="btn btn-primary" href="/coda">Valida i documenti ({{ todo }} da fare) {{ icon("it-arrow-right", "icon-white icon-sm") }}</a></p>
-  {% else %}
-  <p class="mt-3 mb-0">Tutti i documenti con dati personali sono validati.</p>
-  {% endif %}
+{% set pct = (100 * validated / personal)|round|int if personal else 0 %}
+{% set nc, sm = by_outcome.get("NON_CONFORME", 0), by_outcome.get("SCHEDA_MANCANTE", 0) %}
+<section class="summary-card" aria-labelledby="h-urgenti">
+  <h2 id="h-urgenti" class="eyebrow">Da guardare subito</h2>
+  <p class="summary-sentence">
+    <a class="fig fig-red" href="/documenti?esito=NON_CONFORME"><span class="fig-n">{{ nc }}</span> non conform{{ "e" if nc == 1 else "i" }}</a>,
+    <a class="fig fig-amber" href="/documenti?esito=SCHEDA_MANCANTE"><span class="fig-n">{{ sm }}</span> senza scheda</a>
+    e <span class="fig fig-purple"><span class="fig-n">{{ sensitive }}</span> con categorie particolari</span>.
+  </p>
+  <div class="gauge-row">
+    <p class="gauge-text mb-0"><strong>{{ validated }} di {{ personal }}</strong> validati ({{ pct }}%)</p>
+    <span class="meter" aria-hidden="true"><span style="--pct: {{ pct }}%"></span></span>
+    {% if urgent %}<a class="btn btn-primary" href="/documenti/{{ urgent[0].id }}">Valida i {{ todo }} rimasti {{ icon("it-arrow-right", "icon-white icon-sm") }}</a>
+    {% else %}<span>Tutti i documenti con dati personali sono validati.</span>{% endif %}
+  </div>
 </section>
 
-<h2 class="h4 mt-4">Documenti per esito</h2>
-<div class="row">
-  {% for code, (label, color) in outcomes.items() %}
-  <div class="col-12 col-sm-6 col-lg-3 mb-3">
-    <a class="stat-card stat-{{ code|lower }}" href="/documenti?esito={{ code }}">
-      <h3 class="card-title h5">{{ label }}</h3>
-      <p class="stat-number mb-0">{{ by_outcome.get(code, 0) }}</p>
-    </a>
+{% if urgent %}
+<section aria-labelledby="h-coda">
+  <div class="section-head">
+    <h2 id="h-coda" class="h4">I più urgenti</h2>
+    <a href="/coda">Vedi tutta la coda</a>
   </div>
-  {% endfor %}
-</div>
+  <ol class="rows group">
+    {% for d in urgent %}{% set p = priority(d) %}
+    <li>
+      <span class="row-num" aria-hidden="true">{{ loop.index }}</span>
+      <a class="doc-link" href="/documenti/{{ d.id }}"><span class="doc-name">{{ d.file|nome_file|spezza }}</span>
+        <span class="doc-folder">{{ d.file|cartella|spezza }}</span></a>
+      <span class="row-meta">{{ outcome(d.esito) }} <span class="prio prio-{{ p.colore }}">{{ p.livello }}</span>
+        {% if p.motivi %}<span class="prio-why">{{ p.motivi|join(" · ") }}</span>{% endif %}</span>
+      <span class="chevron" aria-hidden="true"></span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+<h2 id="h-esiti" class="h4">Documenti per esito</h2>
+<section aria-labelledby="h-esiti" class="panel mb-4">
+  <div class="stack" aria-hidden="true">
+    {% for code in outcomes %}{% set n = by_outcome.get(code, 0) %}{% if n %}
+    <span class="stack-{{ code|lower }}" style="--pct: {{ 100 * n / docs|length }}%"></span>{% endif %}{% endfor %}
+  </div>
+  <ul class="legend">
+    {% for code, (label, _) in outcomes.items() %}{% set n = by_outcome.get(code, 0) %}
+    <li><a href="/documenti?esito={{ code }}"><span class="dot stack-{{ code|lower }}" aria-hidden="true"></span><span class="legend-label">{{ label }}</span> <span class="legend-num">{{ n }}</span>
+      <span class="muted">({{ (100 * n / docs|length)|round|int if docs else 0 }}%)</span></a></li>
+    {% endfor %}
+  </ul>
+</section>
 
 {% set max_dev = (by_deviation.values()|max) if by_deviation else 1 %}
-<div class="row mt-3">
+<div class="row">
   <div class="col-lg-6 mb-4">
-    <h2 class="h4">Problemi rispetto alla scheda</h2>
-    <p class="hint">Un documento può averne più di uno.</p>
-    <ul class="bars">
-      {% for code, (label, _, _) in deviations.items() %}
-      {% set n = by_deviation.get(code, 0) %}
-      <li>
-        <a href="/documenti?scostamento={{ code }}"><span class="bar-label">{{ label }}</span><span class="bar-value">{{ n }}</span></a>
-        <span class="bar" aria-hidden="true"><span style="--pct: {{ (100 * n / max_dev)|round|int }}%"></span></span>
-      </li>
-      {% endfor %}
-    </ul>
+    <section class="panel h-100" aria-labelledby="h-problemi">
+      <h2 id="h-problemi" class="h5">Problemi rispetto alla scheda</h2>
+      <p class="hint">Un documento può averne più di uno.</p>
+      <ul class="bars">
+        {% for code, (label, _, _) in deviations.items() %}
+        {% set n = by_deviation.get(code, 0) %}
+        <li>
+          <a href="/documenti?scostamento={{ code }}"><span class="bar-label">{{ label }}</span><span class="bar-value">{{ n }}</span></a>
+          <span class="bar bar-red" aria-hidden="true"><span style="--pct: {{ (100 * n / max_dev)|round|int }}%"></span></span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
   </div>
   <div class="col-lg-6 mb-4">
-    <h2 class="h4">Documenti per scheda</h2>
-    <p class="hint">Schede del registro con almeno un documento abbinato.</p>
-    {% set max_rec = (by_record[0][1]) if by_record else 1 %}
-    <ul class="bars">
-      {% for code, n in by_record %}
-      <li>
-        <a href="/documenti?scheda={{ code }}"><span class="bar-label"><span class="rec-code">{{ code }}</span>
-          {% if register.get(code) %}<span class="rec-name">{{ register[code].denominazione }}</span>{% endif %}</span><span class="bar-value">{{ n }}</span></a>
-        <span class="bar" aria-hidden="true"><span style="--pct: {{ (100 * n / max_rec)|round|int }}%"></span></span>
-      </li>
+    <section class="panel h-100" aria-labelledby="h-senza">
+      <h2 id="h-senza" class="h5">Documenti senza scheda</h2>
+      <p class="hint">Hanno dati personali, ma nessuna scheda del registro descrive il trattamento: vanno abbinati a una
+        scheda oppure il registro va aggiornato.</p>
+      {% if missing %}
+      <ul class="plain-list">
+        {% for d in missing[:8] %}
+        <li><a class="doc-link" href="/documenti/{{ d.id }}"><span class="doc-name">{{ d.file|nome_file|spezza }}</span> <span class="doc-folder">{{ d.file|cartella|spezza }}</span></a></li>
+        {% endfor %}
+      </ul>
+      {% if missing|length > 8 %}<p class="mb-0"><a href="/documenti?esito=SCHEDA_MANCANTE">Vedi tutti i {{ missing|length }}</a></p>{% endif %}
       {% else %}
-      <li>Nessun documento abbinato.</li>
-      {% endfor %}
-    </ul>
+      <p>Nessun documento senza scheda.</p>
+      {% endif %}
+    </section>
   </div>
 </div>
 
-<h2 class="h4">Documenti senza scheda</h2>
-<p>Hanno dati personali, ma nessuna scheda del registro descrive il trattamento: vanno abbinati a una scheda oppure il
-  registro va aggiornato.</p>
-{% if missing %}
-<ul class="plain-list">
-  {% for d in missing %}
-  <li><a class="doc-link" href="/documenti/{{ d.id }}"><span class="doc-name">{{ d.file|nome_file|spezza }}</span> <span class="doc-folder">{{ d.file|cartella|spezza }}</span></a></li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>Nessun documento senza scheda.</p>
-{% endif %}
+<section class="panel" aria-labelledby="h-schede">
+  <h2 id="h-schede" class="h5">Documenti per scheda</h2>
+  <p class="hint">Schede del registro con almeno un documento abbinato.</p>
+  {% set max_rec = (by_record[0][1]) if by_record else 1 %}
+  {% macro rec_bar(code, n) %}
+  <li>
+    <a href="/documenti?scheda={{ code }}"><span class="bar-label"><span class="rec-code">{{ code }}</span>
+      {% if register.get(code) %}<span class="rec-name">{{ register[code].denominazione }}</span>{% endif %}</span><span class="bar-value">{{ n }}</span></a>
+    <span class="bar" aria-hidden="true"><span style="--pct: {{ (100 * n / max_rec)|round|int }}%"></span></span>
+  </li>
+  {% endmacro %}
+  <ul class="bars bars-2col">
+    {% for code, n in by_record[:8] %}{{ rec_bar(code, n) }}{% else %}<li>Nessun documento abbinato.</li>{% endfor %}
+  </ul>
+  {% if by_record|length > 8 %}
+  <details class="more">
+    <summary>Mostra le altre {{ by_record|length - 8 }} schede</summary>
+    <ul class="bars bars-2col">{% for code, n in by_record[8:] %}{{ rec_bar(code, n) }}{% endfor %}</ul>
+  </details>
+  {% endif %}
+</section>
 {% endblock %}
