@@ -65,3 +65,31 @@ def test_client_without_server_answers_none():
 def test_draft_without_server_answers_none():
     client = OllamaClient("http://127.0.0.1:9", "qwen3:8b", timeout=2)
     assert client.draft(["testo"]) is None
+    assert client.embed(["testo"]) is None
+    assert client.same_procedure(["a"], ["b"]) is None
+
+
+def test_same_procedure_reads_only_si_or_no(monkeypatch):
+    client = OllamaClient("http://127.0.0.1:9", "qwen3:8b")
+    for answer, expected in (({"stesso": "SI"}, True), ({"stesso": "no"}, False), ({"stesso": "forse"}, None)):
+        monkeypatch.setattr(client, "_chat", lambda system, user, a=answer: a)
+        assert client.same_procedure(["a"], ["b"]) is expected
+
+
+def test_draft_shows_similar_records_to_the_model(monkeypatch):
+    client = OllamaClient("http://127.0.0.1:9", "qwen3:8b")
+    seen = []
+    monkeypatch.setattr(client, "_chat", lambda system, user: seen.append(user) or {})
+    row = {"Codice": "T-CIM-01", "Denominazione": "Polizia mortuaria", "Finalità": "Autorizzazioni",
+           "Tipologie documentali tipiche": "permesso", "Struttura responsabile": "Settore cimiteri",
+           "Ufficio": "Ufficio cimiteri"}
+    client.draft(["testo"], [row])
+    assert "T-CIM-01" in seen[0] and "Ufficio cimiteri" in seen[0] and "<documento>\ntesto" in seen[0]
+
+
+def test_embeddings_run_on_cpu(monkeypatch):
+    client = OllamaClient("http://127.0.0.1:9", "bge-m3")
+    sent = []
+    monkeypatch.setattr(client, "_post", lambda path, body: sent.append(body) or {"embeddings": [[1.0]]})
+    assert client.embed(["testo"]) == [[1.0]]
+    assert sent[0]["options"] == {"num_gpu": 0}

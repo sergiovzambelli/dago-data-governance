@@ -33,10 +33,11 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #17 | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
 | – | feat/records | UI: pagina Schede (crea, modifica, archivia, ripristina, storico, esporta il registro in CSV) | – | – |
 | #19 | feat/ui-refresh | UI: in alto ciò che conta (frase di sintesi, 5 più urgenti, verdetto del documento), stile con le HIG di Apple sopra Bootstrap Italia | – | – |
-| – | feat/no-location-check | Tolto il controllo LUOGO_NON_DICHIARATO da classificatore, UI e scorer, su decisione dell'utente | 89,8 (86,3 con lo scorer di prima) | 90,4 (86,7 con lo scorer di prima) |
+| #25 | feat/no-location-check | Tolto il controllo LUOGO_NON_DICHIARATO da classificatore, UI e scorer, su decisione dell'utente | 89,8 (86,3 con lo scorer di prima) | 90,4 (86,7 con lo scorer di prima) |
 | – | feat/try-file-visual | Prova un file: testo con evidenziati dati personali, categorie e parole chiave; senza scheda l'RPD sceglie tra le 3 proposte o crea una nuova scheda già compilata, e il documento entra nell'inventario | – (invariato) | – (invariato) |
 | – | feat/try-file | UI: pagina "Prova un file", carica un documento e mostra i passi dell'analisi (testo, dati, categorie, schede, esito) senza salvarlo | – (invariato) | – (invariato) |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
+| #24 | feat/semantic-drafts | Bozze: gruppi per nome file uniti per contenuto (embedding `bge-m3` locali + verifica del modello) e RAG sul registro: struttura, ufficio e software dalla scheda esistente più simile scelta dal modello | – (invariato) | – (invariato) |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 
@@ -46,14 +47,13 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 2. **feat/publication** — "destinato alla pubblicazione" anche dal testo, non solo dalla cartella: determine all'albo (5 casi di DIFFUSIONE_NON_PREVISTA mancati su sviluppo). Metrica: F1 scostamenti (15), esito.
 3. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
 4. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
-5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti. Bozze di schede fatte (feat/draft-records); da fare: rimettere nel registro le schede approvate senza copia a mano, provare `qwen3:8b` sulle bozze.
+5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti. Bozze di schede fatte (feat/draft-records, feat/semantic-drafts); da fare: rimettere nel registro le schede approvate senza copia a mano (e codice della bozza nel formato delle schede), RAG su normativa e conservazione quando c'è un massimario, embedding del solo oggetto del documento per distinguere i procedimenti, provare `qwen3:8b`.
 6. **UI** — prima versione fatta (feat/ui, `docs/ui.md`). Da fare: ricerca nei limiti dei permessi dell'utente (T-034), HTTPS tramite proxy al deploy (T-026), dichiarazione di accessibilità AgID, verifica con lettore di schermo.
 7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 
 ## Decisioni prese
 
 - Niente controllo del luogo (LUOGO_NON_DICHIARATO), decisione dell'utente, anche nello scorer: le etichette vengono lette senza il luogo e un documento non conforme solo per il luogo è atteso conforme. **I punteggi da qui in poi non sono confrontabili con quelli precedenti** né con una giuria che usa le etichette originali (con le etichette originali: 86,3 sviluppo, 86,7 validation). Le cartelle dichiarate restano per abbinare la scheda.
-
 - Un file senza testo leggibile non è mai "senza dati personali" (meglio un falso allarme che un dato ignorato).
 - Una categoria particolare descritta rende il documento "con dati personali" anche senza identificativi.
 - Precisione entità misurata per file (le etichette non hanno le posizioni).

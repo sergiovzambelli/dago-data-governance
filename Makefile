@@ -19,8 +19,11 @@ score:
 
 .PHONY: score
 
+# modello di embedding per raggruppare le bozze per contenuto e recuperare le schede simili; vuoto = nome del file
+EMBED ?= bge-m3
+
 # bozze di nuove schede per i documenti SCHEDA_MANCANTE di sviluppo (dopo make score); con LLM= solo lo scheletro
 drafts:
-	CLASSIFIER_LLM_MODEL=$(LLM) python3 -m classifier.drafts data/pred_sviluppo.json $(KIT)/sviluppo $(KIT)/permessi_cartelle.csv > data/bozze_sviluppo.json
+	CLASSIFIER_LLM_MODEL=$(LLM) CLASSIFIER_EMBED_MODEL=$(EMBED) python3 -m classifier.drafts data/pred_sviluppo.json $(KIT)/sviluppo $(KIT)/permessi_cartelle.csv $(KIT)/Registro_trattamenti.csv > data/bozze_sviluppo.json
 
 .PHONY: drafts
