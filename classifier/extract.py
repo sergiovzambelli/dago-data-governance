@@ -1,9 +1,11 @@
-"""Estrae il testo da un file. Formati: PDF con testo, DOCX, XLSX, CSV, TXT (markitdown), ODT ed EML con allegati.
+"""Estrae il testo da un file. Formati: PDF con testo, DOCX, XLSX, CSV, TXT (markitdown), ODT, EML con allegati;
+OCR in italiano (tesseract, ocrmypdf) per PDF scansionati e immagini.
 
 Uso: python -m classifier.extract <file>
 """
 import email
 import email.policy
+import subprocess
 import sys
 import tempfile
 import zipfile
@@ -14,6 +16,8 @@ from markitdown import MarkItDown
 
 MAX_ODT_XML = 50 * 1024 * 1024  # contro gli zip bomb
 MAX_EML_DEPTH = 3  # email allegate dentro email
+OCR_TIMEOUT = 300  # secondi per file
+IMAGES = {".jpg", ".jpeg", ".png", ".tif", ".tiff"}
 
 _md = MarkItDown()
 
@@ -42,6 +46,19 @@ def _eml_text(path, depth):
     return "\n".join(parts)
 
 
+def _ocr(path):
+    # percorso assoluto: un nome che inizia con "-" non diventa un'opzione del comando
+    src = str(path.resolve())
+    run = dict(check=True, capture_output=True, text=True, timeout=OCR_TIMEOUT)
+    if path.suffix.lower() in IMAGES:
+        return subprocess.run(["tesseract", src, "stdout", "-l", "ita"], **run).stdout
+    with tempfile.TemporaryDirectory() as tmp:
+        side = Path(tmp) / "testo.txt"
+        subprocess.run(["ocrmypdf", "-q", "-l", "ita", "--skip-text", "--sidecar", str(side),
+                        src, str(Path(tmp) / "out.pdf")], **run)
+        return side.read_text(encoding="utf-8")
+
+
 def extract_text(path, depth=0):
     path = Path(path)
     try:
@@ -49,7 +66,13 @@ def extract_text(path, depth=0):
             return _odt_text(path)
         if path.suffix.lower() == ".eml":
             return _eml_text(path, depth)
-        return _md.convert(str(path)).text_content
+        if path.suffix.lower() in IMAGES:
+            return _ocr(path)
+        text = _md.convert(str(path)).text_content
+        # PDF scansionato: nessuno strato di testo
+        if path.suffix.lower() == ".pdf" and not text.strip():
+            return _ocr(path)
+        return text
     # shortcut: un file illeggibile diventa testo vuoto senza dire perché; aggiungere lo stato di estrazione quando serve in UI
     except Exception:
         return ""

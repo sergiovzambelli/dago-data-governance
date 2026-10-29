@@ -26,3 +26,5 @@ _Nessuno ancora (vedi `flussi.md`)._
 | T-011 | Entità | D | Testo costruito per far esplodere le regex (ReDoS) | regex senza quantificatori annidati ambigui, finestre limitate (`{0,60}`) | chiusa | feat/entities |
 | T-012 | Categorie | I | Evidenza della categoria (es. diagnosi) esposta a chi non deve vederla | l'evidenza è solo la parola chiave trovata, non il contesto; filtro per ruolo da fare in UI | aperta | feat/categories |
 | T-013 | Estrazione EML | T/D | Allegato con nome malevolo (`../../x`) o email annidate all'infinito | dal nome dell'allegato si usa solo l'estensione, file scritto in una cartella temporanea; massimo 3 livelli di annidamento | chiusa | feat/categories-ext |
+| T-014 | OCR | T | Nome di file che inietta opzioni o comandi in tesseract/ocrmypdf | comando come lista senza shell; percorso assoluto, quindi mai un argomento che inizia con `-` | chiusa | feat/ocr |
+| T-015 | OCR | D | PDF con migliaia di pagine o immagine enorme che blocca l'analisi | timeout di 300 s per file, poi testo vuoto | chiusa | feat/ocr |

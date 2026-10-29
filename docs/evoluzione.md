@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/ocr: OCR per scansioni e foto
+- PDF senza strato di testo → `ocrmypdf --skip-text --sidecar` in italiano; immagini (JPG, PNG, TIFF) → `tesseract -l ita`.
+- Dipendenze di sistema (non pip): `tesseract-ocr`, `tesseract-ocr-ita`, `ocrmypdf` (Debian 12: tesseract 5.3.0, ocrmypdf 14.0.1). Se mancano, il file resta senza testo e la pipeline prosegue.
+- Richiamo categorie particolari: sviluppo 0,77 → **0,98**, validation 0,83 → **1,0**.
+- Punteggio: sviluppo 35,6 → **39,9**, validation 35,2 → **38,7**. Analisi completa (222 file) in circa 1 minuto e 50 secondi su CPU.
+
 ## 2026-10-29 — feat/categories-ext: dizionari estesi ed EML decodificate
 - EML lette con il modulo `email` della libreria standard: testo decodificato (prima "progn= osi"), intestazioni From/To/Cc/Subject/Date e **allegati** estratti a loro volta (massimo 3 livelli di email annidate).
 - Dizionari estesi con il lessico della PA: radici corrette (`invalido`, `disabile`), accompagnamento, oncologia, demenza, salute mentale, RSA, misure cautelari, messa alla prova, esonero IRC, testimoni di Geova, permessi sindacali e altre sigle.

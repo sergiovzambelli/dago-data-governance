@@ -20,9 +20,18 @@ def test_extracts_text_from_kit_formats(rel, expected):
     assert expected in extract_text(KIT / rel)
 
 
-def test_scanned_pdf_has_no_text_layer_yet():
-    # niente OCR in questa PR: la scansione resta vuota
-    assert extract_text(KIT / "Condivisa/scansioni/scan_20260302_0113.pdf").strip() == ""
+def test_scanned_pdf_is_read_with_ocr():
+    assert "BLDSLV66A68E625M" in extract_text(KIT / "Condivisa/scansioni/scan_20260302_0113.pdf")
+
+
+def test_photo_is_read_with_ocr():
+    assert "residenza" in extract_text(KIT / "Demografici/Anagrafe/foto_modulo_residenza.jpg").lower()
+
+
+def test_missing_ocr_tools_give_empty_text(monkeypatch):
+    # server senza tesseract/ocrmypdf: niente errore, solo testo vuoto
+    monkeypatch.setenv("PATH", "")
+    assert extract_text(KIT / "Demografici/Anagrafe/foto_modulo_residenza.jpg") == ""
 
 
 def test_corrupt_file_returns_empty_string(tmp_path):
