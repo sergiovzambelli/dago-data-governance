@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import outcome, record as record_name %}
+{% from "_macros.html" import outcome, record as record_name, share, share_hint %}
 {% block title %}Prova un file{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
@@ -67,10 +67,11 @@
   <li>
     <h3 class="h5">Schede più vicine</h3>
     {% if result.proposte %}
+    {{ share_hint() }}
     <ol class="proposals">
       {% for p in result.proposte %}
       <li><span class="fw-semibold">{{ record_name(p.scheda) }}</span>
-        <span class="hint">punteggio {{ "%.1f"|format(p.punteggio) }}</span>
+        {{ share(p, result.proposte) }}
         <span class="d-block">{{ p.motivazione or "—" }}</span></li>
       {% endfor %}
     </ol>
