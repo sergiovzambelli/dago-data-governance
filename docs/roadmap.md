@@ -35,6 +35,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | – | feat/try-file-visual | Prova un file: testo con evidenziati dati personali, categorie e parole chiave; senza scheda l'RPD sceglie tra le 3 proposte o crea una nuova scheda già compilata, e il documento entra nell'inventario | – (invariato) | – (invariato) |
 | – | feat/try-file | UI: pagina "Prova un file", carica un documento e mostra i passi dell'analisi (testo, dati, categorie, schede, esito) senza salvarlo | – (invariato) | – (invariato) |
 | #20 | feat/draft-records | Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE (`make drafts`, modello locale facoltativo) e pagina "Nuove schede" per l'approvazione dell'RPD | – (invariato) | – (invariato) |
+| #24 | feat/semantic-drafts | Bozze: gruppi per nome file uniti per contenuto (embedding `bge-m3` locali + verifica del modello) e RAG sul registro: struttura, ufficio e software dalla scheda esistente più simile scelta dal modello | – (invariato) | – (invariato) |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 
@@ -44,7 +45,7 @@ Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda 
 2. **feat/publication** — "destinato alla pubblicazione" anche dal testo, non solo dalla cartella: determine all'albo (5 casi di DIFFUSIONE_NON_PREVISTA mancati su sviluppo). Metrica: F1 scostamenti (15), esito.
 3. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
 4. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
-5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti. Bozze di schede fatte (feat/draft-records); da fare: rimettere nel registro le schede approvate senza copia a mano, provare `qwen3:8b` sulle bozze.
+5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti. Bozze di schede fatte (feat/draft-records, feat/semantic-drafts); da fare: rimettere nel registro le schede approvate senza copia a mano (e codice della bozza nel formato delle schede), RAG su normativa e conservazione quando c'è un massimario, embedding del solo oggetto del documento per distinguere i procedimenti, provare `qwen3:8b`.
 6. **UI** — prima versione fatta (feat/ui, `docs/ui.md`). Da fare: ricerca nei limiti dei permessi dell'utente (T-034), HTTPS tramite proxy al deploy (T-026), dichiarazione di accessibilità AgID, verifica con lettore di schermo.
 7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 

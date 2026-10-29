@@ -2,6 +2,17 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/semantic-drafts: gruppi per contenuto e schede simili (RAG sul registro)
+- Richiesta dell'utente: il raggruppamento per nome file è grezzo; provare raggruppamento semantico e RAG. Decisione (dell'utente): una sola PR.
+- Embedding locali con Ollama `bge-m3` (multilingue), stesso `OllamaClient` solo verso host locali. `make drafts` usa `EMBED=bge-m3` di default; senza modello, o se gli embedding falliscono (avviso su stderr), si torna ai gruppi per nome file.
+- **Taratura sui dati di sviluppo**: i documenti dello stesso tipo hanno coseno ≥ 0,78; ma i centri di "concessione loculo" e "domanda loculo" (da unire) sono a 0,759, ERP e "fondo affitti" (trattamenti diversi) a 0,754. Gli embedding del testo intero misurano l'ufficio e l'argomento, non il procedimento: nessuna soglia separa i due casi. Scelta: **ibrido** come per gli abbinamenti, "recupera e verifica". Si parte dai gruppi per nome file; due gruppi si uniscono da soli sopra 0,85, tra 0,70 e 0,85 solo se il modello risponde SI a "stesso procedimento?".
+- Esito su sviluppo: nessuna unione (anche llama3.1 dice che le due "loculo" sono procedimenti diversi). 15 bozze come prima: il meccanismo è provato dai test, non ancora dai dati.
+- **RAG sul registro**: per ogni gruppo le 3 schede del registro più vicine per contenuto vanno nel prompt; il modello ne indica una dello stesso ufficio (`scheda_simile`) o NESSUNA. Se la sceglie, struttura responsabile, ufficio e software vengono copiati, restano "da verificare" e l'Origine dice da quale scheda arrivano. Codici fuori dalle 3 recuperate ignorati.
+- Qualità della scheda simile (giudizio nostro, il kit non ha etichette): qwen3:1.7b circa 6 giuste su 14 (prende quasi sempre la prima); llama3.1 (8B) circa 8 su 15, 2 discutibili, 3 sbagliate (ERP → Anagrafe, anagrafe canina → Anagrafe, reclami → Verbali), 2 NESSUNA. `data/bozze_sviluppo.json` rigenerato con `LLM=llama3.1`, circa 11 minuti.
+- Problema di sistema trovato: con GPU da 4 GB e il modello di chat caricato, `bge-m3` a metà sulla GPU restituisce NaN (Ollama 0.13 risponde errore 500). Gli embedding girano sempre su CPU (`num_gpu: 0`).
+- Fuori: RAG su normativa e conservazione (nel kit non c'è un massimario né un piano di conservazione: senza fonte il modello inventerebbe); codice della bozza compatibile con la pagina Schede (`NUOVA-CONCESSIONE-LOCULO` non rispetta il formato dei codici).
+- Punteggio invariato: la pipeline non cambia.
+
 ## 2026-10-29 — feat/try-file-visual: il file evidenziato e la scelta della scheda
 - Richiesta dell'utente: vedere il file con evidenziate le informazioni trovate; se la scheda manca, proporre le tre schede o "Nuova scheda", che crea una scheda già compilata.
 - Testo estratto con evidenziati dati personali (rosso), categorie particolari (viola) e parole chiave delle schede proposte (blu). Ogni tipo ha anche un bordo diverso e un'etichetta per i lettori di schermo: il colore non è l'unico segnale.

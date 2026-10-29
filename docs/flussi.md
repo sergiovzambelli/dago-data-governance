@@ -136,16 +136,23 @@ flowchart LR
     CAR --> INV[inventario, coda, cruscotto]
 ```
 
-## Bozze di nuove schede (feat/draft-records)
+## Bozze di nuove schede (feat/draft-records, feat/semantic-drafts)
 
 ```mermaid
 flowchart LR
-    PRED[data/pred_sviluppo.json] -->|esito SCHEDA_MANCANTE| GRP[raggruppa per tipo di documento<br/>nome file senza date, numeri, cognomi]
-    FS[(cartella analizzata<br/>sola lettura)] -->|testo, solo file dentro la cartella| GRP
+    PRED[data/pred_sviluppo.json] -->|esito SCHEDA_MANCANTE| KEY[gruppi per nome file<br/>senza date, numeri, cognomi]
+    FS[(cartella analizzata<br/>sola lettura)] -->|testo, solo file dentro la cartella| EMB
+    EMB[embedding locali su CPU<br/>Ollama bge-m3, solo host locali] -->|centri dei gruppi| GRP
+    KEY --> GRP{unione dei gruppi<br/>coseno ≥ 0,85: sì<br/>0,70–0,85: decide il modello SI/NO<br/>sotto: no}
+    GRP -. "0,70–0,85: 2 estratti per gruppo" .-> LLM
+    REGCSV[Registro_trattamenti.csv] -->|descrizioni delle schede| EMB
+    GRP -->|centro del gruppo| RET[3 schede esistenti<br/>più simili]
     PERM[permessi_cartelle.csv] --> SYS
     GRP --> SYS[campi noti: cartella prevalente,<br/>gruppo di accesso, categorie, diffusione NO]
-    GRP -. "fino a 3 estratti — solo host locali" .-> LLM[Ollama<br/>campi descrittivi in JSON]
-    LLM -. risposta non fidata .-> VAL{validazione<br/>una riga · 500 car. · niente entità né nomi<br/>parole chiave presenti nei documenti<br/>base giuridica da elenco chiuso}
+    GRP -. "fino a 3 estratti — solo host locali" .-> LLM[Ollama<br/>campi descrittivi in JSON<br/>+ scheda simile]
+    RET -.-> LLM
+    LLM -. risposta non fidata .-> VAL{validazione<br/>una riga · 500 car. · niente entità né nomi<br/>parole chiave presenti nei documenti<br/>base giuridica da elenco chiuso<br/>scheda simile solo tra le 3 recuperate}
+    RET -->|se scelta: struttura, ufficio, software<br/>da verificare| VAL
     SYS & VAL --> BOZ[data/bozze_sviluppo.json]
     BOZ --> UIB
     subgraph UIB["ui/ — pagina Nuove schede"]

@@ -19,12 +19,27 @@ PERMISSIONS = [("fileserver/SUAP", {"GG_SUAP"}), ("fileserver/Condivisa", {"GG_T
 
 
 class FakeLLM:
-    def __init__(self, answer):
-        self.answer, self.calls = answer, []
+    def __init__(self, answer, same=None):
+        self.answer, self.calls, self._same, self.compared = answer, [], same, []
 
-    def draft(self, texts):
+    def same_procedure(self, a, b):
+        self.compared.append((a, b))
+        return self._same
+
+    def draft(self, texts, similar=()):
         self.calls.append(texts)
+        self.similar = [r["Codice"] for r in similar]
         return self.answer
+
+
+class FakeEmbedder:
+    """Vettori fissi: il testo di ogni documento inizia con il nome del suo vettore."""
+
+    def __init__(self, vectors):
+        self.vectors = vectors
+
+    def embed(self, texts):
+        return [self.vectors[t.split()[0].strip(".")] for t in texts]
 
 
 def test_group_key_drops_dates_numbers_and_names():
@@ -107,3 +122,71 @@ def test_columns_match_the_register_and_the_ui():
     import ui.data
     header = open("data/Kit_team_hackathon_sfida_5/Registro_trattamenti.csv", encoding="utf-8-sig").readline()
     assert tuple(header.strip().split(";")) == REGISTER_COLUMNS == ui.data.REGISTER_COLUMNS
+
+
+SEM_PREDS = [
+    pred("fileserver/ServiziCimiteriali/Concessioni/concessione_loculo_20250622_965.pdf"),
+    pred("fileserver/ServiziCimiteriali/Concessioni/domanda_loculo_20250914_584.pdf"),
+    pred("fileserver/Sociale/Casa/domanda_ERP_Rinaldi.docx"),
+    pred("fileserver/Sociale/Casa/domanda_ERP_Bianchi.docx"),
+    pred("fileserver/Sociale/Casa/domanda_fondo_affitti_2025.docx"),
+    pred("fileserver/Condivisa/scansioni/scan_20260302_0115.pdf"),
+]
+SEM_TEXTS = dict(zip([p["file"] for p in SEM_PREDS],
+                     ["loculo concessione trentennale", "loculo2 domanda di loculo", "erp alloggio popolare",
+                      "erp alloggio popolare", "affitti contributo", ""]))  # scansione senza testo: resta il nome
+# loculo/loculo2 vicinissimi (unione automatica); erp/affitti solo candidati (decide il modello)
+VECTORS = {"loculo": [1, 0, 0], "loculo2": [0.95, 0.1, 0], "erp": [0, 1, 0], "affitti": [0, 0.8, 0.5],
+           "Concessione": [0.9, 0, 0.1], "Account": [0, 0.1, 1], "Contributi": [0, 0.7, 0.3]}
+REGISTER = [
+    dict.fromkeys(REGISTER_COLUMNS, "") | {"Codice": "T-CIM-01", "Denominazione": "Concessione cimiteriale",
+                                           "Struttura responsabile": "Settore Servizi cimiteriali",
+                                           "Ufficio": "Ufficio Polizia mortuaria", "Software": "Gestionale cimiteriale"},
+    dict.fromkeys(REGISTER_COLUMNS, "") | {"Codice": "T-SIS-02", "Denominazione": "Account e log"},
+    dict.fromkeys(REGISTER_COLUMNS, "") | {"Codice": "T-SOC-01", "Denominazione": "Contributi"},
+]
+
+
+def docs_by_draft(drafts):
+    return sorted(sorted(f.rsplit("/", 1)[1] for f in d["documenti"]) for d in drafts)
+
+
+def test_groups_with_very_similar_content_are_merged_even_with_different_names():
+    drafts = build_drafts(SEM_PREDS, SEM_TEXTS, embedder=FakeEmbedder(VECTORS))
+    assert docs_by_draft(drafts) == [
+        ["concessione_loculo_20250622_965.pdf", "domanda_loculo_20250914_584.pdf"],
+        ["domanda_ERP_Bianchi.docx", "domanda_ERP_Rinaldi.docx"], ["domanda_fondo_affitti_2025.docx"],
+        ["scan_20260302_0115.pdf"]]
+
+
+def test_the_model_decides_merges_of_groups_that_are_only_close():
+    yes = build_drafts(SEM_PREDS, SEM_TEXTS, llm=FakeLLM(None, same=True), embedder=FakeEmbedder(VECTORS))
+    assert ["domanda_ERP_Bianchi.docx", "domanda_ERP_Rinaldi.docx", "domanda_fondo_affitti_2025.docx"] in docs_by_draft(yes)
+    # il gruppo più numeroso dà il nome alla bozza
+    assert "NUOVA-DOMANDA-ERP" in [d["codice"] for d in yes]
+    llm = FakeLLM(None, same=False)
+    no = build_drafts(SEM_PREDS, SEM_TEXTS, llm=llm, embedder=FakeEmbedder(VECTORS))
+    assert len(no) == 4 and len(llm.compared) == 1
+
+
+def test_without_embedder_grouping_is_by_file_name():
+    assert len(build_drafts(SEM_PREDS, SEM_TEXTS, llm=FakeLLM(None, same=True))) == 5
+
+
+def test_similar_records_are_retrieved_and_copied_only_if_chosen():
+    llm = FakeLLM({"denominazione": "Concessione di loculo", "scheda_simile": "T-CIM-01"})
+    (draft,) = build_drafts(SEM_PREDS[:2], SEM_TEXTS, llm=llm, embedder=FakeEmbedder(VECTORS), register=REGISTER)
+    # le schede più vicine per contenuto, la più simile per prima
+    assert llm.similar[0] == "T-CIM-01" and len(llm.similar) <= 3
+    f = draft["campi"]
+    assert f["Ufficio"] == "Ufficio Polizia mortuaria" and f["Software"] == "Gestionale cimiteriale"
+    assert f["Struttura responsabile"] == "Settore Servizi cimiteriali"
+    assert "T-CIM-01" in f["Origine"]
+    # copiati da un'altra scheda: restano da verificare
+    assert {"Ufficio", "Software", "Struttura responsabile"} <= set(draft["da_verificare"])
+
+
+def test_similar_record_outside_the_retrieved_ones_is_ignored():
+    llm = FakeLLM({"denominazione": "Concessione di loculo", "scheda_simile": "T-XXX-99"})
+    (draft,) = build_drafts(SEM_PREDS[:2], SEM_TEXTS, llm=llm, embedder=FakeEmbedder(VECTORS), register=REGISTER)
+    assert draft["campi"]["Ufficio"] == "" and draft["campi"]["Origine"] == "Bozza del classificatore"

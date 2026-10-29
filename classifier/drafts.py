@@ -1,12 +1,17 @@
 """Bozze di nuove schede del registro per i documenti SCHEDA_MANCANTE, da approvare dall'RPD.
 
 Una bozza per tipo di documento (nome del file senza date, numeri e cognomi), anche se sparso in più cartelle.
+Con gli embedding locali due tipi diversi si uniscono se il contenuto è quasi uguale, o se è vicino e il modello
+conferma che è lo stesso procedimento (es. concessione_loculo e domanda_loculo).
 Il sistema compila ciò che sa (cartella, gruppo di accesso, categorie rilevate); il modello locale, se c'è,
-propone i campi descrittivi. Riferimenti normativi e conservazione restano sempre all'RPD.
+propone i campi descrittivi e sceglie tra le schede esistenti più simili (recuperate per contenuto) quella da cui
+copiare struttura, ufficio e software. Riferimenti normativi e conservazione restano sempre all'RPD.
 
-Uso: python -m classifier.drafts <predizioni.json> <cartella> [permessi_cartelle.csv] > bozze.json
-Modello locale facoltativo: CLASSIFIER_LLM_MODEL=qwen3:8b [CLASSIFIER_LLM_URL=http://localhost:11434]
+Uso: python -m classifier.drafts <predizioni.json> <cartella> [permessi_cartelle.csv] [registro.csv] > bozze.json
+Modelli locali facoltativi: CLASSIFIER_LLM_MODEL=qwen3:8b CLASSIFIER_EMBED_MODEL=bge-m3
+[CLASSIFIER_LLM_URL=http://localhost:11434]
 """
+import csv
 import hashlib
 import json
 import os
@@ -18,7 +23,7 @@ from pathlib import Path
 from classifier.compliance import _groups, load_permissions
 from classifier.entities import find_entities
 from classifier.extract import extract_text
-from classifier.llm import OllamaClient
+from classifier.llm import MAX_CHARS, OllamaClient
 
 REGISTER_COLUMNS = (
     "Codice", "Origine", "Denominazione", "Struttura responsabile", "Ufficio", "Finalità", "Base giuridica",
@@ -37,6 +42,13 @@ ALWAYS_CHECK = ["Base giuridica", "Fonti normative", "Struttura responsabile", "
                 "Responsabili esterni", "Archivi", "Conservazione", "Conservazione in anni", "Software", "Consenso"]
 MAX_FIELD = 500
 MAX_KEYWORDS = 10
+# coseno tra i centri di due gruppi (bge-m3, sviluppo): stesso tipo ≥ 0,78, ma "loculo" vs "loculo" 0,76 e
+# ERP vs fondo affitti 0,75. Nessuna soglia li separa: tra CANDIDATE e SIMILARITY decide il modello
+CANDIDATE = 0.70
+SIMILARITY = 0.85
+SIMILAR_RECORDS = 3
+# copiati dalla scheda simile scelta dal modello: stesso ufficio, stessi strumenti (restano da verificare)
+COPIED_FIELDS = ("Struttura responsabile", "Ufficio", "Software")
 
 
 def group_key(path):
@@ -46,6 +58,50 @@ def group_key(path):
     # chiave (e nella tipologia proposta), da rivedere quando ci sarà il riconoscimento dei nomi (feat/names)
     parts = [p for p in re.split(r"[_\-\s]+", stem) if p and not re.search(r"\d", p) and not re.fullmatch(r"[A-Z][a-z]+", p)]
     return "_".join(parts).lower() or "documento"
+
+
+def _cosine(a, b):
+    na, nb = sum(x * x for x in a) ** 0.5, sum(x * x for x in b) ** 0.5
+    return sum(x * y for x, y in zip(a, b)) / (na * nb) if na and nb else 0.0
+
+
+def _centroid(vectors):
+    return [sum(xs) / len(vectors) for xs in zip(*vectors)]
+
+
+def _cluster(preds, vectors, texts, llm):
+    """Gruppi {chiave: predizioni}: per nome del file, poi uniti se il contenuto dice che è lo stesso procedimento."""
+    groups = {}
+    for p in sorted(preds, key=lambda p: p["file"]):
+        groups.setdefault(group_key(p["file"]), []).append(p)
+
+    def center(ps):
+        vs = [vectors[p["file"]] for p in ps if p["file"] in vectors]
+        return _centroid(vs) if vs else None
+
+    rejected = set()
+    while True:
+        centers = {k: c for k, ps in groups.items() if (c := center(ps))}
+        pairs = sorted(((_cosine(centers[a], centers[b]), a, b) for a in centers for b in centers
+                        if a < b and (a, b) not in rejected), reverse=True)
+        sim, a, b = pairs[0] if pairs else (0, None, None)
+        if sim < CANDIDATE:
+            return groups
+        # sotto la soglia automatica decide il modello: stesso ufficio non vuol dire stesso trattamento
+        if sim < SIMILARITY:
+            sample_a, sample_b = ([texts[p["file"]] for p in groups[k] if p["file"] in vectors][:2] for k in (a, b))
+            if not (llm and llm.same_procedure(sample_a, sample_b)):
+                rejected.add((a, b))
+                continue
+        # il gruppo più numeroso dà il nome alla bozza
+        keep, drop = sorted((a, b), key=lambda k: (-len(groups[k]), k))
+        groups[keep] += groups.pop(drop)
+        groups[keep].sort(key=lambda p: p["file"])
+        rejected = {r for r in rejected if drop not in r}
+
+
+def _describe(row):
+    return f"{row['Denominazione']}. {row['Finalità']} Documenti tipici: {row['Tipologie documentali tipiche']}."
 
 
 def _clean(value, corpus):
@@ -70,7 +126,7 @@ def _keywords(answer, corpus):
     return out[:MAX_KEYWORDS]
 
 
-def _draft(key, preds, texts, permissions, llm):
+def _draft(key, preds, texts, permissions, llm, similar):
     folders = Counter(p["file"].rpartition("/")[0] for p in preds)
     top = max(folders.values())
     # la cartella prevalente: un documento finito in una cartella condivisa non diventa un percorso dichiarato
@@ -88,31 +144,54 @@ def _draft(key, preds, texts, permissions, llm):
     doc_texts = [t for t in (texts.get(p["file"]) or "" for p in preds) if t.strip()]
     corpus = "\n".join(doc_texts)
     # scansioni senza OCR: nulla da far leggere al modello
-    answer = llm.draft(doc_texts) if llm and doc_texts else None
+    answer = llm.draft(doc_texts, similar) if llm and doc_texts else None
     check = list(ALWAYS_CHECK)
     if isinstance(answer, dict):
         for k, col in MODEL_FIELDS.items():
             fields[col] = _clean(answer.get(k), corpus) or (fallback if col == "Tipologie documentali tipiche" else "")
         fields["Parole chiave"] = ", ".join(_keywords(answer.get("parole_chiave"), corpus)) or fallback
         fields["Base giuridica"] = LEGAL_BASES.get(str(answer.get("base_giuridica", "")).strip().lower()[:1], "")
+        # elenco chiuso anche qui: solo una delle schede recuperate, mai un codice inventato
+        ref = next((r for r in similar if r["Codice"] == str(answer.get("scheda_simile", "")).strip().upper()), None)
+        if ref:
+            fields.update({c: ref[c] for c in COPIED_FIELDS})
+            fields["Origine"] += f" (struttura e ufficio da {ref['Codice']})"
     check += [col for col in MODEL_FIELDS.values() if not fields[col]]
     return {"id": hashlib.sha256(key.encode()).hexdigest()[:16], "codice": code,
             "documenti": sorted(p["file"] for p in preds), "campi": fields,
             "da_verificare": [c for c in REGISTER_COLUMNS if c in check], "modello": isinstance(answer, dict)}
 
 
-def build_drafts(predictions, texts, permissions=(), llm=None):
-    """Bozze per i documenti SCHEDA_MANCANTE. texts: testo per file."""
-    groups = {}
-    for p in predictions:
-        if p["esito"] == "SCHEDA_MANCANTE":
-            groups.setdefault(group_key(p["file"]), []).append(p)
-    drafts = [_draft(k, ps, texts, permissions, llm) for k, ps in groups.items()]
+def _embed(embedder, texts):
+    vectors = embedder.embed(texts) if embedder and texts else None
+    if embedder and texts and not (vectors and len(vectors) == len(texts)):
+        print("embedding non disponibili: gruppi per nome del file", file=sys.stderr)
+        return None
+    return vectors
+
+
+def build_drafts(predictions, texts, permissions=(), llm=None, embedder=None, register=()):
+    """Bozze per i documenti SCHEDA_MANCANTE. texts: testo per file; register: righe del registro CSV."""
+    preds = [p for p in predictions if p["esito"] == "SCHEDA_MANCANTE"]
+    with_text = [p["file"] for p in preds if (texts.get(p["file"]) or "").strip()]
+    # embedder spento o senza risposta: si torna al nome del file
+    doc_vectors = _embed(embedder, [texts[f][:MAX_CHARS] for f in with_text]) or []
+    vectors = dict(zip(with_text, doc_vectors))
+    record_vectors = _embed(embedder, [_describe(r) for r in register]) if vectors else None
+    drafts = []
+    for key, ps in _cluster(preds, vectors, texts, llm).items():
+        similar = []
+        group = [vectors[p["file"]] for p in ps if p["file"] in vectors]
+        if record_vectors and group:
+            c = _centroid(group)
+            ranked = sorted(zip(register, record_vectors), key=lambda rv: -_cosine(c, rv[1]))
+            similar = [r for r, _ in ranked[:SIMILAR_RECORDS]]
+        drafts.append(_draft(key, ps, texts, permissions, llm, similar))
     return sorted(drafts, key=lambda d: d["codice"])
 
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (3, 4):
+    if len(sys.argv) not in (3, 4, 5):
         sys.exit(__doc__)
     preds = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
     root = Path(sys.argv[2]).resolve()
@@ -122,7 +201,16 @@ if __name__ == "__main__":
         # il file deve stare dentro la cartella analizzata: le predizioni sono un input da validare
         if p["esito"] == "SCHEDA_MANCANTE" and path.is_relative_to(root) and path.is_file() and not path.is_symlink():
             texts[p["file"]] = extract_text(path)
-    permissions = load_permissions(sys.argv[3]) if len(sys.argv) == 4 else ()
-    model = os.environ.get("CLASSIFIER_LLM_MODEL")
-    llm = OllamaClient(os.environ.get("CLASSIFIER_LLM_URL", "http://localhost:11434"), model) if model else None
-    print(json.dumps(build_drafts(preds, texts, permissions, llm), ensure_ascii=False, indent=1))
+    permissions = load_permissions(sys.argv[3]) if len(sys.argv) >= 4 else ()
+    register = ()
+    if len(sys.argv) == 5:
+        with open(sys.argv[4], encoding="utf-8-sig", newline="") as f:
+            reader = csv.DictReader(f, delimiter=";")
+            if tuple(reader.fieldnames or ()) != REGISTER_COLUMNS:
+                sys.exit("registro: colonne diverse da quelle attese")
+            register = list(reader)
+    url = os.environ.get("CLASSIFIER_LLM_URL", "http://localhost:11434")
+    model, embed_model = os.environ.get("CLASSIFIER_LLM_MODEL"), os.environ.get("CLASSIFIER_EMBED_MODEL")
+    llm = OllamaClient(url, model) if model else None
+    embedder = OllamaClient(url, embed_model) if embed_model else None
+    print(json.dumps(build_drafts(preds, texts, permissions, llm, embedder, register), ensure_ascii=False, indent=1))
