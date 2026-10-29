@@ -38,6 +38,15 @@
         {% endfor %}
       </select>
     </div>
+    <div class="select-wrapper">
+      <label for="f-settore">Settore</label>
+      <select id="f-settore" name="settore">
+        <option value="">Tutti</option>
+        {% for name in sectors %}
+        <option value="{{ name }}"{% if filters.settore == name %} selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
     <button type="submit" class="btn btn-primary">Filtra</button>
   </div>
 </form>
@@ -46,12 +55,13 @@
 {% if filters.esito %}{% set _ = active.append(("esito", "Esito: " ~ outcomes[filters.esito][0])) %}{% endif %}
 {% if filters.scheda %}{% set _ = active.append(("scheda", "Scheda: " ~ filters.scheda)) %}{% endif %}
 {% if filters.scostamento %}{% set _ = active.append(("scostamento", "Problema: " ~ deviations[filters.scostamento][0])) %}{% endif %}
+{% if filters.settore %}{% set _ = active.append(("settore", "Settore: " ~ filters.settore)) %}{% endif %}
 {% if active %}
 <div class="active-filters">
   <span class="fw-semibold">Filtri attivi:</span>
   <ul class="tag-list">
     {% for key, label in active %}
-    {% set keep = [] %}{% for k in ["esito", "scheda", "scostamento"] if k != key and filters[k] %}{% set _ = keep.append(k ~ "=" ~ filters[k]) %}{% endfor %}
+    {% set keep = [] %}{% for k in ["esito", "scheda", "scostamento", "settore"] if k != key and filters[k] %}{% set _ = keep.append(k ~ "=" ~ filters[k]|urlencode) %}{% endfor %}
     <li><a class="tag tag-remove" href="/documenti{{ '?' ~ keep|join('&') if keep }}">{{ label }}
       <span class="visually-hidden">(togli il filtro)</span>{{ icon("it-close", "icon-xs") }}</a></li>
     {% endfor %}
@@ -62,6 +72,6 @@
 
 <p role="status" class="result-count">{{ total }} document{{ "o" if total == 1 else "i" }}{% if pages > 1 %}, pagina {{ pagina }} di {{ pages }}{% endif %}.</p>
 {{ doc_table(docs, "Documenti analizzati") }}
-{% set base = "/documenti?" ~ ("esito=" ~ filters.esito ~ "&" if filters.esito) ~ ("scheda=" ~ filters.scheda ~ "&" if filters.scheda) ~ ("scostamento=" ~ filters.scostamento ~ "&" if filters.scostamento) %}
+{% set base = "/documenti?" ~ ("esito=" ~ filters.esito ~ "&" if filters.esito) ~ ("scheda=" ~ filters.scheda ~ "&" if filters.scheda) ~ ("scostamento=" ~ filters.scostamento ~ "&" if filters.scostamento) ~ ("settore=" ~ filters.settore|urlencode ~ "&" if filters.settore) %}
 {% set label = "Pagine dell'inventario" %}{% include "_pager.html" %}
 {% endblock %}

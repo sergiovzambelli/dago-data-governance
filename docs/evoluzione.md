@@ -10,6 +10,12 @@ Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 - Verifica sul kit: la rianalisi della UI coincide con `pred_sviluppo.json` su 156 documenti su 156; pagina in 0,1 s (3 s la prima volta, 0,6 s per una scansione con OCR).
 - Trovato: senza `.venv` i test della UI vengono saltati in blocco (`importorskip("fastapi")`). Il "1 skipped" delle PR precedenti era tutta `tests/test_ui.py`: si lanciano con `.venv/bin/python -m pytest`.
 
+## 2026-10-29 — feat/sector-view: documenti per settore
+- Richiesta dell'utente: una vista per settore. Prima una prova su Sociale (25 file, tutte le schede): 81,0 contro 88,3 di tutto lo sviluppo, quindi il settore è utile per vedere dove il classificatore sbaglia di più.
+- Decisioni (dell'utente): il settore è la **cartella** sotto il server (`fileserver/Sociale/…` → Sociale), non la struttura della scheda, perché c'è anche per i file senza scheda. Vista = tabella nel cruscotto (file, conformi, non conformi, senza scheda) e filtro nell'inventario, niente pagina nuova.
+- Limite: anche `Condivisa`, `Pubblicazioni` e `OpenData` risultano settori, perché sono cartelle sotto il server. Un file caricato senza cartella sta in "Senza cartella".
+- Punteggio invariato: la pipeline non cambia.
+
 ## 2026-10-29 — feat/no-location-check: niente più errore di luogo
 - Richiesta dell'utente: togliere il controllo di dove stanno i documenti e non mostrare più l'errore di luogo. Scelta dell'utente tra tre opzioni (solo Prova un file, solo UI, anche classificatore): **anche nel classificatore**.
 - `classifier/compliance.py` non produce più LUOGO_NON_DICHIARATO; la UI non lo conosce più (anche nelle predizioni vecchie viene ignorato). Le cartelle dichiarate restano: servono all'abbinamento della scheda e a decidere SCHEDA_MANCANTE.

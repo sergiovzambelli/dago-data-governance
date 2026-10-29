@@ -112,6 +112,27 @@ def test_inventory_filters_by_outcome(client):
 
 def test_inventory_rejects_unknown_filter_values(client):
     assert client.get("/documenti", params={"esito": "<script>"}).status_code == 400
+    assert client.get("/documenti", params={"settore": "Inesistente"}).status_code == 400
+
+
+def test_sector_is_the_folder_under_the_server():
+    from ui.data import sector
+    assert sector("fileserver/Sociale/Casa/domanda.docx") == "Sociale"
+    assert sector("srv-archivi/Gare/offerta.pdf") == "Gare"
+    assert sector("fileserver/leggimi.txt") == "" and sector("caricato.pdf") == ""
+
+
+def test_dashboard_counts_documents_by_sector(client):
+    html = client.get("/").text
+    # Personale: 2 file, 1 conforme, 1 non conforme, 0 senza scheda
+    row = re.search(r'<tr>\s*<th[^>]*><a href="/documenti\?settore=Personale">Personale</a></th>(.*?)</tr>', html, re.S)
+    assert re.findall(r"<td[^>]*>\s*(\d+)\s*</td>", row.group(1)) == ["2", "1", "1", "0"]
+
+
+def test_inventory_filters_by_sector(client):
+    html = client.get("/documenti", params={"settore": "Personale"}).text
+    assert "congedo_Lenzi.docx" in html and "scansione_0412.pdf" in html and "reclamo_117.eml" not in html
+    assert "Settore: Personale" in html
 
 
 def test_document_detail_shows_evidence_and_rules(client):
