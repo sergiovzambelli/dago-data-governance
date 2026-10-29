@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import outcome %}
 {% block title %}Registro decisioni{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
@@ -6,30 +7,28 @@
 {% endblock %}
 {% block content %}
 <h1>Registro delle decisioni</h1>
-<p>Ogni conferma o correzione dell'RPD, dalla più recente. Il registro è in sola aggiunta: le decisioni non si
-  modificano né si cancellano, una nuova decisione prevale sulla precedente.</p>
-<div class="table-responsive">
-<table class="table table-striped">
-  <caption>{{ rows|length }} decisioni registrate</caption>
+<p class="intro">Ogni conferma o correzione dell'RPD, dalla più recente. Le decisioni non si modificano né si cancellano:
+  una nuova decisione sullo stesso documento prevale sulla precedente.</p>
+<p role="status" class="result-count">{{ rows|length }} decision{{ "e" if rows|length == 1 else "i" }} registrat{{ "a" if rows|length == 1 else "e" }}.</p>
+<table class="doc-table">
+  <caption class="visually-hidden">Decisioni registrate</caption>
   <thead>
-    <tr><th scope="col">Quando (UTC)</th><th scope="col">Utente</th><th scope="col">Documento</th>
-      <th scope="col">Azione</th><th scope="col">Esito</th><th scope="col">Scheda</th><th scope="col">Nota</th></tr>
+    <tr><th scope="col">Quando</th><th scope="col">Documento</th><th scope="col">Decisione</th>
+      <th scope="col">Scheda</th><th scope="col">Chi</th><th scope="col">Nota</th></tr>
   </thead>
   <tbody>
   {% for r in rows %}
     <tr>
-      <td><time datetime="{{ r.quando }}">{{ r.quando[:16].replace("T", " ") }}</time></td>
-      <td>{{ r.utente }}</td>
-      <td class="text-break">{% if ids.get(r.documento) %}<a href="/documenti/{{ ids[r.documento] }}">{{ r.documento }}</a>{% else %}{{ r.documento }}{% endif %}</td>
-      <td>{{ r.azione }}</td>
-      <td>{{ outcomes[r.esito][0] if r.esito in outcomes else r.esito }}</td>
-      <td>{{ r.scheda or "—" }}</td>
-      <td>{{ r.nota }}</td>
+      <td data-label="Quando"><time datetime="{{ r.quando }}">{{ r.quando|quando }}</time></td>
+      <td data-label="Documento">{% if ids.get(r.documento) %}<a class="doc-link" href="/documenti/{{ ids[r.documento] }}"><span class="doc-name">{{ r.documento|nome_file|spezza }}</span> <span class="doc-folder">{{ r.documento|cartella|spezza }}</span></a>{% else %}<span class="doc-name">{{ r.documento }}</span>{% endif %}</td>
+      <td data-label="Decisione">{{ actions.get(r.azione, r.azione) }}: {% if r.esito in outcomes %}{{ outcome(r.esito) }}{% else %}{{ r.esito }}{% endif %}</td>
+      <td data-label="Scheda">{{ r.scheda or "—" }}</td>
+      <td data-label="Chi">{{ r.utente }}</td>
+      <td data-label="Nota">{{ r.nota or "—" }}</td>
     </tr>
   {% else %}
-    <tr><td colspan="7">Nessuna decisione registrata.</td></tr>
+    <tr><td colspan="6">Nessuna decisione registrata.</td></tr>
   {% endfor %}
   </tbody>
 </table>
-</div>
 {% endblock %}

@@ -9,11 +9,12 @@ from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ui.config import LOOPBACK
-from ui.data import (CATEGORIES, DEVIATIONS, ENTITY_TYPES, OUTCOMES, apply_decision, load_predictions,
-                     load_register, risk)
+from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, ENTITY_TYPES, OUTCOMES, apply_decision, load_predictions,
+                     load_register, priority, risk, split_path, when)
 from ui.decisions import DecisionLog
 from ui.security import HEADERS, LOCAL_USER, ROLES, Csrf, check_basic_auth, load_users
 
@@ -49,8 +50,13 @@ def create_app(settings):
     csrf = Csrf(settings.secret)
     templates = Jinja2Templates(directory=HERE / "templates")  # autoescape attivo sui .html
     templates.env.globals.update(ente=settings.ente, bi=f"/static/{BI}", outcomes=OUTCOMES, deviations=DEVIATIONS,
-                                 entity_types=ENTITY_TYPES, categories=CATEGORIES, roles=ROLES,
-                                 local_mode=users is None)
+                                 entity_types=ENTITY_TYPES, categories=CATEGORIES, roles=ROLES, actions=ACTIONS,
+                                 local_mode=users is None, schede=store.register, priority=priority)
+    def breakable(text):
+        # a capo dopo _ - / . invece che a metà parola (prima si fa l'escape, poi si aggiunge <wbr>)
+        return Markup(re.sub(r"([_\-/.])", r"\1<wbr>", str(escape(text))))
+    templates.env.filters.update(cartella=lambda p: split_path(p)[0], nome_file=lambda p: split_path(p)[1], quando=when,
+                                 spezza=breakable)
 
     app = FastAPI(title="Classificatore del patrimonio informativo", docs_url=None, redoc_url=None, openapi_url=None)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
@@ -86,6 +92,11 @@ def create_app(settings):
     def documents():
         latest = log.latest()
         return [apply_decision(d, latest.get((d["file"], d["sha256"]))) for d in store.refresh()]
+
+    def queue_of(docs):
+        """Documenti da validare, dal più rischioso."""
+        return sorted((d for d in docs if d["dati_personali"] and not d["validato"]
+                       and d["esito"] != "NESSUN_DATO_PERSONALE"), key=lambda d: (-risk(d), d["file"]))
 
     def find(doc_id):
         if not ID_RE.match(doc_id):
@@ -123,13 +134,19 @@ def create_app(settings):
     def detail(request: Request, doc_id: str):
         doc = find(doc_id)
         history = [d for d in log.all() if d["documento"] == doc["file"]]
-        return page(request, "documento.html", nav="documenti", doc=doc, history=history,
+        queue = queue_of(documents())
+        ids = [d["id"] for d in queue]
+        position = ids.index(doc_id) + 1 if doc_id in ids else None
+        # il prossimo dopo questo nella coda; per un documento già validato, il primo della coda
+        following = ids[position:] if position else ids
+        return page(request, "documento.html", nav="coda" if position else "documenti", doc=doc, history=history,
                     record=store.register.get(doc["scheda"] or ""), register=store.register,
-                    can_decide=request.state.user["ruolo"] == "rpd")
+                    can_decide=request.state.user["ruolo"] == "rpd", position=position, queue_size=len(ids),
+                    next_id=following[0] if following else None)
 
     @app.post("/documenti/{doc_id}/decisione")
     def decide(request: Request, doc_id: str, csrf_token: str = Form("", alias="csrf"), azione: str = Form(""),
-               esito: str = Form(""), scheda: str = Form(""), nota: str = Form("")):
+               esito: str = Form(""), scheda: str = Form(""), nota: str = Form(""), poi: str = Form("")):
         user = request.state.user
         origin = request.headers.get("origin")
         if origin and origin.split("://", 1)[-1] != request.headers.get("host"):
@@ -153,14 +170,27 @@ def create_app(settings):
                 scheda = ""
         else:
             raise HTTPException(400, "Azione non valida.")
+        before = [d["id"] for d in queue_of(documents())]
         log.add(user["nome"], doc, azione, esito, scheda, nota)
+        if poi == "prossimo":
+            # il documento che veniva dopo questo nella coda, ripartendo dall'inizio dopo l'ultimo
+            k = before.index(doc_id) if doc_id in before else -1
+            remaining = {d["id"] for d in queue_of(documents())}
+            nxt = next((i for i in before[k + 1:] + before[:max(k, 0)] if i in remaining), None)
+            if nxt is None:
+                return RedirectResponse("/coda?finita=1", status_code=303)
+            return RedirectResponse(f"/documenti/{nxt}?registrata=1", status_code=303)
         return RedirectResponse(f"/documenti/{doc_id}?registrata=1", status_code=303)
 
     @app.get("/coda", response_class=HTMLResponse)
-    def queue(request: Request):
-        docs = sorted((d for d in documents() if d["dati_personali"] and not d["validato"]
-                       and d["esito"] != "NESSUN_DATO_PERSONALE"), key=lambda d: (-risk(d), d["file"]))
-        return page(request, "coda.html", nav="coda", docs=docs, risk=risk)
+    def queue(request: Request, pagina: int = 1):
+        docs = queue_of(documents())
+        pages = max(1, -(-len(docs) // PAGE_SIZE))
+        if not 1 <= pagina <= pages:
+            raise HTTPException(400, "Pagina non valida.")
+        return page(request, "coda.html", nav="coda", docs=docs[(pagina - 1) * PAGE_SIZE:pagina * PAGE_SIZE],
+                    total=len(docs), by_outcome=Counter(d["esito"] for d in docs), pagina=pagina, pages=pages,
+                    start=(pagina - 1) * PAGE_SIZE, first=docs[0] if docs else None)
 
     @app.get("/ricerca", response_class=HTMLResponse)
     def search(request: Request, q: str = ""):

@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/ui-ux: leggibilità, accessibilità e flusso di validazione
+- Analisi della UI nel browser: contrasto insufficiente su "Scheda mancante" (2,39:1), nomi dei file persi nei percorsi, priorità come numero senza significato, nessun modo di passare al documento successivo, modulo di decisione con campi sempre attivi, tabelle che sul telefono scorrevano di lato, etichette flottanti sovrapposte, avviso ripetuto su ogni pagina, date in formato tecnico.
+- Correzioni descritte in `docs/ui.md` ("Leggibilità e flusso di lavoro"). La più utile: "Conferma la proposta e vai al prossimo" e la posizione nella coda, che evitano di tornare all'elenco dopo ogni documento.
+- Decisione (dell'utente): leggibilità e accessibilità prima dell'aderenza a Bootstrap Italia. Restano la libreria, la struttura dei modelli Designers Italia e i font; colori degli esiti, tabelle, etichette dei campi e riquadri sono personalizzati in `ui/static/ui.css`.
+- Verificata nel browser: contrasto ≥ 4,5:1 su tutti i testi di cruscotto, coda, inventario, documento e registro; nessuno scorrimento orizzontale a 375 px; flusso "conferma e vai al prossimo" provato con il focus sul messaggio.
+
 ## 2026-10-29 — feat/ui: interfaccia web per l'RPD
 - Nuova cartella `ui/` (FastAPI + Jinja2 + Bootstrap Italia 2.18.3 in locale): cruscotto, coda di validazione per rischio, inventario con filtri, pagina del documento con le evidenze e la conferma o correzione dell'RPD, ricerca, registro delle decisioni, esportazione JSON e CSV. Dettagli in `docs/ui.md`.
 - Decisione: la UI legge solo il JSON della pipeline e il CSV del registro, senza importare `classifier/`. Dipendenze in `requirements-ui.txt`, non in `requirements.txt`; nessuna modifica a `Makefile` e `.gitignore` della radice. Così backend e UI si sviluppano in parallelo senza conflitti.

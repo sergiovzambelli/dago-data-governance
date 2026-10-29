@@ -7,17 +7,24 @@
 {% endblock %}
 {% block content %}
 <h1>Ricerca</h1>
-<form method="get" action="/ricerca" role="search" class="mb-4">
-  <div class="form-group">
-    <label for="q" class="active">Cerca per percorso, scheda, esito, scostamento, categoria o tipo di dato</label>
-    <input type="search" id="q" name="q" value="{{ q }}" maxlength="100" aria-describedby="q-aiuto">
-    <small id="q-aiuto" class="form-text">Esempi: <code>T-PER-07</code>, <code>reclami</code>, <code>salute</code>,
-      <code>codice fiscale</code>. Più parole: devono esserci tutte. Il testo integrale dei documenti non è indicizzato.</small>
+<form method="get" action="/ricerca" role="search" class="search-form">
+  <label for="q">Cerca un documento</label>
+  <div class="search-row">
+    <input type="search" id="q" name="q" value="{{ q }}" maxlength="100" aria-describedby="q-aiuto" autocomplete="off">
+    <button type="submit" class="btn btn-primary">Cerca</button>
   </div>
-  <button type="submit" class="btn btn-primary">Cerca</button>
+  <p id="q-aiuto" class="hint">Cerca nel percorso, nella scheda, nell'esito, nei problemi, nelle categorie e nei tipi di dato.
+    Con più parole servono tutte. Il testo integrale dei documenti non viene conservato, quindi non si può cercare.</p>
 </form>
 {% if q %}
-<p role="status">{{ results|length }} documenti per «{{ q }}».</p>
-{{ doc_table(results, "Risultati della ricerca") }}
+<p role="status" class="result-count">{{ results|length }} document{{ "o" if results|length == 1 else "i" }} per «{{ q }}».</p>
+{% if results %}{{ doc_table(results, "Risultati della ricerca") }}{% endif %}
+{% else %}
+<p class="mb-1">Per esempio:</p>
+<ul class="tag-list">
+  {% for s in ["salute", "scheda mancante", "accesso eccessivo", "codice fiscale", "Condivisa"] %}
+  <li><a class="tag" href="/ricerca?q={{ s|urlencode }}">{{ s }}</a></li>
+  {% endfor %}
+</ul>
 {% endif %}
 {% endblock %}

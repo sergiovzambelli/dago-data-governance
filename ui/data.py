@@ -2,6 +2,7 @@
 import csv
 import hashlib
 import json
+from datetime import datetime
 
 OUTCOMES = {
     "NON_CONFORME": ("Non conforme", "danger"),
@@ -125,12 +126,48 @@ def load_register(path):
     } for r in rows if col(r, "Codice")}
 
 
+ACTIONS = {"CONFERMA": "Conferma", "CORREZIONE": "Correzione"}
+
+
 def risk(doc):
     """Priorità nella coda di validazione: più alta prima."""
     score = {"NON_CONFORME": 30, "SCHEDA_MANCANTE": 20, "CONFORME": 0, "NESSUN_DATO_PERSONALE": 0}[doc["esito"]]
     score += 10 * len(doc["scostamenti"]) + 8 * len(doc["categorie_particolari"])
     score += 5 if "ACCESSO_ECCESSIVO" in doc["scostamenti"] or "DIFFUSIONE_NON_PREVISTA" in doc["scostamenti"] else 0
     return score + min(len(doc["entita"]), 5)
+
+
+def priority(doc):
+    """Priorità a parole, con i motivi: è ciò che l'RPD legge nella coda al posto del punteggio."""
+    score = risk(doc)
+    level = ("Alta", "danger") if score >= 40 else ("Media", "warning") if score >= 20 else ("Bassa", "neutral")
+    reasons = []
+    if doc["esito"] == "SCHEDA_MANCANTE":
+        reasons.append("nessuna scheda")
+    n = len(doc["scostamenti"])
+    if n:
+        reasons.append(f"{n} scostament{'o' if n == 1 else 'i'}")
+    reasons += [CATEGORIES.get(c, c) for c in doc["categorie_particolari"]]
+    if "ACCESSO_ECCESSIVO" in doc["scostamenti"]:
+        reasons.append("aperto a tutti i dipendenti")
+    if "DIFFUSIONE_NON_PREVISTA" in doc["scostamenti"]:
+        reasons.append("pubblicato")
+    return {"livello": level[0], "colore": level[1], "motivi": reasons}
+
+
+def split_path(path):
+    """(cartella, nome del file) per mostrarli separati."""
+    folder, _, name = path.rpartition("/")
+    return folder, name
+
+
+def when(iso):
+    """2026-10-29T14:01:05+00:00 → 29/10/2026 14:01 UTC."""
+    try:
+        d = datetime.fromisoformat(iso)
+    except ValueError:
+        return iso
+    return d.strftime("%d/%m/%Y %H:%M") + (" UTC" if d.utcoffset() is not None and not d.utcoffset() else "")
 
 
 def apply_decision(doc, decision):

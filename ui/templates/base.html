@@ -24,7 +24,7 @@
             <div class="it-header-slim-right-zone">
               <span class="text-white small">
                 {{ icon("it-user", "icon-white icon-sm") }}
-                {{ user.nome }} · {{ roles[user.ruolo] }}
+                {{ user.nome }} · {{ roles[user.ruolo] }}{% if local_mode %}<span class="d-none d-md-inline"> · solo su questo computer</span>{% endif %}
               </span>
             </div>
           </div>
@@ -95,12 +95,6 @@
       {% block breadcrumb %}{% endblock %}
     </ol>
   </nav>
-  {% if local_mode %}
-  <div class="alert alert-info" role="note">
-    Modalità locale: la UI accetta solo connessioni da questo computer e non chiede le credenziali.
-    Per l'uso in rete configura gli utenti (<code>python -m ui.users</code>).
-  </div>
-  {% endif %}
   {% block content %}{% endblock %}
 </main>
 
@@ -147,5 +141,6 @@
   </div>
 </footer>
 <script src="{{ bi }}/js/bootstrap-italia.bundle.min.js"></script>
+<script src="/static/ui.js"></script>
 </body>
 </html>
