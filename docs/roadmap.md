@@ -5,7 +5,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 
 ## Come si misura
 
-- `make data` estrae il kit; `make score` analizza sviluppo e validation e stampa le 6 metriche della giuria e il totale su 100.
+- `make data` estrae il kit; `make score` (con `LLM=qwen3:1.7b` o `LLM=qwen3:8b` per il modello locale sui casi dubbi) analizza sviluppo e validation e stampa le 6 metriche della giuria e il totale su 100.
 - Pesi (specifica): esito 20 · richiamo categorie particolari 20 · scheda top-3 20 · F1 SCHEDA_MANCANTE 15 · F1 scostamenti 15 · precisione entità 10.
 - **Si corregge guardando solo il dataset di sviluppo**; il validation set serve solo a misurare (altrimenti il suo punteggio non è più "alla cieca").
 
@@ -28,6 +28,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #14 | feat/retention | CONSERVAZIONE_SCADUTA con la data del documento (testo, nome file) | **88,3** | **90,1** |
 | #15 | feat/llm-matching | Modello locale (Ollama) sui casi dubbi di abbinamento, facoltativo e spento: con registro senza parole chiave 92 → 100/109 schede giuste | 88,3 (88,0 acceso) | 90,1 (88,7 acceso) |
 | #16 | feat/ui | Interfaccia web per l'RPD in `ui/` (Bootstrap Italia 2.18.3), separata dal classificatore | – | – |
+| | chore/llm-model-make | `make score LLM=qwen3:1.7b` o `LLM=qwen3:8b`: scelta del modello locale | 88,3 (91,6 con 1.7b) | 90,1 (88,3 con 1.7b) |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 

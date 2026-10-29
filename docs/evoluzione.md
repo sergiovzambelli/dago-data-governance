@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — chore/llm-model-make: scelta del modello da `make`
+- `make score LLM=qwen3:1.7b` (o `LLM=qwen3:8b`) accende il modello locale sui casi dubbi; `make score` senza `LLM` resta con le sole regole. Il modello passa a `CLASSIFIER_LLM_MODEL`, già letto dalla pipeline: nessuna modifica al codice Python.
+- Misure con `qwen3:1.7b` (Quadro T1000 4 GB, tutto in GPU; circa 11 minuti per sviluppo + validation, contro meno di 2 minuti con le sole regole): sviluppo 88,3 → **91,6**, validation 90,1 → **88,3**. Stesso schema del modello 8b: migliora sviluppo, peggiora validation.
+- Decisione: il modello resta spento di default e le predizioni salvate restano quelle delle sole regole.
+- Nota di sistema: un `CUDA_VISIBLE_DEVICES=` vuoto nell'override systemd di Ollama nascondeva la GPU (tutto su CPU, molto più lento). Va tolto e il servizio riavviato.
+
 ## 2026-10-29 — feat/ui: interfaccia web per l'RPD
 - Nuova cartella `ui/` (FastAPI + Jinja2 + Bootstrap Italia 2.18.3 in locale): cruscotto, coda di validazione per rischio, inventario con filtri, pagina del documento con le evidenze e la conferma o correzione dell'RPD, ricerca, registro delle decisioni, esportazione JSON e CSV. Dettagli in `docs/ui.md`.
 - Decisione: la UI legge solo il JSON della pipeline e il CSV del registro, senza importare `classifier/`. Dipendenze in `requirements-ui.txt`, non in `requirements.txt`; nessuna modifica a `Makefile` e `.gitignore` della radice. Così backend e UI si sviluppano in parallelo senza conflitti.
