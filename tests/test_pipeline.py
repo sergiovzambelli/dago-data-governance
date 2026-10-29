@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 
+from classifier.compliance import load_permissions
 from classifier.matching import load_register
 from classifier.pipeline import classify
 
@@ -106,3 +107,18 @@ def test_personal_document_without_matching_record_is_missing_record(tmp_path):
     assert r["esito"] == "SCHEDA_MANCANTE" and r["scheda"] is None
     # la scheda più vicina resta tra le proposte, per il controllo dell'RPD
     assert [p["scheda"] for p in r["proposte"]] == ["T-PER-07"]
+
+
+def test_document_outside_declared_folder_is_not_compliant(tmp_path):
+    reg = tmp_path / "registro.csv"
+    reg.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche;"
+                   "Categorie particolari dichiarate\n"
+                   "T-PER-07;Personale/Permessi;congedo, legge 104;Istanza;SALUTE\n", encoding="utf-8")
+    perm = tmp_path / "permessi.csv"
+    perm.write_text("cartella;gruppi_con_accesso\nVarie;GG_TUTTI_DIPENDENTI\n", encoding="utf-8")
+    root = tmp_path / "share"
+    (root / "Varie").mkdir(parents=True)
+    (root / "Varie" / "scan.txt").write_text("C.F. BLDSLV66A68E625M chiede congedo, legge 104")
+    (r,) = classify(root, load_register(reg), load_permissions(perm))
+    assert r["scheda"] == "T-PER-07" and r["esito"] == "NON_CONFORME"
+    assert r["scostamenti"] == ["LUOGO_NON_DICHIARATO", "ACCESSO_ECCESSIVO"]

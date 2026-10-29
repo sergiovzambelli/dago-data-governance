@@ -76,3 +76,15 @@ def test_declared_folder_is_never_missing_record(register):
 def test_two_keywords_in_wrong_folder_keep_their_record(register):
     # documento fuori posto (LUOGO_NON_DICHIARATO): il testo basta per riconoscere la scheda
     assert not is_missing_record(register, "fileserver/Condivisa/x.pdf", "istanza legge 104 e congedo")
+
+
+def test_register_reads_declared_categories_and_diffusion(tmp_path):
+    p = tmp_path / "r.csv"
+    p.write_text("Codice;Percorsi dichiarati;Parole chiave;Tipologie documentali tipiche;"
+                 "Categorie particolari dichiarate;Diffusione\n"
+                 "T-1;a/b;x;y;ETNICA, SALUTE;SI\nT-2;c;x;y;Nessuna;NO\nT-3;d;x;y;SESSUALE;\n", encoding="utf-8")
+    recs = {r["codice"]: r for r in load_register(p)}
+    # i nomi del registro diventano quelli usati dal classificatore
+    assert recs["T-1"]["categorie_dichiarate"] == {"ORIGINE_ETNICA", "SALUTE"} and recs["T-1"]["diffusione"]
+    assert recs["T-2"]["categorie_dichiarate"] == set() and not recs["T-2"]["diffusione"]
+    assert recs["T-3"]["categorie_dichiarate"] == {"ORIENTAMENTO_SESSUALE"} and not recs["T-3"]["diffusione"]

@@ -11,6 +11,8 @@ REQUIRED = ("Codice", "Percorsi dichiarati", "Parole chiave", "Tipologie documen
 TERM_FIELDS = ("Parole chiave", "Tipologie documentali tipiche")
 # tarato su sviluppo: con pesi da 0,5 a 8 la top-3 non cambia; 2 lascia al testo la possibilità di vincere
 PATH_BONUS = 2.0
+# nomi del registro → nomi usati dal classificatore (categories.py)
+CATEGORY_ALIASES = {"ETNICA": "ORIGINE_ETNICA", "SESSUALE": "ORIENTAMENTO_SESSUALE"}
 
 
 def _split(value):
@@ -32,6 +34,11 @@ def load_register(path):
     return [{
         "codice": r["Codice"],
         "percorsi": [p.strip().rstrip("/") for p in r["Percorsi dichiarati"].split(";") if p.strip()],
+        # colonne facoltative: se mancano nulla è dichiarato, quindi i controlli segnalano di più (default sicuro)
+        "categorie_dichiarate": {CATEGORY_ALIASES.get(c, c) for c in (
+            x.strip().upper() for x in (r.get("Categorie particolari dichiarate") or "").split(","))
+            if c and c != "NESSUNA"},
+        "diffusione": (r.get("Diffusione") or "").strip().upper() == "SI",
         # parole intere; lo spazio vale anche come a capo (PDF)
         "termini": [(t, re.compile(r"\b" + r"\s+".join(map(re.escape, t.split())) + r"\b", re.I),
                      math.log(1 + len(rows) / df[t])) for t in sorted(terms[r["Codice"]])],
