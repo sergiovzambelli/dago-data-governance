@@ -2,6 +2,14 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/try-file: provare un file dalla UI
+- Richiesta dell'utente: una nuova pagina dove caricare un file e vedere l'elaborazione fatta su di esso.
+- Pagina **Prova un file** (`/prova`, solo RPD): carica il file, cartella sul file server facoltativa, e mostra in ordine testo estratto (primi 5000 caratteri), dati personali mascherati, categorie particolari, tre schede più vicine con motivazione, esito e scostamenti.
+- `classifier/pipeline.py`: il corpo del ciclo diventa `analyze(rel, text, …)`, usato sia da `classify` sia dalla UI. Predizioni di sviluppo identiche byte per byte.
+- Decisioni: il file sta solo in una cartella temporanea cancellata subito dopo, con nome fisso (dall'utente si prende solo l'estensione); niente nell'inventario né nel database. Si usa il registro in uso nella UI (con le modifiche delle Schede). Modello locale spento in questa pagina.
+- Richiesta dell'utente: il punteggio delle schede non si capiva. Ora la UI (anche nel dettaglio documento) mostra la quota degli indizi: punteggio della scheda diviso la somma delle proposte, in percentuale, con una riga che dice che non è una probabilità. Il punteggio grezzo resta nel JSON.
+- Decisione che cambia una regola precedente: la UI ora importa da `classifier/` (solo in questa pagina, con import al momento della richiesta: senza `requirements.txt` le altre pagine funzionano) e mostra il testo del documento a chi lo ha caricato (T-041).
+
 ## 2026-10-29 — feat/records: gestione delle schede del registro
 - Richiesta dell'utente: una pagina per vedere le schede del registro, crearne di nuove, modificarle, archiviarle.
 - Decisioni (dell'utente): salvataggio in SQLite con storico, il CSV del registro resta com'è; eliminare = archiviare, con ripristino; nuova PR da `main`.

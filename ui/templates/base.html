@@ -72,7 +72,7 @@
                 <div class="menu-wrapper">
                   <ul class="navbar-nav">
                     {% for key, href, label in [("cruscotto", "/", "Cruscotto"), ("coda", "/coda", "Coda di validazione"),
-                                                ("documenti", "/documenti", "Inventario"), ("ricerca", "/ricerca", "Ricerca"),
+                                                ("documenti", "/documenti", "Inventario"), ("ricerca", "/ricerca", "Ricerca"), ("prova", "/prova", "Prova un file"),
                                                 ("schede", "/schede", "Schede"), ("bozze", "/bozze", "Bozze di schede"), ("decisioni", "/decisioni", "Registro decisioni")] %}
                     <li class="nav-item">
                       <a class="nav-link{% if nav == key %} active{% endif %}" href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}><span>{{ label }}</span></a>

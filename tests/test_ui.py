@@ -461,3 +461,37 @@ def test_register_export_has_all_columns_and_no_formulas(client):
     header, *rows = text.splitlines()
     assert header.startswith("Codice;Origine;Denominazione;") and header.endswith("Parole chiave")
     assert any(r.startswith("T-URP-02;") and "'=HYPERLINK" in r for r in rows)
+
+
+def test_try_file_shows_each_step_without_saving(client, settings):
+    pytest.importorskip("markitdown")
+    page = client.get("/prova").text
+    assert 'type="file"' in page and "<label" in page
+    before = settings.predictions.read_text(encoding="utf-8")
+    r = client.post("/prova", data={"csrf": token(page), "cartella": "fileserver/Personale/Permessi"},
+                    files={"file": ("congedo.txt", "Richiesta di permesso. C.F. CSMPRZ97B66G702K".encode())})
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    assert "Richiesta di permesso" in r.text  # testo estratto
+    assert "Codice fiscale" in r.text and "CSM************K" in r.text  # entità mascherate
+    assert "T-PER-07" in r.text and "Conforme" in r.text  # scheda ed esito
+    assert "100% degli indizi" in r.text and "punteggio" not in r.text  # quota leggibile, non il punteggio grezzo
+    assert settings.predictions.read_text(encoding="utf-8") == before  # niente salvato
+
+
+def test_try_file_requires_rpd_csrf_and_a_small_file(client, monkeypatch):
+    t = token(client.get("/prova").text)
+    assert client.post("/prova", data={"csrf": "x"}, files={"file": ("a.txt", b"x")}).status_code == 403
+    assert client.post("/prova", data={"csrf": t}, files={"file": ("", b"")}).status_code == 400
+    monkeypatch.setattr("ui.app.MAX_UPLOAD", 10)
+    assert client.post("/prova", data={"csrf": t}, files={"file": ("a.txt", b"x" * 11)}).status_code == 400
+    r = client.post("/prova", data={"csrf": t, "cartella": "../etc"}, files={"file": ("a.txt", b"x")})
+    assert r.status_code == 400
+
+
+def test_proposals_show_share_of_evidence(client, settings):
+    preds = json.loads(settings.predictions.read_text(encoding="utf-8"))
+    preds[0]["proposte"] = [{"scheda": "T-PER-07", "punteggio": 3.0, "motivazione": "a"},
+                            {"scheda": "T-POL-02", "punteggio": 1.0, "motivazione": "b"}]
+    settings.predictions.write_text(json.dumps(preds), encoding="utf-8")
+    html = client.get(doc_url(client, "scansione_0412.pdf")).text
+    assert "75% degli indizi" in html and "25% degli indizi" in html
