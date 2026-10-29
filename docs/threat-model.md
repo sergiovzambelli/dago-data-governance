@@ -16,3 +16,4 @@ _Nessuno ancora (vedi `flussi.md`)._
 | T-001 | Repository | I | Segreti committati per errore | `.env` escluso da git | chiusa | chore/kit-data |
 | T-002 | `data/` | I | Dati personali o etichette riservate pubblicati su GitHub | rischio accettato dal team: dati sintetici (LEGGIMI del kit), zip già nel repo | accettata | chore/kit-data |
 | T-003 | `make data` | T | Archivio zip con percorsi `..` o assoluti (zip-slip) | estrazione con `zipfile` di Python, che li scarta | chiusa | chore/kit-data |
+| T-004 | Scorer | T | File di predizioni malformato o con percorsi inventati che falsa il punteggio | i file non presenti nelle etichette vengono rifiutati; i campi mancanti contano come errore | chiusa | feat/scorer |

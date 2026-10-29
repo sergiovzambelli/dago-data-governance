@@ -17,7 +17,7 @@ flowchart LR
 
 ## Flussi dell'applicazione
 
-### Architettura e tool (proposta, nulla ancora implementato)
+### Architettura e tool (proposta; implementato: Scorer)
 
 Tutto gratuito, open source, eseguito in locale senza Internet. Il LLM è opzionale: la catena funziona anche solo con le regole.
 
