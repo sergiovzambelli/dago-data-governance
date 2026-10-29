@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, outcome %}
+{% block title %}Documento{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item"><a href="/documenti">Inventario</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Documento</li>
+{% endblock %}
+{% block content %}
+{% if request.query_params.get("registrata") %}
+<div class="alert alert-success" role="status">Decisione registrata.</div>
+{% endif %}
+
+<h1 class="h2 text-break">{{ doc.file.rsplit("/", 1)[-1] }}</h1>
+<p class="text-break mb-1"><span class="fw-semibold">Percorso:</span> {{ doc.file }}</p>
+<p class="mb-1"><span class="fw-semibold">Esito:</span> {{ outcome(doc.esito) }}
+  {% if doc.validato %}<span class="badge bg-light text-dark border">{{ icon("it-check-circle", "icon-success icon-xs") }} Validato dall'RPD</span>
+  {% else %}<span class="badge bg-light text-dark border">Da validare</span>{% endif %}</p>
+<p class="small text-muted">Impronta SHA-256: <code>{{ doc.sha256 }}</code></p>
+
+<div class="row">
+<div class="col-lg-8">
+
+  <section aria-labelledby="h-scostamenti" class="mb-4">
+    <h2 id="h-scostamenti" class="h4">Scostamenti dalla scheda</h2>
+    {% if doc.scostamenti %}
+      {% for s in doc.scostamenti %}
+      {% set title, meaning, action = deviations[s] %}
+      <div class="callout warning">
+        <div class="callout-title">{{ icon("it-error") }}<span class="text">{{ title }}</span></div>
+        <p>{{ meaning }}</p>
+        {% if s == "LUOGO_NON_DICHIARATO" and record and record.percorsi %}
+        <p class="mb-1">Cartelle dichiarate nella scheda:</p>
+        <ul>{% for p in record.percorsi %}<li><code>{{ p }}</code></li>{% endfor %}</ul>
+        {% endif %}
+        <p class="mb-0"><span class="fw-semibold">Cosa fare:</span> {{ action }}</p>
+      </div>
+      {% endfor %}
+    {% elif doc.esito == "SCHEDA_MANCANTE" %}
+      <p>Nessuna scheda del registro descrive questo trattamento, quindi il controllo di conformità non è applicabile.
+        La scheda più vicina è tra le proposte qui sotto.</p>
+    {% elif doc.esito == "NESSUN_DATO_PERSONALE" %}
+      <p>Nel documento non sono stati trovati dati personali.</p>
+    {% else %}
+      <p>Nessuno scostamento: il documento rispetta ciò che la scheda dichiara.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="h-proposte" class="mb-4">
+    <h2 id="h-proposte" class="h4">Proposte di abbinamento</h2>
+    {% if doc.proposte %}
+    <div class="table-responsive">
+    <table class="table">
+      <caption>Le tre schede più probabili, con il punteggio e le evidenze trovate</caption>
+      <thead><tr><th scope="col">Scheda</th><th scope="col" class="text-end">Punteggio</th><th scope="col">Motivazione</th></tr></thead>
+      <tbody>
+      {% for p in doc.proposte %}
+        <tr>
+          <th scope="row">{{ p.scheda }}{% if register.get(p.scheda) %}<span class="d-block small fw-normal">{{ register[p.scheda].denominazione }}</span>{% endif %}</th>
+          <td class="text-end">{{ "%.2f"|format(p.punteggio) if p.punteggio is not none else "—" }}</td>
+          <td>{{ p.motivazione or "—" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p>Nessuna scheda con indizi nel testo o nel percorso.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="h-dati" class="mb-4">
+    <h2 id="h-dati" class="h4">Dati personali trovati</h2>
+    {% if doc.categorie_particolari %}
+    <p><span class="fw-semibold">Categorie particolari:</span>
+      {% for c in doc.categorie_particolari %}<span class="badge bg-danger me-1">{{ categories.get(c, c) }}</span>{% endfor %}</p>
+    {% endif %}
+    {% if doc.entita %}
+    <div class="table-responsive">
+    <table class="table table-sm">
+      <caption>Entità rilevate, mostrate solo in forma mascherata</caption>
+      <thead><tr><th scope="col">Tipo</th><th scope="col">Valore mascherato</th><th scope="col" class="text-end">Posizione</th><th scope="col" class="text-end">Confidenza</th></tr></thead>
+      <tbody>
+      {% for e in doc.entita %}
+        <tr>
+          <td>{{ entity_types.get(e.tipo, e.tipo) }}</td>
+          <td><code>{{ e.valore_mascherato }}</code></td>
+          <td class="text-end">{{ e.inizio if e.inizio is not none else "—" }}</td>
+          <td class="text-end">{{ "%.0f %%"|format(e.confidenza * 100) if e.confidenza is not none else "—" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% elif doc.dati_personali and not doc.categorie_particolari %}
+    <p>Nessuna entità leggibile: il documento potrebbe essere una scansione senza testo, quindi viene trattato come
+      contenente dati personali per prudenza.</p>
+    {% elif not doc.dati_personali %}
+    <p>Nessuna entità trovata.</p>
+    {% endif %}
+  </section>
+</div>
+
+<div class="col-lg-4">
+  <section aria-labelledby="h-scheda" class="mb-4">
+    <h2 id="h-scheda" class="h4">Scheda abbinata</h2>
+    {% if record %}
+    <div class="card card-bg">
+      <div class="card-body">
+        <h3 class="card-title h5">{{ record.codice }} · {{ record.denominazione }}</h3>
+        <dl class="small mb-0">
+          <dt>Finalità</dt><dd>{{ record.finalita or "—" }}</dd>
+          <dt>Categorie particolari dichiarate</dt><dd>{{ record.categorie }}</dd>
+          <dt>Cartelle dichiarate</dt><dd>{% for p in record.percorsi %}<code class="d-block">{{ p }}</code>{% else %}—{% endfor %}</dd>
+          <dt>Conservazione</dt><dd>{{ record.conservazione or "—" }}</dd>
+          <dt>Diffusione</dt><dd>{{ record.diffusione }}</dd>
+        </dl>
+      </div>
+    </div>
+    {% elif doc.scheda %}
+    <p>{{ doc.scheda }} (scheda non presente nel registro caricato).</p>
+    {% else %}
+    <p>Nessuna scheda.</p>
+    {% endif %}
+  </section>
+</div>
+</div>
+
+<section aria-labelledby="h-decisione" class="mb-4">
+  <h2 id="h-decisione" class="h4">Validazione</h2>
+  {% if can_decide %}
+  <form method="post" action="/documenti/{{ doc.id }}/decisione" class="decision-form ps-3 py-2">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h3 class="h5">Registra la decisione</h3>
+    <fieldset class="mb-3">
+      <legend class="h6">Azione</legend>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="azione" id="az-conferma" value="CONFERMA" checked>
+        <label class="form-check-label" for="az-conferma">Confermo esito e scheda proposti</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="azione" id="az-correzione" value="CORREZIONE">
+        <label class="form-check-label" for="az-correzione">Correggo esito o scheda</label>
+      </div>
+    </fieldset>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <div class="select-wrapper">
+          <label for="d-esito">Esito corretto (solo per la correzione)</label>
+          <select id="d-esito" name="esito">
+            {% for code, (label, _) in outcomes.items() %}
+            <option value="{{ code }}"{% if doc.esito == code %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <div class="select-wrapper">
+          <label for="d-scheda">Scheda corretta (solo per la correzione)</label>
+          <select id="d-scheda" name="scheda">
+            <option value="">Nessuna scheda</option>
+            {% for code, r in register.items() %}
+            <option value="{{ code }}"{% if doc.scheda == code %} selected{% endif %}>{{ code }} · {{ r.denominazione[:60] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="d-nota" class="active">Nota (facoltativa, massimo 500 caratteri)</label>
+      <textarea id="d-nota" name="nota" rows="3" maxlength="500" aria-describedby="d-nota-aiuto"></textarea>
+      <small id="d-nota-aiuto" class="form-text">Non scrivere dati personali nella nota: il registro delle decisioni è conservato.</small>
+    </div>
+    <button type="submit" class="btn btn-primary">Registra la decisione</button>
+  </form>
+  {% else %}
+  <p>Solo l'RPD può confermare o correggere l'esito.</p>
+  {% endif %}
+
+  {% if history %}
+  <h3 class="h5 mt-4">Decisioni su questo documento</h3>
+  <ul>
+    {% for h in history %}
+    <li><time datetime="{{ h.quando }}">{{ h.quando[:16].replace("T", " ") }}</time> · {{ h.utente }} · {{ h.azione }}
+      → {{ outcomes[h.esito][0] if h.esito in outcomes else h.esito }}{% if h.scheda %}, {{ h.scheda }}{% endif %}
+      {% if h.nota %}<br><span class="small">{{ h.nota }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+{% endblock %}

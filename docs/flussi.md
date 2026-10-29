@@ -93,3 +93,23 @@ flowchart TB
         C2[container ollama<br/>opzionale]
     end
 ```
+
+## Interfaccia web (ui/)
+
+Dettagli in [ui.md](ui.md). La UI legge solo i file prodotti dal classificatore: nessun import da `classifier/`.
+
+```mermaid
+flowchart LR
+    PIPE[classifier.pipeline] -->|data/pred_*.json| UI
+    REG[(Registro_trattamenti.csv)] --> UI
+    subgraph UI["ui/ — FastAPI + Jinja2 + Bootstrap Italia 2.18.3 (file locali)"]
+        AUTH{utente?<br/>Basic + PBKDF2<br/>oppure solo 127.0.0.1}
+        PAG[cruscotto · coda · inventario<br/>documento · ricerca · registro]
+        DEC[decisione RPD<br/>ruolo rpd + token CSRF + Origin]
+        EXP[esporta JSON / CSV]
+    end
+    U((RPD / operatore)) -->|confine di fiducia: browser → server| AUTH --> PAG
+    PAG --> DEC -->|solo aggiunte| DB[(ui/var/decisioni.sqlite3)]
+    DB --> PAG
+    DB --> EXP
+```

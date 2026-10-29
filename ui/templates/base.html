@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Patrimonio informativo · {{ ente }}</title>
+  <link rel="stylesheet" href="{{ bi }}/css/bootstrap-italia.min.css">
+  <link rel="stylesheet" href="/static/fonts.css">
+  <link rel="stylesheet" href="/static/ui.css">
+</head>
+<body>
+{% from "_macros.html" import icon %}
+<div class="skiplinks">
+  <a class="visually-hidden-focusable" href="#main-content">Vai al contenuto principale</a>
+  <a class="visually-hidden-focusable" href="#menu-principale">Vai alla navigazione</a>
+</div>
+<header class="it-header-wrapper">
+  <div class="it-header-slim-wrapper">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <div class="it-header-slim-wrapper-content">
+            <span class="d-lg-block navbar-brand">{{ ente }}</span>
+            <div class="it-header-slim-right-zone">
+              <span class="text-white small">
+                {{ icon("it-user", "icon-white icon-sm") }}
+                {{ user.nome }} · {{ roles[user.ruolo] }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="it-nav-wrapper">
+    <div class="it-header-center-wrapper">
+      <div class="container">
+        <div class="row">
+          <div class="col-12">
+            <div class="it-header-center-content-wrapper">
+              <div class="it-brand-wrapper">
+                <a href="/">
+                  {{ icon("it-pa") }}
+                  <div class="it-brand-text">
+                    <div class="it-brand-title">Patrimonio informativo</div>
+                    <div class="it-brand-tagline d-none d-md-block">Dati personali nelle cartelle di rete e registro dei trattamenti</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="it-header-navbar-wrapper" id="menu-principale">
+      <div class="container">
+        <div class="row">
+          <div class="col-12">
+            <nav class="navbar navbar-expand-lg" aria-label="Navigazione principale">
+              <button class="custom-navbar-toggler" type="button" aria-controls="nav-principale" aria-expanded="false"
+                      aria-label="Mostra o nascondi la navigazione" data-bs-toggle="navbarcollapsible" data-bs-target="#nav-principale">
+                {{ icon("it-burger") }}
+              </button>
+              <div class="navbar-collapsable" id="nav-principale">
+                <div class="overlay"></div>
+                <div class="close-div">
+                  <button class="btn close-menu" type="button">
+                    <span class="visually-hidden">Nascondi la navigazione</span>
+                    {{ icon("it-close-big") }}
+                  </button>
+                </div>
+                <div class="menu-wrapper">
+                  <ul class="navbar-nav">
+                    {% for key, href, label in [("cruscotto", "/", "Cruscotto"), ("coda", "/coda", "Coda di validazione"),
+                                                ("documenti", "/documenti", "Inventario"), ("ricerca", "/ricerca", "Ricerca"),
+                                                ("decisioni", "/decisioni", "Registro decisioni")] %}
+                    <li class="nav-item">
+                      <a class="nav-link{% if nav == key %} active{% endif %}" href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}><span>{{ label }}</span></a>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main-content" class="container my-4">
+  <nav class="breadcrumb-container" aria-label="Percorso di navigazione">
+    <ol class="breadcrumb">
+      {% block breadcrumb %}{% endblock %}
+    </ol>
+  </nav>
+  {% if local_mode %}
+  <div class="alert alert-info" role="note">
+    Modalità locale: la UI accetta solo connessioni da questo computer e non chiede le credenziali.
+    Per l'uso in rete configura gli utenti (<code>python -m ui.users</code>).
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="it-footer">
+  <div class="it-footer-main">
+    <div class="container">
+      <section>
+        <div class="row clearfix">
+          <div class="col-sm-12">
+            <div class="it-brand-wrapper">
+              <a href="/">
+                {{ icon("it-pa", "icon-white") }}
+                <div class="it-brand-text">
+                  <h2 class="no_toc">{{ ente }}</h2>
+                  <h3 class="no_toc d-none d-md-block">Classificatore del patrimonio informativo</h3>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="py-4 border-white border-top">
+        <div class="row">
+          <div class="col-lg-8">
+            <p class="text-white small mb-0">
+              Le proposte del sistema sono suggerimenti: ogni decisione definitiva spetta all'RPD ed è registrata.
+              I dati personali sono mostrati solo in forma mascherata.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="it-footer-small-prints clearfix">
+    <div class="container">
+      <h3 class="visually-hidden">Informazioni sul software</h3>
+      <ul class="it-footer-small-prints-list list-inline mb-0 d-flex flex-column flex-md-row">
+        <li class="list-inline-item text-white">Software libero, licenza EUPL-1.2</li>
+        <li class="list-inline-item text-white">Interfaccia con Bootstrap Italia 2.18.3</li>
+        <li class="list-inline-item"><a href="/esporta.json">Esporta JSON</a></li>
+        <li class="list-inline-item"><a href="/esporta.csv">Esporta CSV</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+<script src="{{ bi }}/js/bootstrap-italia.bundle.min.js"></script>
+</body>
+</html>

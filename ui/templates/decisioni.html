@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Registro decisioni{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Registro decisioni</li>
+{% endblock %}
+{% block content %}
+<h1>Registro delle decisioni</h1>
+<p>Ogni conferma o correzione dell'RPD, dalla più recente. Il registro è in sola aggiunta: le decisioni non si
+  modificano né si cancellano, una nuova decisione prevale sulla precedente.</p>
+<div class="table-responsive">
+<table class="table table-striped">
+  <caption>{{ rows|length }} decisioni registrate</caption>
+  <thead>
+    <tr><th scope="col">Quando (UTC)</th><th scope="col">Utente</th><th scope="col">Documento</th>
+      <th scope="col">Azione</th><th scope="col">Esito</th><th scope="col">Scheda</th><th scope="col">Nota</th></tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><time datetime="{{ r.quando }}">{{ r.quando[:16].replace("T", " ") }}</time></td>
+      <td>{{ r.utente }}</td>
+      <td class="text-break">{% if ids.get(r.documento) %}<a href="/documenti/{{ ids[r.documento] }}">{{ r.documento }}</a>{% else %}{{ r.documento }}{% endif %}</td>
+      <td>{{ r.azione }}</td>
+      <td>{{ outcomes[r.esito][0] if r.esito in outcomes else r.esito }}</td>
+      <td>{{ r.scheda or "—" }}</td>
+      <td>{{ r.nota }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7">Nessuna decisione registrata.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

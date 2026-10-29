@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import doc_table %}
+{% block title %}Coda di validazione{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Coda di validazione</li>
+{% endblock %}
+{% block content %}
+<h1>Coda di validazione</h1>
+<p>Documenti con dati personali non ancora validati, dal più rischioso. La priorità cresce con l'esito (non conforme,
+  poi scheda mancante), il numero di scostamenti, le categorie particolari e l'esposizione (accesso eccessivo,
+  diffusione).</p>
+<p role="status">{{ docs|length }} documenti da validare.</p>
+{{ doc_table(docs, "Documenti da validare, in ordine di priorità", show_risk=risk) }}
+{% endblock %}

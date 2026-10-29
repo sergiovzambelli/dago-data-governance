@@ -1,0 +1,5 @@
+/* Solo piccoli ritocchi: componenti, colori e griglia arrivano da Bootstrap Italia. */
+/* i percorsi dei file sono lunghi e senza spazi: vanno a capo ovunque, così su telefono non c'è scorrimento orizzontale */
+.table-docs td.file, .link-list .list-item span { overflow-wrap: anywhere; word-break: break-all; }
+.stat-number { font-size: 2.5rem; font-weight: 700; line-height: 1; }
+.decision-form { border-left: 4px solid #0066cc; }
