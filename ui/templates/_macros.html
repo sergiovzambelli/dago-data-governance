@@ -1,0 +1,37 @@
+{% macro icon(name, cls="") %}<svg class="icon {{ cls }}" aria-hidden="true" focusable="false"><use href="{{ bi }}/svg/sprites.svg#{{ name }}"></use></svg>{% endmacro %}
+
+{% macro outcome(code) %}{% set o = outcomes[code] %}<span class="badge bg-{{ o[1] }}{% if o[1] == 'warning' %} text-dark{% endif %}">{{ o[0] }}</span>{% endmacro %}
+
+{% macro deviation_badges(codes) %}{% for s in codes %}<span class="badge bg-light text-dark border me-1">{{ deviations[s][0] }}</span>{% endfor %}{% endmacro %}
+
+{% macro doc_table(docs, caption, show_risk=None) %}
+<div class="table-responsive">
+<table class="table table-striped table-docs">
+  <caption>{{ caption }}</caption>
+  <thead>
+    <tr>
+      <th scope="col">Documento</th>
+      <th scope="col">Esito</th>
+      <th scope="col">Scheda</th>
+      <th scope="col">Scostamenti</th>
+      <th scope="col">Validato</th>
+      {% if show_risk %}<th scope="col" class="text-end">Priorità</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for d in docs %}
+    <tr>
+      <td class="file"><a href="/documenti/{{ d.id }}">{{ d.file }}</a></td>
+      <td>{{ outcome(d.esito) }}</td>
+      <td>{{ d.scheda or "—" }}</td>
+      <td>{{ deviation_badges(d.scostamenti) }}{% if not d.scostamenti %}—{% endif %}</td>
+      <td>{% if d.validato %}{{ icon("it-check-circle", "icon-success icon-sm") }} Sì{% else %}No{% endif %}</td>
+      {% if show_risk %}<td class="text-end">{{ show_risk(d) }}</td>{% endif %}
+    </tr>
+  {% else %}
+    <tr><td colspan="{{ 6 if show_risk else 5 }}">Nessun documento.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endmacro %}

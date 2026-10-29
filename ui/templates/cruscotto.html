@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Cruscotto{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active" aria-current="page">Cruscotto</li>{% endblock %}
+{% block content %}
+<h1>Cruscotto</h1>
+<p class="lead">
+  Documenti analizzati: {{ docs|length }}, di cui {{ personal }} con dati personali.
+  Validati dall'RPD: {{ validated }}.
+</p>
+
+<h2 class="h4 mt-4">Documenti per esito</h2>
+<div class="row">
+  {% for code, (label, color) in outcomes.items() %}
+  <div class="col-12 col-sm-6 col-lg-3 mb-3">
+    <div class="card card-bg border-start border-{{ color }} border-4 h-100">
+      <div class="card-body">
+        <a class="text-decoration-none" href="/documenti?esito={{ code }}">
+          <h3 class="card-title h5">{{ label }}</h3>
+          <p class="stat-number mb-0">{{ by_outcome.get(code, 0) }}</p>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row mt-3">
+  <div class="col-lg-6 mb-4">
+    <h2 class="h4">Scostamenti dalla scheda</h2>
+    <table class="table table-sm">
+      <caption>Documenti con ciascuno scostamento (un documento può averne più di uno)</caption>
+      <thead><tr><th scope="col">Scostamento</th><th scope="col" class="text-end">Documenti</th></tr></thead>
+      <tbody>
+      {% for code, (label, _, _) in deviations.items() %}
+        <tr>
+          <th scope="row"><a href="/documenti?scostamento={{ code }}">{{ label }}</a></th>
+          <td class="text-end">{{ by_deviation.get(code, 0) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-lg-6 mb-4">
+    <h2 class="h4">Documenti per scheda</h2>
+    <table class="table table-sm">
+      <caption>Schede del registro con almeno un documento abbinato</caption>
+      <thead><tr><th scope="col">Scheda</th><th scope="col" class="text-end">Documenti</th></tr></thead>
+      <tbody>
+      {% for code, n in by_record %}
+        <tr>
+          <th scope="row"><a href="/documenti?scheda={{ code }}">{{ code }}</a>
+            {% if register.get(code) %}<span class="d-block small fw-normal">{{ register[code].denominazione }}</span>{% endif %}</th>
+          <td class="text-end">{{ n }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="2">Nessun documento abbinato.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h2 class="h4">Documenti senza scheda</h2>
+<p>Documenti con dati personali per cui nessuna scheda del registro descrive il trattamento: vanno abbinati a una scheda o
+  il registro va aggiornato.</p>
+{% if missing %}
+<ul class="link-list">
+  {% for d in missing %}
+  <li><a class="list-item" href="/documenti/{{ d.id }}"><span>{{ d.file }}</span></a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Nessun documento senza scheda.</p>
+{% endif %}
+{% endblock %}

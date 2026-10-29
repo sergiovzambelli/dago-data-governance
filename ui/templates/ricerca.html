@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import doc_table %}
+{% block title %}Ricerca{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Ricerca</li>
+{% endblock %}
+{% block content %}
+<h1>Ricerca</h1>
+<form method="get" action="/ricerca" role="search" class="mb-4">
+  <div class="form-group">
+    <label for="q" class="active">Cerca per percorso, scheda, esito, scostamento, categoria o tipo di dato</label>
+    <input type="search" id="q" name="q" value="{{ q }}" maxlength="100" aria-describedby="q-aiuto">
+    <small id="q-aiuto" class="form-text">Esempi: <code>T-PER-07</code>, <code>reclami</code>, <code>salute</code>,
+      <code>codice fiscale</code>. Più parole: devono esserci tutte. Il testo integrale dei documenti non è indicizzato.</small>
+  </div>
+  <button type="submit" class="btn btn-primary">Cerca</button>
+</form>
+{% if q %}
+<p role="status">{{ results|length }} documenti per «{{ q }}».</p>
+{{ doc_table(results, "Risultati della ricerca") }}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import doc_table %}
+{% block title %}Inventario{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Inventario</li>
+{% endblock %}
+{% block content %}
+<h1>Inventario dei documenti</h1>
+
+<form method="get" action="/documenti" class="row g-3 align-items-end mb-4" aria-label="Filtri dell'inventario">
+  <div class="col-md-4">
+    <div class="select-wrapper">
+      <label for="f-esito">Esito</label>
+      <select id="f-esito" name="esito">
+        <option value="">Tutti</option>
+        {% for code, (label, _) in outcomes.items() %}
+        <option value="{{ code }}"{% if filters.esito == code %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="select-wrapper">
+      <label for="f-scheda">Scheda</label>
+      <select id="f-scheda" name="scheda">
+        <option value="">Tutte</option>
+        {% for code, r in register.items() %}
+        <option value="{{ code }}"{% if filters.scheda == code %} selected{% endif %}>{{ code }} · {{ r.denominazione[:60] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="select-wrapper">
+      <label for="f-scostamento">Scostamento</label>
+      <select id="f-scostamento" name="scostamento">
+        <option value="">Tutti</option>
+        {% for code, (label, _, _) in deviations.items() %}
+        <option value="{{ code }}"{% if filters.scostamento == code %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="col-12">
+    <button type="submit" class="btn btn-primary">Applica i filtri</button>
+    <a class="btn btn-outline-primary ms-2" href="/documenti">Azzera</a>
+  </div>
+</form>
+
+<p role="status">{{ total }} documenti trovati.</p>
+{{ doc_table(docs, "Documenti analizzati, pagina " ~ pagina ~ " di " ~ pages) }}
+
+{% if pages > 1 %}
+<nav class="pagination-wrapper" aria-label="Pagine dell'inventario">
+  <ul class="pagination">
+    {% for n in range(1, pages + 1) %}
+    <li class="page-item">
+      {% set q = "esito=" ~ filters.esito ~ "&scheda=" ~ filters.scheda ~ "&scostamento=" ~ filters.scostamento ~ "&pagina=" ~ n %}
+      <a class="page-link" href="/documenti?{{ q }}"{% if n == pagina %} aria-current="page"{% endif %}>
+        <span class="visually-hidden">Pagina </span>{{ n }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

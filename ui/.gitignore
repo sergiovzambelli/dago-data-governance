@@ -1,0 +1,3 @@
+# registro delle decisioni e file degli utenti: dati dell'ente, non nel repository
+var/
+utenti*.json

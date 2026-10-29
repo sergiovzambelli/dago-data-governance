@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<div class="alert alert-danger" role="alert">{{ message }}</div>
+<p><a href="/">Torna al cruscotto</a></p>
+{% endblock %}

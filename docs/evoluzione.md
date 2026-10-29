@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/ui: interfaccia web per l'RPD
+- Nuova cartella `ui/` (FastAPI + Jinja2 + Bootstrap Italia 2.18.3 in locale): cruscotto, coda di validazione per rischio, inventario con filtri, pagina del documento con le evidenze e la conferma o correzione dell'RPD, ricerca, registro delle decisioni, esportazione JSON e CSV. Dettagli in `docs/ui.md`.
+- Decisione: la UI legge solo il JSON della pipeline e il CSV del registro, senza importare `classifier/`. Dipendenze in `requirements-ui.txt`, non in `requirements.txt`; nessuna modifica a `Makefile` e `.gitignore` della radice. Così backend e UI si sviluppano in parallelo senza conflitti.
+- Decisione: registro delle decisioni in SQLite in sola aggiunta; l'ultima decisione su un file vale solo se l'impronta SHA-256 non è cambiata.
+- Verificata nel browser a 1280 e 375 px: corretti un'intestazione `Referrer-Policy` che faceva inviare `Origin: null` ai moduli, il contrasto del footer e lo scorrimento orizzontale causato dai percorsi lunghi.
+
 ## 2026-10-29 — feat/llm-matching: modello locale per i casi dubbi (facoltativo)
 - `classifier/llm.py`: client Ollama scritto con la libreria standard (nessuna dipendenza nuova), solo verso host locali. `decide()`: il modello verifica la prima proposta delle regole (SI/NO sulla finalità della scheda); se la scarta sceglie lui tra tutte le schede o dice NESSUNA, e la sua scelta viene a sua volta verificata. Codici fuori dal registro ignorati. Se il modello non risponde valgono le regole.
 - Il modello legge denominazione, finalità e documenti tipici delle schede, non le parole chiave: sono queste che cambiano da un ente all'altro.
