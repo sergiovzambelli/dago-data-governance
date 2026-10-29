@@ -1,4 +1,5 @@
 """Calcola le 6 metriche della giuria confrontando le predizioni con un CSV di etichette.
+LUOGO_NON_DICHIARATO non si misura (vedi IGNORED): su questo il punteggio differisce da quello delle etichette originali.
 
 Uso: python -m classifier.scorer <etichette.csv> <predizioni.json>
 """
@@ -15,6 +16,9 @@ WEIGHTS = {
     "f1_scostamenti": 15,
     "precisione_entita": 10,
 }
+# scostamenti che non si misurano, né nelle etichette né nelle predizioni (decisione dell'utente: niente controllo del
+# luogo). Un documento non conforme solo per questi è atteso conforme
+IGNORED = {"LUOGO_NON_DICHIARATO"}
 
 
 def _split(value):
@@ -22,17 +26,21 @@ def _split(value):
 
 
 def load_labels(path):
+    labels = {}
     with open(path, encoding="utf-8-sig", newline="") as f:
-        return {
-            r["Percorso"]: {
-                "esito": r["Esito atteso"],
+        for r in csv.DictReader(f, delimiter=";"):
+            deviations = _split(r["Scostamenti attesi"])
+            esito = r["Esito atteso"]
+            if esito == "NON_CONFORME" and deviations and deviations <= IGNORED:
+                esito = "CONFORME"
+            labels[r["Percorso"]] = {
+                "esito": esito,
                 "schede_ok": _split(r["Scheda attesa"]) | _split(r["Alternative accettabili"]),
                 "dati_personali": r["Dati personali"] == "SI",
                 "categorie": _split(r["Categorie particolari"]),
-                "scostamenti": _split(r["Scostamenti attesi"]),
+                "scostamenti": deviations - IGNORED,
             }
-            for r in csv.DictReader(f, delimiter=";")
-        }
+    return labels
 
 
 def _f1(tp, fp, fn):
@@ -69,7 +77,7 @@ def score(labels, predictions):
         sm[1] += got_sm and not exp_sm
         sm[2] += exp_sm and not got_sm
 
-        got_sc = set(p.get("scostamenti") or [])
+        got_sc = set(p.get("scostamenti") or []) - IGNORED
         sc[0] += len(got_sc & lab["scostamenti"])
         sc[1] += len(got_sc - lab["scostamenti"])
         sc[2] += len(lab["scostamenti"] - got_sc)

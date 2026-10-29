@@ -39,7 +39,7 @@ def test_load_labels_splits_lists(labels):
     d01 = labels["a.pdf"]
     assert d01["categorie"] == {"SALUTE", "GIUDIZIARI"}
     assert d01["schede_ok"] == {"T-1", "T-2"}
-    assert d01["scostamenti"] == {"LUOGO_NON_DICHIARATO", "ACCESSO_ECCESSIVO"}
+    assert d01["scostamenti"] == {"ACCESSO_ECCESSIVO"} and d01["esito"] == "NON_CONFORME"
     assert labels["d.txt"]["dati_personali"] is False
 
 
@@ -58,7 +58,7 @@ def test_perfect_predictions_score_100(labels):
 def test_missing_and_wrong_predictions(labels):
     preds = [
         # top-3 sbagliato (T-1 al quarto posto), metà categorie, 1 scostamento giusto + 1 falso
-        pred("a.pdf", "CONFORME", ["T-5", "T-6", "T-7", "T-1"], ["SALUTE"], ["LUOGO_NON_DICHIARATO", "CONSERVAZIONE_SCADUTA"], 1),
+        pred("a.pdf", "CONFORME", ["T-5", "T-6", "T-7", "T-1"], ["SALUTE"], ["ACCESSO_ECCESSIVO", "CONSERVAZIONE_SCADUTA"], 1),
         # falso allarme SCHEDA_MANCANTE
         pred("b.pdf", "SCHEDA_MANCANTE", entita=1),
         # c.pdf mancante: conta come errore
@@ -70,8 +70,8 @@ def test_missing_and_wrong_predictions(labels):
     assert m["richiamo_categorie"] == pytest.approx(1 / 3)
     assert m["scheda_top3"] == pytest.approx(0 / 2)
     assert m["f1_scheda_mancante"] == pytest.approx(0)
-    # tp=1 fp=1 fn=1
-    assert m["f1_scostamenti"] == pytest.approx(0.5)
+    # tp=1 fp=1 fn=0 (il luogo atteso in a.pdf non si misura)
+    assert m["f1_scostamenti"] == pytest.approx(2 / 3)
     # 3 file predetti con entità, 2 davvero con dati personali
     assert m["precisione_entita"] == pytest.approx(2 / 3)
 
@@ -92,3 +92,10 @@ def test_cli_prints_json(labels, tmp_path):
         capture_output=True, text=True, check=True,
     ).stdout
     assert json.loads(out)["metriche"]["esito"] == pytest.approx(1 / 4)
+
+
+def test_location_is_not_measured(tmp_path):
+    # il luogo non si misura più (decisione dell'utente): via dalle etichette, e senza altri problemi è conforme
+    p = tmp_path / "labels.csv"
+    p.write_text("\n".join([HEADER, "D05;e.pdf;NON_CONFORME;T-1;;SI;;LUOGO_NON_DICHIARATO"]) + "\n", encoding="utf-8")
+    assert load_labels(p)["e.pdf"]["scostamenti"] == set() and load_labels(p)["e.pdf"]["esito"] == "CONFORME"

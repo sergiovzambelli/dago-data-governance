@@ -7,6 +7,8 @@ Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 - `classifier/compliance.py` non produce più LUOGO_NON_DICHIARATO; la UI non lo conosce più (anche nelle predizioni vecchie viene ignorato). Le cartelle dichiarate restano: servono all'abbinamento della scheda e a decidere SCHEDA_MANCANTE.
 - Misura (`make score`, sole regole): sviluppo 88,3 → **86,3**, validation 90,1 → **86,7**. Cala F1 scostamenti (sviluppo 0,75 → 0,65) e un po' l'esito (0,83 → 0,81): i documenti fuori posto che avevano solo questo problema ora risultano conformi, mentre le etichette della giuria li danno non conformi. Lo scorer non cambia.
 - Predizioni `data/pred_*.json` rigenerate.
+- Seconda richiesta dell'utente: "anche la giuria non deve basarsi su questo". `classifier/scorer.py` ignora LUOGO_NON_DICHIARATO nelle etichette e nelle predizioni; un documento atteso NON_CONFORME solo per il luogo diventa atteso CONFORME. Con questo scorer: sviluppo **89,8**, validation **90,4** (F1 scostamenti 0,83; esito 0,85 e 0,84).
+- Attenzione: il punteggio della giuria vera dipende dalle sue etichette, non da questo scorer. Se la giuria misura ancora il luogo, il valore realistico resta 86,3 / 86,7.
 
 ## 2026-10-29 — feat/try-file-visual: il file evidenziato e la scelta della scheda
 - Richiesta dell'utente: vedere il file con evidenziate le informazioni trovate; se la scheda manca, proporre le tre schede o "Nuova scheda", che crea una scheda già compilata.
