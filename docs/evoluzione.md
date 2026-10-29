@@ -2,6 +2,17 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-29 — feat/llm-matching: modello locale per i casi dubbi (facoltativo)
+- `classifier/llm.py`: client Ollama scritto con la libreria standard (nessuna dipendenza nuova), solo verso host locali. `decide()`: il modello verifica la prima proposta delle regole (SI/NO sulla finalità della scheda); se la scarta sceglie lui tra tutte le schede o dice NESSUNA, e la sua scelta viene a sua volta verificata. Codici fuori dal registro ignorati. Se il modello non risponde valgono le regole.
+- Il modello legge denominazione, finalità e documenti tipici delle schede, non le parole chiave: sono queste che cambiano da un ente all'altro.
+- Si usa solo nei casi dubbi (`matching.is_doubtful`: prima proposta con ≤ 2 parole chiave e fuori cartella), circa 1 documento su 4. Attivazione: `CLASSIFIER_LLM_MODEL=qwen3:8b` (e `CLASSIFIER_LLM_URL`, predefinito `http://localhost:11434`). **Spento di default.**
+- Misure con `qwen3:8b` (RTX 4070 portatile, circa 3 s a verifica; testo da `pdftotext` e libreria standard):
+  - da solo, senza regole: scheda giusta o NESSUNA in 97/118 documenti di sviluppo; tende a forzare l'abbinamento (domande SAD → contributi economici, reclami URP → verbali);
+  - **registro senza la colonna "Parole chiave"** (prova di robustezza per altri enti): regole 92/109 su sviluppo e 37/48 su validation; regole + modello sui dubbi **100/109** e **43/48**;
+  - registro completo del kit: punteggio sviluppo 88,3 → 88,0, validation 90,1 → 88,7. Le parole chiave del kit sono scritte per questi documenti e il modello aggiunge errori sulle domande SAD (assegnate a T-SOC-01) quanto ne corregge (log VPN, scrutatori, accesso agli atti).
+- Decisione: modello facoltativo e spento; da accendere con registri senza parole chiave o con parole chiave povere. Le predizioni salvate restano quelle delle sole regole.
+- Provato un prompt più severo ("stesso settore o stesso ISEE non bastano"): sviluppo 87,9, nessun miglioramento. Scartato per non adattare il prompt a questo kit.
+
 ## 2026-10-29 — feat/retention: CONSERVAZIONE_SCADUTA, la quinta regola
 - `classifier/dates.py`: `document_date(percorso, testo)` cerca la data del documento in quest'ordine: data dopo il luogo o un'etichetta ("Livorno, 12 marzo 2026", "Data: …"), poi data nel nome del file (AAAAMMGG), poi data più recente nel testo. Escluse le date di nascita ("nato … il", "Nome (23/02/1991)"), le date future e quelle impossibili (31/02).
 - Strategie misurate su sviluppo (data esatta su 155 file): solo nome file 132, solo testo 127, **ordine scelto 134**. La data di modifica dei file non serve: nello zip del kit vale 28/10/2026 per tutti.

@@ -40,6 +40,10 @@ def load_register(path):
             if c and c != "NESSUNA"},
         "diffusione": (r.get("Diffusione") or "").strip().upper() == "SI",
         # "Illimitata / non calcolabile" o vuoto: nessuna scadenza
+        # descrizione della scheda per il modello locale (classifier/llm.py)
+        "denominazione": (r.get("Denominazione") or "").strip(),
+        "finalita": (r.get("Finalità") or "").strip(),
+        "tipologie": r["Tipologie documentali tipiche"].strip(),
         "conservazione_anni": int(y) if (y := (r.get("Conservazione in anni") or "").strip()).isdigit() else None,
         # parole intere; lo spazio vale anche come a capo (PDF)
         "termini": [(t, re.compile(r"\b" + r"\s+".join(map(re.escape, t.split())) + r"\b", re.I),
@@ -75,7 +79,20 @@ def is_missing_record(register, file_path, text):
     """
     # tarato su sviluppo: soglia 1 → F1 SCHEDA_MANCANTE 0,755; con 2 sale a 0,806 ma i falsi positivi in più sono
     # documenti fuori posto (LUOGO_NON_DICHIARATO) con testo chiaro, che perderebbero la scheda per i controlli
-    # shortcut: una sola parola chiave non distingue un servizio non censito da un documento povero di testo;
-    # da rivedere con l'LLM locale o con parole chiave più ricche nel registro
+    # una sola parola chiave non distingue un servizio non censito da un documento povero di testo:
+    # con il modello locale attivo questi casi passano da is_doubtful e decide il modello
+    return _weak(register, file_path, text, 1)
+
+
+def is_doubtful(register, file_path, text):
+    """Abbinamento da verificare con il modello locale: la migliore ha al massimo due parole chiave, fuori cartella.
+
+    Su sviluppo, con il registro senza parole chiave (come un ente che non le compila), le regole scendono da 98 a
+    92 schede giuste su 109; con il modello su questi casi restano a 100.
+    """
+    return _weak(register, file_path, text, 2)
+
+
+def _weak(register, file_path, text, max_terms):
     ev = _evidence(register, file_path, text)
-    return not ev or (len(ev[0][2]) <= 1 and not ev[0][3])
+    return not ev or (len(ev[0][2]) <= max_terms and not ev[0][3])

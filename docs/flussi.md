@@ -47,9 +47,8 @@ flowchart TB
         ESITO{Esito}
     end
 
-    subgraph LLM["LLM locale opzionale — Ollama, CPU"]
-        GEN[modello istruito 7–8B<br/>categorie implicite · casi incerti]
-        EMB[modello embedding<br/>similarità documento ↔ scheda]
+    subgraph LLM["LLM locale opzionale — Ollama, CPU o GPU, solo host locali"]
+        GEN[qwen3:8b<br/>verifica la scheda nei casi dubbi · categorie implicite da fare]
     end
 
     subgraph STORE["Archivio"]
@@ -75,7 +74,8 @@ flowchart TB
     EXT -->|testo assente| OCR
     MD & ODT & EML & OCR --> ENT --> CAT --> LVL --> MATCH --> RULES --> ESITO
     CAT -. dubbio .-> GEN
-    MATCH -. sotto soglia .-> EMB
+    MATCH -. "≤ 2 parole chiave e fuori cartella: verifica SI/NO, poi scelta" .-> GEN
+    GEN -. scheda verificata o nessuna .-> RULES
     REG --> MATCH
     REG --> RULES
     PERM --> RULES

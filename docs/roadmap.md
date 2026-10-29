@@ -26,17 +26,19 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #12 | feat/missing-record | SCHEDA_MANCANTE se la scheda migliore ha ≤ 1 parola chiave ed è fuori dalle cartelle dichiarate | 73,2 | 72,9 |
 | #13 | feat/compliance | 4 regole su 5: categoria, luogo, accesso, diffusione → NON_CONFORME | 84,9 | 87,4 |
 | #14 | feat/retention | CONSERVAZIONE_SCADUTA con la data del documento (testo, nome file) | **88,3** | **90,1** |
+| – | feat/llm-matching | Modello locale (Ollama) sui casi dubbi di abbinamento, facoltativo e spento: con registro senza parole chiave 92 → 100/109 schede giuste | 88,3 (88,0 acceso) | 90,1 (88,7 acceso) |
 
 Metriche dopo feat/retention (sviluppo): esito 0,83 · categorie 0,98 · scheda top-3 0,97 · F1 SCHEDA_MANCANTE 0,75 · F1 scostamenti 0,75 · precisione entità 1,0.
 
 ## Da fare (in ordine)
 
-1. **feat/publication** — "destinato alla pubblicazione" anche dal testo, non solo dalla cartella: determine all'albo (5 casi di DIFFUSIONE_NON_PREVISTA mancati su sviluppo). Metrica: F1 scostamenti (15), esito.
-2. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
-3. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
-4. **LLM locale (Ollama, opzionale)** — categorie implicite e abbinamenti incerti.
-5. **UI** — FastAPI + Jinja2 + Bootstrap Italia 2.x: inventario, coda di validazione, cruscotto, ricerca, registro decisioni RPD.
-6. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
+1. **chore/ente-config** — togliere dal codice ciò che vale solo per il kit di Livorno: "Livorno" nella data dopo il luogo (qualsiasi nome di luogo seguito da virgola), il gruppo `GG_TUTTI_DIPENDENTI`, le cartelle `Pubblicazioni`/`OpenData`, la data di riferimento 28/10/2026 (predefinita: oggi). In un file di configurazione dell'ente con valori predefiniti.
+2. **feat/publication** — "destinato alla pubblicazione" anche dal testo, non solo dalla cartella: determine all'albo (5 casi di DIFFUSIONE_NON_PREVISTA mancati su sviluppo). Metrica: F1 scostamenti (15), esito.
+3. **feat/level** — livello di riservatezza 0–3 con regole esplicite (serve ad ACCESSO_ECCESSIVO).
+4. **feat/names** — nomi e indirizzi con spaCy `it_core_news_lg`: una ventina di documenti con soli nomi risulta ancora "senza dati personali".
+5. **LLM locale, altri usi (opzionale)** — categorie implicite e abbinamenti incerti.
+6. **UI** — FastAPI + Jinja2 + Bootstrap Italia 2.x: inventario, coda di validazione, cruscotto, ricerca, registro decisioni RPD.
+7. **Deploy** — `docker compose up` su server senza GPU (tesseract e ocrmypdf nel container), `publiccode.yml`, licenza EUPL-1.2.
 
 ## Decisioni prese
 
