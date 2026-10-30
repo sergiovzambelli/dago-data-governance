@@ -23,6 +23,7 @@ from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, DRAFT_ACTIONS, DRAFT_EDITA
                      load_drafts, load_predictions, load_register, parse_predictions, priority, record_view, risk,
                      sector, split_path, when)
 from ui.decisions import DecisionLog
+from ui.gauge import average, compliance_score, gauge_svg
 from ui.security import HEADERS, LOCAL_USER, ROLES, Csrf, check_basic_auth, load_users
 
 HERE = Path(__file__).parent
@@ -81,7 +82,7 @@ def create_app(settings):
     templates = Jinja2Templates(directory=HERE / "templates")  # autoescape attivo sui .html
     templates.env.globals.update(ente=settings.ente, bi=f"/static/{BI}", outcomes=OUTCOMES, deviations=DEVIATIONS,
                                  entity_types=ENTITY_TYPES, categories=CATEGORIES, roles=ROLES, actions=ACTIONS,
-                                 local_mode=users is None, priority=priority)
+                                 local_mode=users is None, priority=priority, gauge=gauge_svg, score=compliance_score)
 
     def sync_register():
         """Schede in uso = CSV + versioni salvate. Si riassegna il dizionario intero: nessuna richiesta lo vede a metà."""
@@ -167,15 +168,18 @@ def create_app(settings):
         by_deviation = Counter(s for d in docs for s in d["scostamenti"])
         by_record = Counter(d["scheda"] for d in docs if d["scheda"])
         missing = [d for d in docs if d["esito"] == "SCHEDA_MANCANTE"]
-        by_sector = {}
+        by_sector, sector_docs = {}, {}
         for d in docs:
             by_sector.setdefault(sector(d["file"]), Counter())[d["esito"]] += 1
+            sector_docs.setdefault(sector(d["file"]), []).append(d)
         return page(request, "cruscotto.html", nav="cruscotto", docs=docs, by_outcome=by_outcome,
                     by_sector=sorted(by_sector.items(), key=lambda s: (not s[0], s[0].lower())),
                     by_deviation=by_deviation, by_record=by_record.most_common(), missing=missing,
                     validated=sum(d["validato"] for d in docs), register=store.register,
                     personal=sum(d["dati_personali"] for d in docs), urgent=queue_of(docs)[:5],
-                    sensitive=sum(bool(d["categorie_particolari"]) for d in docs))
+                    sensitive=sum(bool(d["categorie_particolari"]) for d in docs),
+                    # grado di conformità: media dei documenti con dati personali, con le decisioni dell'RPD
+                    archive_score=average(docs), sector_score={k: average(v) for k, v in sector_docs.items()})
 
     @app.get("/documenti", response_class=HTMLResponse)
     def inventory(request: Request, esito: str = "", scheda: str = "", scostamento: str = "", settore: str = "",

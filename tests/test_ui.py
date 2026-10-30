@@ -691,3 +691,23 @@ def test_dashboard_shows_metrics_and_validation_ring(client):
     html = client.get("/").text
     assert re.search(r'class="metric-label">\s*Da validare\s*</[^>]+>\s*<[^>]+>\s*3\b', html)
     assert re.search(r'role="img" aria-label="Validati 0 su 3"', html)
+
+
+# --- indicatori a lancetta del grado di conformità ---
+
+def test_document_shows_its_compliance_gauge(client):
+    html = client.get(doc_url(client, "scansione_0412.pdf")).text
+    assert re.search(r'role="img" aria-label="Grado di conformità \d+ su 100, (alta|media|bassa)', html)
+    assert "Conformità" in html
+
+
+def test_document_without_personal_data_has_no_gauge(client):
+    html = client.get(doc_url(client, "comunicato.txt")).text
+    assert "Grado di conformità" not in html
+
+
+def test_dashboard_shows_archive_and_sector_gauges(client):
+    html = client.get("/").text
+    # archivio: media di 3 documenti con dati personali (non conforme, conforme, senza scheda)
+    assert re.search(r'aria-label="Grado di conformità \d+ su 100, \w+ — archivio"', html)
+    assert len(re.findall(r'aria-label="Grado di conformità \d+ su 100, \w+ — settore ', html)) >= 2

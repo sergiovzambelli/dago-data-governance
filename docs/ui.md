@@ -41,6 +41,25 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 
 Demo della specifica: dalla coda si apre un documento non conforme, poi uno senza scheda; si vedono le evidenze, si registra la correzione e il cruscotto si aggiorna.
 
+## Indicatori di conformità (feat/compliance-gauge)
+
+Indicatori a lancetta come un contachilometri (`ui/gauge.py`, SVG generato sul server): arco a 240° in sei settori dal verde (a sinistra, conforme) al rosso (a destra, non conforme).
+
+| Documento | Grado (0-100) |
+|---|---|
+| Conforme | 100 |
+| Scheda mancante | 30: la conformità non si può verificare |
+| Non conforme | 70 meno il peso di ogni problema: diffusione 35, categoria non dichiarata 25, accesso eccessivo 25, conservazione scaduta 20 (minimo 0) |
+| Nessun dato personale | nessun indicatore |
+
+Livelli scritti a parole: **alta** (≥ 75), **media** (40-74), **bassa** (< 40). Il grado usa l'esito validato dall'RPD, se c'è.
+
+- **Documento**: indicatore grande nel riquadro del verdetto, prima dell'esito.
+- **Cruscotto**: conformità dell'archivio (media dei documenti con dati personali) accanto all'anello della validazione.
+- **Settori**: indicatore piccolo in ogni riga della tabella "Documenti per settore".
+- **Accessibilità**: ogni indicatore è un'immagine (`role="img"`) con il testo "Grado di conformità 74 su 100, media — archivio". Valore e livello sono scritti sotto o accanto all'arco, quindi i colori dei settori sono solo decorativi e chi non distingue il verde dal rosso legge comunque il risultato.
+- I pesi sono scelte iniziali, da tarare con l'RPD (segnati come scorciatoia nel codice).
+
 ## Area di lavoro (feat/ui-workspace)
 
 Decisione dell'utente: la UI è uno strumento di lavoro per l'RPD e non segue più lo stile istituzionale dei siti della PA. Scelte, tra le quattro direzioni proposte (strumento denso, revisione affiancata, cruscotto a dati, servizio essenziale): **revisione affiancata e cruscotto a dati, con le scorciatoie dello strumento denso**.
