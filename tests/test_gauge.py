@@ -30,10 +30,13 @@ def _needle_x(svg):
 
 
 def test_needle_points_to_green_when_compliant_and_red_when_not():
-    # come nella foto: verde a sinistra, rosso a destra
-    assert _needle_x(gauge_svg(100, "Documento")) < 60
-    assert _needle_x(gauge_svg(0, "Documento")) > 140
+    # rosso a sinistra, verde a destra: la lancetta sale verso destra come un contachilometri
+    assert _needle_x(gauge_svg(100, "Documento")) > 140
+    assert _needle_x(gauge_svg(0, "Documento")) < 60
     assert 90 < _needle_x(gauge_svg(50, "Documento")) < 110
+    arcs = re.findall(r'<path d="M ([\d.]+) [^"]*" stroke="(#\w+)"', gauge_svg(50, "Documento"))
+    assert arcs[0][1] == "#c92a2a" and float(arcs[0][0]) < 100  # primo settore, a sinistra: rosso
+    assert arcs[-1][1] == "#1e7b34"
 
 
 def test_gauge_is_an_image_with_its_text_and_escapes_the_label():

@@ -1,4 +1,4 @@
-"""Grado di conformità (0-100) e indicatore a lancetta in SVG: verde a sinistra (conforme), rosso a destra."""
+"""Grado di conformità (0-100) e indicatore a lancetta in SVG: rosso a sinistra, verde a destra (conforme)."""
 import math
 
 from markupsafe import Markup, escape
@@ -8,8 +8,8 @@ PENALTY = {"DIFFUSIONE_NON_PREVISTA": 35, "CATEGORIA_NON_DICHIARATA": 25, "ACCES
            "CONSERVAZIONE_SCADUTA": 20, "LUOGO_NON_DICHIARATO": 15}
 NON_COMPLIANT_START = 70  # un documento non conforme parte sotto la soglia "alta"
 MISSING_RECORD = 30       # senza scheda la conformità non si può verificare: grado basso
-# sei settori come nella foto, dal verde scuro al rosso (decorativi: il valore è sempre scritto a parole)
-SEGMENTS = ("#1e7b34", "#4caf2a", "#e2b007", "#f08c00", "#e8590c", "#c92a2a")
+# sei settori da sinistra a destra, dal rosso al verde scuro (decorativi: il valore è sempre scritto a parole)
+SEGMENTS = ("#c92a2a", "#e8590c", "#f08c00", "#e2b007", "#4caf2a", "#1e7b34")
 START, SWEEP = 210, 240   # gradi: l'arco va da in basso a sinistra a in basso a destra
 CX, CY, R, WIDTH = 100, 100, 78, 26
 
@@ -55,8 +55,8 @@ def gauge_svg(score, label, size="md"):
         a1, a2 = START - i * step - (gap if i else 0), START - (i + 1) * step + (gap if i < len(SEGMENTS) - 1 else 0)
         (x1, y1), (x2, y2) = _point(a1, R), _point(a2, R)
         arcs.append(f'<path d="M {x1} {y1} A {R} {R} 0 0 1 {x2} {y2}" stroke="{colour}" stroke-width="{WIDTH}" fill="none"/>')
-    # 100 = tutto a sinistra (verde), 0 = tutto a destra (rosso)
-    nx, ny = _point(START - SWEEP * (100 - score) / 100, R - 8)
+    # 0 = tutto a sinistra (rosso), 100 = tutto a destra (verde)
+    nx, ny = _point(START - SWEEP * score / 100, R - 8)
     return Markup(
         f'<figure class="gauge gauge-{size} gauge-{cls}" role="img" aria-label="{escape(alt)}">'
         f'<svg viewBox="0 0 200 150" aria-hidden="true" focusable="false">{"".join(arcs)}'
