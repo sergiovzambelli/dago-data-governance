@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %} · DaGo · {{ ente }}</title>
-  <link rel="icon" href="/static/brand/logo-vaglio.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/brand/dago-marchio.svg" type="image/svg+xml">
   <script src="/static/a11y-init.js"></script>
   {# Bootstrap Italia resta solo come base (griglia, moduli, pulsanti); aspetto e guscio sono in ui.css #}
   <link rel="stylesheet" href="{{ bi }}/css/bootstrap-italia.min.css">
@@ -22,13 +22,13 @@
     <button class="menu-toggle" type="button" aria-controls="menu-principale" aria-expanded="false" hidden>
       {{ icon("it-burger") }}<span class="visually-hidden">Apri il menu</span>
     </button>
-    <a class="brand brand-top" href="/"><img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="26" height="26">DaGo</a>
+    <a class="brand brand-top" href="/"><img class="brand-logo" src="/static/brand/dago-logo-negativo.svg" alt="DaGo" width="94" height="28"></a>
   </header>
 
   <aside class="sidebar" id="menu-principale">
     <a class="brand" href="/">
-      <img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="36" height="36">
-      <span><span class="brand-name">DaGo</span><span class="brand-ente">Patrimonio informativo · {{ ente }}</span></span>
+      <img class="brand-logo" src="/static/brand/dago-logo-negativo.svg" alt="DaGo" width="121" height="36">
+      <img class="brand-mark" src="/static/brand/dago-marchio-negativo.svg" alt="DaGo" width="30" height="36">
     </a>
     <button class="side-collapse" type="button" aria-expanded="true" aria-controls="menu-principale" hidden>
       {{ icon("it-chevron-left") }}<span class="side-label">Comprimi il menu</span>

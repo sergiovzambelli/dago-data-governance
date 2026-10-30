@@ -810,10 +810,14 @@ def test_mobile_menu_makes_page_inert_and_skip_link_opens_it():
 def test_pages_carry_the_dago_name_logo_and_favicon(client):
     html = client.get("/").text
     assert "<title>Compliance · DaGo · Comune di Prova</title>" in html
-    assert re.search(r'<link rel="icon" href="/static/brand/logo-vaglio.svg" type="image/svg\+xml">', html)
-    assert re.search(r'<img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="\d+" height="\d+">', html)
-    assert '<span class="brand-name">DaGo</span>' in html and "Vaglio" not in html and "Cruscotto" not in html and "Patrimonio informativo" in html
-    assert client.get("/static/brand/logo-vaglio.svg").status_code == 200
+    assert '<link rel="icon" href="/static/brand/dago-marchio.svg" type="image/svg+xml">' in html
+    assert re.search(r'<img class="brand-logo" src="/static/brand/dago-logo-negativo.svg" alt="DaGo" width="\d+" height="\d+">', html)
+    # vecchio logo e descrizione sotto il nome tolti dal menu
+    assert "logo-vaglio" not in html and "brand-ente" not in html and "Patrimonio informativo" not in html
+    assert "Vaglio" not in html and "Cruscotto" not in html
+    for f in ("dago-logo-negativo.svg", "dago-marchio-negativo.svg", "dago-marchio.svg"):
+        assert client.get("/static/brand/" + f).status_code == 200
+    assert client.get("/static/brand/logo-vaglio.svg").status_code == 404
 
 
 def test_brand_kit_is_kept_in_the_repository():

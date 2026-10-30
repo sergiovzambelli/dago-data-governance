@@ -47,11 +47,10 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
   padding: 1.25rem .85rem; display: flex; flex-direction: column; gap: 1.25rem; }
 .brand { display: flex; gap: .65rem; align-items: center; color: #fff; text-decoration: none; padding: 0 .4rem; }
 .brand:hover { color: #fff; }
-/* marchio di DaGo (docs/brand): logo decorativo accanto al nome, che resta testo */
-.brand-logo { flex-shrink: 0; border-radius: 9px; }
-.brand-top { display: inline-flex; align-items: center; gap: .5rem; }
-.brand-name { display: block; font-weight: 700; font-size: 1.15rem; line-height: 1.2; letter-spacing: -.01em; }
-.brand-ente { display: block; font-size: .8rem; color: var(--side-muted); }
+/* marchio di DaGo (docs/brand): scudo e nome già nel logo, versione negativa per il menu blu */
+.brand-logo, .brand-mark { flex-shrink: 0; }
+.brand-mark { display: none; }  /* solo lo scudo, quando il menu è compresso */
+.brand-top { display: inline-flex; align-items: center; }
 .sidebar-nav ul { list-style: none; padding: 0; margin: 0 0 1rem; }
 .nav-group { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--side-muted);
   margin: 0 0 .35rem .6rem; }
@@ -87,8 +86,9 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
 @media (min-width: 992px) {
   .shell.side-collapsed { grid-template-columns: 4.5rem minmax(0, 1fr); }
   .side-collapsed .sidebar { padding-inline: .6rem; align-items: center; }
-  .side-collapsed .brand > span, .side-collapsed .nav-group, .side-collapsed .sidebar-foot { display: none; }
+  .side-collapsed .brand-logo, .side-collapsed .nav-group, .side-collapsed .sidebar-foot { display: none; }
   .side-collapsed .brand { padding: 0; }
+  .side-collapsed .brand-mark { display: block; }
   .side-collapsed .side-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .side-collapsed .sidebar-nav a, .side-collapsed .side-collapse { justify-content: center; padding: .55rem; }
   .side-collapsed .side-collapse .icon { transform: rotate(180deg); }
@@ -282,7 +282,7 @@ html { scroll-padding-bottom: 5.5rem; }
   border: 2px solid #000 !important; box-shadow: none !important; }
 .a11y-contrasto main a:not(.btn) { text-decoration: underline; }
 .a11y-contrasto .hint, .a11y-contrasto .muted, .a11y-contrasto .doc-folder, .a11y-contrasto .rec-name { color: #1a1a1a !important; }
-.a11y-contrasto .sidebar .hint, .a11y-contrasto .sidebar .brand-ente { color: #ffffff !important; }
+.a11y-contrasto .sidebar .hint { color: #ffffff !important; }
 .a11y-contrasto .meter, .a11y-contrasto .bar, .a11y-contrasto .tp-track, .a11y-contrasto .ring { outline: 2px solid #000; }
 .a11y-contrasto *:focus-visible { outline: 4px solid #000 !important; outline-offset: 2px; box-shadow: 0 0 0 7px #ffd600 !important; }
 

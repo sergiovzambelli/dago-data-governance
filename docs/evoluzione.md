@@ -3,7 +3,7 @@
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
 ## 2026-10-30 — feat/dago-menu-compatto: nome DaGo, pagina Compliance, menu comprimibile
-- Richiesta dell'utente: il prodotto si chiama **DaGo** (prima Vaglio). Cambiati titolo delle pagine, menu, barra su telefono, logo (`<title>` dell'SVG), brand kit e regole. Il file del logo resta `logo-vaglio.svg` e la chiave delle preferenze di accessibilità resta `vaglio-a11y`, per non perdere le scelte già salvate nei browser.
+- Richiesta dell'utente: il prodotto si chiama **DaGo** (prima Vaglio). Cambiati titolo delle pagine, menu, barra su telefono, brand kit e regole. Il vecchio logo (`logo-vaglio.svg`) è tolto: al suo posto lo scudo DaGo da `asset/` (versione negativa nel menu e su telefono, solo scudo con il menu compresso e come favicon), senza più "Patrimonio informativo · ente" sotto. La chiave delle preferenze di accessibilità resta `vaglio-a11y`, per non perdere le scelte già salvate nei browser.
 - La voce "Cruscotto" diventa **Compliance** (menu, titolo, briciole di pane); indirizzo `/` invariato.
 - Tolto l'avviso di modalità locale dalla pagina Compliance: l'informazione resta accanto all'utente nel menu.
 - Pulsante "Comprimi il menu": da desktop il menu diventa una colonna di icone, con i nomi per i lettori di schermo; la scelta resta nel browser.
