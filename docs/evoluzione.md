@@ -2,6 +2,20 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/dago-menu-compatto: nome DaGo, pagina Compliance, menu comprimibile
+- Richiesta dell'utente: il prodotto si chiama **DaGo** (prima Vaglio). Cambiati titolo delle pagine, menu, barra su telefono, brand kit e regole. Il vecchio logo (`logo-vaglio.svg`) è tolto: al suo posto lo scudo DaGo da `asset/` (versione negativa nel menu e su telefono, solo scudo con il menu compresso e come favicon), senza più "Patrimonio informativo · ente" sotto. La chiave delle preferenze di accessibilità resta `vaglio-a11y`, per non perdere le scelte già salvate nei browser.
+- La voce "Cruscotto" diventa **Compliance** (menu, titolo, briciole di pane); indirizzo `/` invariato.
+- Tolto l'avviso di modalità locale dalla pagina Compliance: l'informazione resta accanto all'utente nel menu.
+- Pulsante "Comprimi il menu": da desktop il menu diventa una colonna di icone, con i nomi per i lettori di schermo; la scelta resta nel browser.
+- Piede del menu ridisegnato: utente con tondo, nome e ruolo; "Esporta" come etichetta con due pulsanti JSON e CSV; dichiarazione di accessibilità come link discreto.
+- Più spazio sotto "Precedente" e "Prossimo da validare" nella pagina del documento.
+
+## 2026-10-30 — feat/palette-bauhaus: nuovi colori dalla palette
+- Richiesta dell'utente: rifare i colori del sito con la palette in `asset/palette.jpg`, giallo `#E8A519` e blu `#1C4B62` principali, rosso `#CD3318` come accento.
+- Blu per azioni, link, focus e menu (menu `#123444`, voce attiva `#1C4B62`); giallo per il segno della voce attiva, il focus sul menu, il filetto dei riquadri del cruscotto e il foglio dietro nel logo; rosso per Non conforme, problemi e arco del logo; sfondo crema `#f6f3ec` preso dalla stessa foto.
+- Decisione: il giallo non porta mai testo su fondi chiari (2,1:1 sul bianco), solo su fondi scuri o come segno. Contrasti ricalcolati e scritti accanto ai token: nessun testo sotto 4,5:1. Esiti verde, ambra, grigio e viola invariati (significato, non marchio). Indaco tolto da token, guida e copertina.
+- Nella guida corretta anche la scala degli indicatori (rosso a sinistra, verde a destra), rimasta indietro dalla PR precedente.
+
 ## 2026-10-30 — fix/gauge-verde-destra: verde a destra negli indicatori
 - Richiesta dell'utente: negli indicatori di conformità il verde va a destra e il rosso a sinistra, come un contachilometri che sale. Girati il contachilometri (`ui/gauge.py`: settori e lancetta, 0 a sinistra e 100 a destra) e la scala finale di Prova un file (gradiente, etichette agli estremi, indicatore che scorre fino al grado).
 - Soglie dei livelli invariate (alta ≥ 75, media ≥ 40).
