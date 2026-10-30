@@ -25,6 +25,16 @@
       {% else %}<p class="mb-0">Tutti validati.</p>{% endif %}
     </div>
   </div>
+  {% if archive_score is not none %}
+  <div class="gauge-card">
+    {{ gauge(archive_score, "archivio") }}
+    <div>
+      <p class="metric-label">Conformità dell'archivio</p>
+      <p class="ring-text">Media dei {{ personal }} documenti con dati personali: 100 se tutti conformi.</p>
+      <p class="hint mb-0">Conforme 100 · scheda mancante 30 · non conforme da 70 in giù secondo i problemi.</p>
+    </div>
+  </div>
+  {% endif %}
   <a class="metric" href="/coda"><span class="metric-label">Da validare</span><span class="metric-value">{{ todo }}</span></a>
   <a class="metric metric-red" href="/documenti?esito=NON_CONFORME"><span class="metric-label">Non conformi</span><span class="metric-value">{{ nc }}</span></a>
   <a class="metric metric-amber" href="/documenti?esito=SCHEDA_MANCANTE"><span class="metric-label">Senza scheda</span><span class="metric-value">{{ sm }}</span></a>
@@ -71,19 +81,21 @@
   <p class="hint">Il settore è la cartella del file server in cui si trova il documento.</p>
   <table class="doc-table">
     <caption class="visually-hidden">Documenti per settore ed esito</caption>
-    <thead><tr><th scope="col">Settore</th><th scope="col">File</th><th scope="col">Conformi</th>
+    <thead><tr><th scope="col">Settore</th><th scope="col">Conformità</th><th scope="col">File</th><th scope="col">Conformi</th>
       <th scope="col">Non conformi</th><th scope="col">Senza scheda</th></tr></thead>
     <tbody>
     {% for name, n in by_sector %}
       <tr>
         <th scope="row">{% if name %}<a href="/documenti?settore={{ name|urlencode }}">{{ name }}</a>{% else %}Senza cartella{% endif %}</th>
+        {% set ss = sector_score.get(name) %}
+        <td data-label="Conformità">{% if ss is not none %}{{ gauge(ss, "settore " ~ (name or "senza cartella"), "sm") }}{% else %}<span class="muted">Nessun dato personale</span>{% endif %}</td>
         <td data-label="File">{{ n.values()|sum }}</td>
         <td data-label="Conformi">{{ n.get("CONFORME", 0) }}</td>
         <td data-label="Non conformi">{{ n.get("NON_CONFORME", 0) }}</td>
         <td data-label="Senza scheda">{{ n.get("SCHEDA_MANCANTE", 0) }}</td>
       </tr>
     {% else %}
-      <tr><td colspan="5">Nessun documento.</td></tr>
+      <tr><td colspan="6">Nessun documento.</td></tr>
     {% endfor %}
     </tbody>
   </table>

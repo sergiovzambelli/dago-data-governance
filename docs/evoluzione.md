@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/compliance-gauge: indicatori a lancetta del grado di conformità
+- Richiesta dell'utente: indicatori visivi del grado di conformità, dal verde (conforme) al rosso (non conforme), come i contachilometri di un'immagine di riferimento.
+- `ui/gauge.py`: grado 0-100 per documento (conforme 100, scheda mancante 30, non conforme 70 meno il peso dei problemi) e SVG a sei settori con lancetta. Indicatori nel verdetto del documento, nel cruscotto (archivio) e nella tabella dei settori. Dettagli in `docs/ui.md`.
+- Decisione: il grado misura quanto il documento rispetta la sua scheda, non la probabilità che l'esito sia giusto. Scheda mancante a 30 perché senza scheda non si può verificare niente. Pesi scelti a mano, da tarare con l'RPD.
+- Accessibilità: valore e livello (alta, media, bassa) sempre scritti; l'indicatore ha un testo alternativo completo; i colori dei settori sono decorativi. Contrasto dei testi verificato nel browser; nessuno scorrimento orizzontale a 375 px.
+
 ## 2026-10-30 — feat/ui-workspace: la UI diventa un'area di lavoro
 - Richiesta dell'utente: un'interfaccia diversa dallo stile istituzionale. Proposte quattro direzioni (strumento denso, revisione affiancata, cruscotto a dati, servizio essenziale); scelta la combinazione consigliata: revisione affiancata + cruscotto a dati + scorciatoie da tastiera.
 - Menu laterale al posto di header e footer istituzionali; coda di validazione accanto al documento; scorciatoie J, K, C, E e ? disattivabili; cruscotto con anello della validazione e quattro riquadri numerici. Dettagli in `docs/ui.md` ("Area di lavoro").

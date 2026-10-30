@@ -44,7 +44,9 @@
 
 {% set n_dev = doc.scostamenti|length %}
 {% set n_ent = doc.entita|length %}
-<section class="verdict verdict-{{ doc.esito|lower }}" aria-labelledby="h-sintesi">
+{% set s = score(doc) %}
+<section class="verdict verdict-{{ doc.esito|lower }}{% if s is not none %} has-gauge{% endif %}" aria-labelledby="h-sintesi">
+  {% if s is not none %}<div class="verdict-gauge">{{ gauge(s, "documento") }}<p class="gauge-title" aria-hidden="true">Conformità</p></div>{% endif %}
   <div class="verdict-main">
     <p class="verdict-kicker">Esito {{ "validato" if doc.validato else "proposto dal sistema" }} · {{ status(doc) }}</p>
     <h2 id="h-sintesi" class="verdict-title">{{ outcomes[doc.esito][0] }}</h2>
