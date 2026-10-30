@@ -36,7 +36,7 @@
     <span class="tp-fill"></span>
     <span class="tp-marker" aria-hidden="true"></span>
   </div>
-  <div class="tp-ends" aria-hidden="true" hidden><span>Conforme</span><span>Non conforme</span></div>
+  <div class="tp-ends" aria-hidden="true" hidden><span>Non conforme</span><span>Conforme</span></div>
   <p class="tp-now"><span class="tp-label">In attesa</span> <span class="tp-detail hint"></span></p>
   <ol class="tp-steps">
     {% for f in try_phases %}<li data-step="{{ loop.index }}"><span class="tp-dot" aria-hidden="true"></span>{{ f }}<span class="visually-hidden tp-state">: da fare</span></li>{% endfor %}

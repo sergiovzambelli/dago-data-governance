@@ -2,6 +2,10 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — fix/gauge-verde-destra: verde a destra negli indicatori
+- Richiesta dell'utente: negli indicatori di conformità il verde va a destra e il rosso a sinistra, come un contachilometri che sale. Girati il contachilometri (`ui/gauge.py`: settori e lancetta, 0 a sinistra e 100 a destra) e la scala finale di Prova un file (gradiente, etichette agli estremi, indicatore che scorre fino al grado).
+- Soglie dei livelli invariate (alta ≥ 75, media ≥ 40).
+
 ## 2026-10-30 — feat/a11y-settings: pannello Accessibilità
 - Richiesta dell'utente: un pannello come quello dei siti pubblici, con contrasto elevato, testo grande e caratteri grandi. Aggiunte anche spaziatura del testo, link evidenziati, animazioni ferme, cursore grande, guida alla lettura, bianco e nero e ripristino. Dettagli in `docs/ui.md`.
 - Decisione: preferenze che cambiano lo stile vero (classi CSS) e restano nel browser dell'utente, non un "overlay" che promette di sistemare l'accessibilità: quella di base resta nel sito per tutti.

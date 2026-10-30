@@ -71,7 +71,7 @@ Con JavaScript, "Analizza" avvia l'analisi in background (`POST /prova/avvia`) e
 4. Evidenziazione nel testo
 5. Risultato
 
-Ogni fase resta visibile almeno 0,45 secondi, così le fasi rapide non spariscono; l'ordine e il punto d'arrivo sono sempre quelli del server. Alla fine la barra diventa la scala **Conforme → Non conforme** (verde → rosso) e un indicatore scorre da sinistra fino al grado di conformità del file. Mentre passa, l'etichetta dice "Conforme", "In parte conforme" o "Non conforme"; poi si ferma sull'esito vero ("Non conforme, conformità media 45 su 100"). Il pulsante "Vedi il risultato" riceve il focus e apre `GET /prova/risultato/<id>`, leggibile **una sola volta**: poi il testo del documento viene cancellato dalla memoria.
+Ogni fase resta visibile almeno 0,45 secondi, così le fasi rapide non spariscono; l'ordine e il punto d'arrivo sono sempre quelli del server. Alla fine la barra diventa la scala **Non conforme → Conforme** (rosso → verde) e un indicatore scorre da sinistra fino al grado di conformità del file. Mentre passa, l'etichetta dice "Non conforme", "In parte conforme" o "Conforme"; poi si ferma sull'esito vero ("Non conforme, conformità media 45 su 100"). Il pulsante "Vedi il risultato" riceve il focus e apre `GET /prova/risultato/<id>`, leggibile **una sola volta**: poi il testo del documento viene cancellato dalla memoria.
 
 - **Accessibilità**: `role="progressbar"` con `aria-valuenow` e `aria-valuetext` ("Fase 3 di 5: …", poi "Esito: Non conforme, conformità 45 su 100"); ogni fase annunciata in una regione `aria-live="polite"`; lo stato di ogni fase scritto anche a parole (fatta, in corso, da fare); con "riduci movimento" niente animazioni. Durante l'analisi le scorciatoie da tastiera sono sospese.
 - **Senza JavaScript** il modulo funziona come prima (`POST /prova`, risultato nella stessa pagina).
@@ -79,7 +79,7 @@ Ogni fase resta visibile almeno 0,45 secondi, così le fasi rapide non spariscon
 
 ## Indicatori di conformità (feat/compliance-gauge)
 
-Indicatori a lancetta come un contachilometri (`ui/gauge.py`, SVG generato sul server): arco a 240° in sei settori dal verde (a sinistra, conforme) al rosso (a destra, non conforme).
+Indicatori a lancetta come un contachilometri (`ui/gauge.py`, SVG generato sul server): arco a 240° in sei settori dal rosso (a sinistra, non conforme) al verde (a destra, conforme).
 
 | Documento | Grado (0-100) |
 |---|---|

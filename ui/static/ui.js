@@ -130,7 +130,7 @@
   }
 
   // Prova un file: analisi in background, barra che segue le fasi reali del server; alla fine la barra diventa la
-  // scala Conforme → Non conforme e l'indicatore scorre fino al grado del documento.
+  // scala Non conforme → Conforme e l'indicatore scorre fino al grado del documento.
   function tryProgress() {
     var form = document.querySelector("form[data-progress]");
     var box = document.getElementById("avanzamento");
@@ -158,8 +158,8 @@
       });
       say("Fase " + n + " di " + names.length + ": " + name);
     }
-    function zone(pos) {  // pos 0 = verde (sinistra), 100 = rosso (destra)
-      return pos <= 25 ? "Conforme" : pos < 60 ? "In parte conforme" : "Non conforme";
+    function zone(pos) {  // pos 0 = rosso (sinistra), 100 = verde (destra)
+      return pos >= 75 ? "Conforme" : pos > 40 ? "In parte conforme" : "Non conforme";
     }
     function finish(state, url) {
       box.classList.add("tp-verdict");
@@ -174,7 +174,7 @@
         open.querySelector("a").focus();
       };
       if (state.grado === null) { marker.hidden = true; done(); return; }
-      var target = 100 - state.grado, start = null, DUR = reduced ? 0 : 1600;
+      var target = state.grado, start = null, DUR = reduced ? 0 : 1600;
       var frame = function (t) {
         if (start === null) start = t;
         var k = DUR ? Math.min(1, (t - start) / DUR) : 1, pos = target * (1 - Math.pow(1 - k, 3));

@@ -155,7 +155,7 @@ a.metric:hover .metric-label { text-decoration: underline; }
   .verdict.has-gauge .verdict-facts { grid-column: 1 / -1; } }
 @media (max-width: 575.98px) { .verdict.has-gauge { grid-template-columns: 1fr; } .verdict-gauge { align-items: flex-start; } }
 
-/* Prova un file: barra che segue le fasi dell'analisi, poi diventa la scala Conforme → Non conforme */
+/* Prova un file: barra che segue le fasi dell'analisi, poi diventa la scala Non conforme → Conforme */
 .try-progress { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem 1.5rem;
   margin-bottom: 2rem; }
 .try-progress h2 { margin: 0 0 .9rem; }
@@ -164,11 +164,11 @@ a.metric:hover .metric-label { text-decoration: underline; }
   transition: width .4s ease; }
 .tp-marker { display: none; position: absolute; top: -.45rem; left: 0; width: .35rem; height: 1.8rem; border-radius: 3px;
   background: #2b2f3a; transform: translateX(-50%); box-shadow: 0 0 0 2px #fff; }
-.tp-verdict .tp-track { background: linear-gradient(90deg, #1e7b34 0%, #4caf2a 20%, #e2b007 45%, #f08c00 62%, #e8590c 80%, #c92a2a 100%); }
+.tp-verdict .tp-track { background: linear-gradient(90deg, #c92a2a 0%, #e8590c 20%, #f08c00 38%, #e2b007 55%, #4caf2a 80%, #1e7b34 100%); }
 .tp-verdict .tp-fill { display: none; }
 .tp-verdict .tp-marker { display: block; }
 .tp-ends { display: flex; justify-content: space-between; font-size: .85rem; font-weight: 600; margin-top: .35rem; }
-.tp-ends span:first-child { color: var(--green); } .tp-ends span:last-child { color: var(--red); }
+.tp-ends span:first-child { color: var(--red); } .tp-ends span:last-child { color: var(--green); }
 .tp-now { margin: .9rem 0 .5rem; }
 .tp-label { font-size: 1.25rem; font-weight: 700; }
 .tp-error .tp-label { color: var(--red); font-size: 1.05rem; }
