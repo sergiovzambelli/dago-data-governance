@@ -42,7 +42,7 @@ Italiano semplice, frasi corte, verbi all'inizio. Si parla di ciò che la person
 
 ## Logo
 
-Il marchio è un quadrato indaco con angoli `radius-lg` e tre elementi: due fogli sovrapposti (le cartelle di rete) e, sul foglio davanti, l'arco dell'indicatore di conformità con la lancetta, dal verde al rosso: il vaglio che separa conforme da non conforme. File: gruppo **Logos**, `logo-vaglio.svg`.
+Il marchio è un quadrato blu (`blue-700`) con angoli `radius-lg` e tre elementi: due fogli sovrapposti (le cartelle di rete; quello dietro giallo) e, sul foglio davanti, l'arco dell'indicatore di conformità con la lancetta, dal verde al rosso: il vaglio che separa conforme da non conforme. File: gruppo **Logos**, `logo-vaglio.svg`.
 
 - **Accanto al nome**: il marchio a sinistra, "Vaglio" in `card-title` e, sotto, "Patrimonio informativo · " e il nome dell'ente in `label` `muted`.
 - **Area di rispetto**: almeno un quarto del lato del marchio su ogni lato.
@@ -52,13 +52,15 @@ Il marchio è un quadrato indaco con angoli `radius-lg` e tre elementi: due fogl
 
 ## Colori
 
-Un colore = un significato. L'indaco è l'unico colore del marchio; verde, ambra, rosso e grigio sono **solo** gli esiti, il viola **solo** le categorie particolari.
+Un colore = un significato. La palette viene da `asset/palette.jpg`: **blu** `#1C4B62` e **giallo** `#E8A519` sono i colori principali del marchio, il **rosso** `#CD3318` è l'accento e si usa poco (non conforme, problemi, arco del logo). Verde, ambra e grigio sono **solo** gli esiti, il viola **solo** le categorie particolari. Il giallo non porta mai testo su fondi chiari: sta sui fondi scuri (menu) o come filetto e segno.
 
 | Ruolo | Token | Uso |
 |---|---|---|
-| Marchio e azioni | `indigo-700` | pulsanti primari, link, focus; 7,9:1 sul bianco |
-| Struttura | `side`, `side-ink`, `side-muted` | menu laterale scuro e barra in alto |
-| Superfici | `page`, `card`, `sep`, `fill` | sfondo, riquadri, separatori, binari |
+| Marchio e azioni | `blue-700`, `blue-800`, `blue-50` | pulsanti primari, link, focus; 9,4:1 sul bianco |
+| Marchio, secondo colore | `yellow` | voce attiva e focus sul menu (6,1:1 su `side`), filetto dei riquadri, logo |
+| Accento | `red` | non conforme e problemi; 5,1:1 con il bianco |
+| Struttura | `side`, `side-ink`, `side-muted` | menu laterale blu scuro e barra in alto |
+| Superfici | `page`, `card`, `sep`, `fill` | sfondo crema, riquadri, separatori, binari |
 | Testo | `ink`, `muted` | 16,4:1 e 6,1:1 sul bianco |
 | Esiti | `green`, `amber`, `red`, `grey` | capsule piene con testo bianco, sempre con la parola |
 | Categorie particolari | `purple` | etichette "Salute", "Giudiziari"… |
@@ -68,7 +70,7 @@ Regole: un testo sta solo sui fondi indicati nella sua nota; i colori che devono
 
 ## Indicatori di conformità
 
-La scala va da **verde a sinistra** (conforme, 100) a **rosso a destra** (non conforme, 0) in sei settori, con lancetta e perno in `side`. Il grado: conforme 100; scheda mancante 30; non conforme 70 meno il peso dei problemi. Sotto o accanto all'arco ci sono sempre il numero e il livello a parole: **alta** (≥ 75, testo `green`), **media** (40–74, `amber`), **bassa** (< 40, `red`). La stessa scala diventa una barra orizzontale alla fine dell'analisi di un file.
+La scala va da **rosso a sinistra** (non conforme, 0) a **verde a destra** (conforme, 100) in sei settori, con lancetta e perno scuri; rosso e giallo sono quelli della palette. Il grado: conforme 100; scheda mancante 30; non conforme 70 meno il peso dei problemi. Sotto o accanto all'arco ci sono sempre il numero e il livello a parole: **alta** (≥ 75, testo `green`), **media** (40–74, `amber`), **bassa** (< 40, `red`). La stessa scala diventa una barra orizzontale alla fine dell'analisi di un file.
 
 ## Caratteri
 
@@ -80,7 +82,7 @@ Icone a tratto della libreria `sprites.svg` di Bootstrap Italia (`it-files`, `it
 
 ## Accessibilità
 
-- Contrasto ≥ 4,5:1 per i testi, 3:1 per bordi di controlli e anelli di focus; focus visibile su ogni elemento interattivo (3 px `indigo-700`, `indigo-300` sul menu scuro).
+- Contrasto ≥ 4,5:1 per i testi, 3:1 per bordi di controlli e anelli di focus; focus visibile su ogni elemento interattivo (3 px `blue-700`, `yellow` sul menu scuro).
 - Scorciatoie a tasto singolo (J, K, C, E, ?) disattivabili e mai attive nei campi.
 - Bersagli di almeno 24 × 24 px; riflusso a 320 px; `prefers-reduced-motion` e colori forzati di Windows rispettati.
 - Ogni grafico (anello, indicatore, barra) ha un testo alternativo con il valore.

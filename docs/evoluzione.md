@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/palette-bauhaus: nuovi colori dalla palette
+- Richiesta dell'utente: rifare i colori del sito con la palette in `asset/palette.jpg`, giallo `#E8A519` e blu `#1C4B62` principali, rosso `#CD3318` come accento.
+- Blu per azioni, link, focus e menu (menu `#123444`, voce attiva `#1C4B62`); giallo per il segno della voce attiva, il focus sul menu, il filetto dei riquadri del cruscotto e il foglio dietro nel logo; rosso per Non conforme, problemi e arco del logo; sfondo crema `#f6f3ec` preso dalla stessa foto.
+- Decisione: il giallo non porta mai testo su fondi chiari (2,1:1 sul bianco), solo su fondi scuri o come segno. Contrasti ricalcolati e scritti accanto ai token: nessun testo sotto 4,5:1. Esiti verde, ambra, grigio e viola invariati (significato, non marchio). Indaco tolto da token, guida e copertina.
+- Nella guida corretta anche la scala degli indicatori (rosso a sinistra, verde a destra), rimasta indietro dalla PR precedente.
+
 ## 2026-10-30 — fix/gauge-verde-destra: verde a destra negli indicatori
 - Richiesta dell'utente: negli indicatori di conformità il verde va a destra e il rosso a sinistra, come un contachilometri che sale. Girati il contachilometri (`ui/gauge.py`: settori e lancetta, 0 a sinistra e 100 a destra) e la scala finale di Prova un file (gradiente, etichette agli estremi, indicatore che scorre fino al grado).
 - Soglie dei livelli invariate (alta ≥ 75, media ≥ 40).

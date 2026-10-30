@@ -815,9 +815,12 @@ def test_brand_kit_is_kept_in_the_repository():
     assert tokens["name"] == "Vaglio"
     css = (Path(__file__).parents[1] / "ui/static/ui.css").read_text(encoding="utf-8").lower()
     # i colori principali del marchio sono quelli usati dall'app
-    for name in ("indigo-700", "side", "ink", "muted", "green", "amber", "red"):
+    for name in ("blue-700", "yellow", "side", "ink", "muted", "green", "amber", "red"):
         value = next(t["value"] for t in tokens["color"]["tokens"] if t["name"] == name).lower()
         assert value in css, name
+    # palette in asset/palette.jpg: giallo e blu principali, rosso accento
+    palette = {t["name"]: t["value"].lower() for t in tokens["color"]["tokens"]}
+    assert (palette["blue-700"], palette["yellow"], palette["red"]) == ("#1c4b62", "#e8a519", "#cd3318")
 
 
 # --- pannello Accessibilità (preferenze dell'utente) ---

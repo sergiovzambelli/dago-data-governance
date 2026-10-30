@@ -7,9 +7,9 @@
   html, body { margin: 0; height: 100%; background: var(--page); }
   .cover { position: relative; width: 960px; height: 288px; overflow: hidden; background: var(--page); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   .art { position: absolute; inset: 0; }
-  .side { fill: var(--side); } .brand { fill: var(--indigo-700); } .tint { fill: var(--indigo-300); } .relief { fill: var(--fill); }
+  .side { fill: var(--side); } .brand { fill: var(--blue-700); } .tint { fill: var(--yellow); } .relief { fill: var(--fill); }
   .slab { rx: var(--radius-xl); } .tile { rx: var(--radius-lg); }
-  .ok { stroke: var(--green); } .ko { stroke: var(--red); } .needle { stroke: var(--indigo-300); } .hub { fill: var(--indigo-300); }
+  .ok { stroke: var(--green); } .ko { stroke: var(--red); } .needle { stroke: var(--yellow); } .hub { fill: var(--yellow); }
   .arc { fill: none; stroke-width: 16px; stroke-linecap: round; }
   .text { position: absolute; left: 32px; bottom: 32px; max-width: 440px; }
   .name { margin: 0; font-size: 120px; line-height: .95; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
@@ -19,7 +19,7 @@
 <body>
 <div class="cover">
   <svg class="art" viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
-    <!-- blocks: side 224×308 (slab, radius-xl, bleeds top and bottom), indigo-700 208×168 (radius-lg, bleeds top-right), indigo-300 96×88, fill 96×88 (radius-lg) -->
+    <!-- blocks: side 224×308 (slab, radius-xl, bleeds top and bottom), blue-700 208×168 (radius-lg, bleeds top-right), yellow 96×88, fill 96×88 (radius-lg) -->
     <!-- arrangement: one tall dark slab with satellites to its right, two blocks bleeding off the top and right edges -->
     <!-- pattern: a literal motif, the compliance gauge — green and red arcs with a needle on the slab; the product is the dial that goes from conforme to non conforme -->
     <!-- scales: gaps space-4 (16px), stroke = space-4, tiles radius-lg, slab radius-xl; arcs radius 64 = 4 × space-4 -->

@@ -9,7 +9,7 @@ PENALTY = {"DIFFUSIONE_NON_PREVISTA": 35, "CATEGORIA_NON_DICHIARATA": 25, "ACCES
 NON_COMPLIANT_START = 70  # un documento non conforme parte sotto la soglia "alta"
 MISSING_RECORD = 30       # senza scheda la conformità non si può verificare: grado basso
 # sei settori da sinistra a destra, dal rosso al verde scuro (decorativi: il valore è sempre scritto a parole)
-SEGMENTS = ("#c92a2a", "#e8590c", "#f08c00", "#e2b007", "#4caf2a", "#1e7b34")
+SEGMENTS = ("#cd3318", "#e8590c", "#f08c00", "#e8a519", "#4caf2a", "#1e7b34")
 START, SWEEP = 210, 240   # gradi: l'arco va da in basso a sinistra a in basso a destra
 CX, CY, R, WIDTH = 100, 100, 78, 26
 
