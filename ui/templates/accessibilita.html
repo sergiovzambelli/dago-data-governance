@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Dichiarazione di accessibilità{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="/">Cruscotto</a><span class="separator">/</span></li>
+<li class="breadcrumb-item active" aria-current="page">Accessibilità</li>
+{% endblock %}
+{% block content %}
+<h1>Dichiarazione di accessibilità</h1>
+<p class="page-lead">{{ ente }} si impegna a rendere questo strumento accessibile secondo la Legge 4/2004 (Legge Stanca)
+  e le WCAG 2.1 di livello AA.</p>
+
+<section class="panel mb-4" aria-labelledby="h-stato-conf">
+  <h2 id="h-stato-conf" class="h5">Stato di conformità</h2>
+  <p>Lo strumento è <strong>parzialmente conforme</strong> alle WCAG 2.1 AA: le verifiche fatte non hanno trovato
+    problemi bloccanti, ma non è ancora stato provato con un lettore di schermo da persone che lo usano ogni giorno.</p>
+</section>
+
+<section class="panel mb-4" aria-labelledby="h-verifiche">
+  <h2 id="h-verifiche" class="h5">Cosa è stato verificato</h2>
+  <ul>
+    <li>Contrasto di tutti i testi almeno 4,5:1, misurato su ogni pagina; indicatori e barre hanno sempre il valore scritto a parole.</li>
+    <li>Uso completo da tastiera, con il focus sempre visibile; il link "Vai al contenuto principale" all'inizio di ogni pagina.</li>
+    <li>Scorciatoie da tastiera (J, K, C, E, ?) che non agiscono nei campi e si possono disattivare dal menu.</li>
+    <li>Pagine leggibili a 320 px di larghezza (zoom al 400%) senza scorrimento orizzontale.</li>
+    <li>Etichetta su ogni campo, titoli in ordine, tabelle con intestazioni, messaggi di esito annunciati ai lettori di schermo.</li>
+    <li>Animazioni spente con "riduci movimento"; bordi e colori di sistema con il contrasto elevato di Windows.</li>
+  </ul>
+</section>
+
+<section class="panel mb-4" aria-labelledby="h-limiti">
+  <h2 id="h-limiti" class="h5">Limiti noti</h2>
+  <ul>
+    <li>Prova con lettori di schermo (NVDA, JAWS, VoiceOver) non ancora fatta.</li>
+    <li>Il testo estratto dai documenti è mostrato com'è: se il documento originale non ha titoli o struttura, non li ha neanche qui.</li>
+    <li>I colori dei settori negli indicatori a lancetta sono decorativi: il grado e il livello sono sempre scritti accanto.</li>
+  </ul>
+</section>
+
+<section class="panel" aria-labelledby="h-segnala">
+  <h2 id="h-segnala" class="h5">Segnala un problema</h2>
+  <p>Se una parte dello strumento non è utilizzabile, scrivi all'amministratore del sistema di {{ ente }} indicando la
+    pagina e il problema: la segnalazione verrà presa in carico e, se non risolta, potrai rivolgerti al Difensore civico
+    per il digitale di AgID.</p>
+</section>
+{% endblock %}

@@ -356,6 +356,10 @@ def create_app(settings):
         return {"chars": len(text), "segments": segments, "choice": choice, "file_changed": changed,
                 "result": result, "analisi": csrf.sign(user, choice) if choice else ""}
 
+    @app.get("/accessibilita", response_class=HTMLResponse)
+    def accessibility(request: Request):
+        return page(request, "accessibilita.html", nav="")
+
     @app.get("/prova", response_class=HTMLResponse)
     def try_form(request: Request):
         return page(request, "prova.html", nav="prova", result=None, try_phases=TRY_PHASES)

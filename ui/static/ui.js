@@ -19,13 +19,21 @@
     if (shell && toggle && menu) {
       shell.classList.add("js");
       toggle.hidden = false;
+      var workspace = document.querySelector(".workspace");
       var setOpen = function (open) {
         shell.classList.toggle("menu-open", open);
         toggle.setAttribute("aria-expanded", String(open));
         toggle.querySelector(".visually-hidden").textContent = open ? "Chiudi il menu" : "Apri il menu";
+        // con il menu aperto il contenuto sotto non riceve il focus né viene letto (niente Tab "nascosti")
+        if (workspace) workspace.inert = open;
         if (open) { var first = menu.querySelector("a"); if (first) first.focus(); }
       };
       toggle.addEventListener("click", function () { setOpen(!shell.classList.contains("menu-open")); });
+      // "Vai alla navigazione": su telefono il menu è chiuso, quindi il link lo apre
+      var skip = document.querySelector('a[href="#menu-principale"]');
+      if (skip) skip.addEventListener("click", function (e) {
+        if (getComputedStyle(menu).display === "none") { e.preventDefault(); setOpen(true); }
+      });
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && shell.classList.contains("menu-open")) { setOpen(false); toggle.focus(); }
       });

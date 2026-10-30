@@ -33,7 +33,7 @@
         <span class="doc-folder">{{ r.campi["Denominazione"] }}</span></a></td>
       <td data-label="Struttura">{{ r.campi["Struttura responsabile"] or "—" }}</td>
       <td data-label="Categorie particolari">{% set cats = r.campi["Categorie particolari dichiarate"] %}{% if cats and cats != "Nessuna" %}<ul class="tag-list">{% for c in cats.split(",") %}<li class="tag tag-strong">{{ c.strip() }}</li>{% endfor %}</ul>{% else %}<span class="muted">Nessuna</span>{% endif %}</td>
-      <td data-label="Documenti">{% if counts.get(code) %}<a href="/documenti?scheda={{ code }}">{{ counts[code] }}</a>{% else %}<span class="muted">0</span>{% endif %}</td>
+      <td data-label="Documenti">{% if counts.get(code) %}<a href="/documenti?scheda={{ code }}">{{ counts[code] }}<span class="visually-hidden"> document{{ "o" if counts[code] == 1 else "i" }} con la scheda {{ code }}</span></a>{% else %}<span class="muted">0</span>{% endif %}</td>
       <td data-label="Stato">{% if r.archiviata %}<span class="stato">Archiviata</span>{% elif r.nuova %}<span class="stato stato-ok">Nuova</span>{% elif r.versioni %}<span class="stato stato-ok">Modificata</span>{% else %}<span class="stato">Dal registro</span>{% endif %}</td>
     </tr>
   {% else %}
