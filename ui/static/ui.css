@@ -47,11 +47,10 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
   padding: 1.25rem .85rem; display: flex; flex-direction: column; gap: 1.25rem; }
 .brand { display: flex; gap: .65rem; align-items: center; color: #fff; text-decoration: none; padding: 0 .4rem; }
 .brand:hover { color: #fff; }
-/* marchio di Vaglio (docs/brand): logo decorativo accanto al nome, che resta testo */
-.brand-logo { flex-shrink: 0; border-radius: 9px; }
-.brand-top { display: inline-flex; align-items: center; gap: .5rem; }
-.brand-name { display: block; font-weight: 700; font-size: 1.15rem; line-height: 1.2; letter-spacing: -.01em; }
-.brand-ente { display: block; font-size: .8rem; color: var(--side-muted); }
+/* marchio di DaGo (docs/brand): scudo e nome già nel logo, versione negativa per il menu blu */
+.brand-logo, .brand-mark { flex-shrink: 0; }
+.brand-mark { display: none; }  /* solo lo scudo, quando il menu è compresso */
+.brand-top { display: inline-flex; align-items: center; }
 .sidebar-nav ul { list-style: none; padding: 0; margin: 0 0 1rem; }
 .nav-group { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--side-muted);
   margin: 0 0 .35rem .6rem; }
@@ -62,11 +61,38 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
 .sidebar-nav a[aria-current="page"] { background: var(--side-active); color: #fff; font-weight: 600;
   box-shadow: inset 3px 0 0 var(--yellow); }
 .sidebar a:focus-visible, .sidebar summary:focus-visible, .sidebar button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 1px; }
-.sidebar-foot { margin-top: auto; font-size: .85rem; border-top: 1px solid #24506a; padding-top: 1rem; }
-.sidebar-foot p { margin: .5rem .4rem; }
-.sidebar-foot a { color: var(--yellow); }
-.sidebar-foot .hint { color: var(--side-muted); }
-.whoami .icon { fill: currentColor; }
+.sidebar-foot { margin-top: auto; font-size: .85rem; border-top: 1px solid #24506a; padding-top: 1rem; display: flex; flex-direction: column; gap: .85rem; }
+/* utente: tondo con l'icona, nome sopra e ruolo sotto */
+.whoami { display: flex; gap: .6rem; align-items: center; margin: 0 .4rem; }
+.whoami p { margin: 0; min-width: 0; line-height: 1.3; }
+.whoami-avatar { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--side-active); flex-shrink: 0; }
+.whoami-avatar .icon { fill: var(--yellow); }
+.whoami-name { display: block; color: #fff; font-weight: 600; overflow-wrap: anywhere; }
+.whoami-role { display: block; color: var(--side-muted); font-size: .8rem; }
+/* esportazioni: etichetta piccola e due pulsanti a pillola */
+.exports { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: 0 .4rem; }
+.exports > span { flex-basis: 100%; color: var(--side-muted); font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.exports a { display: inline-flex; align-items: center; gap: .3rem; min-height: 1.9rem; padding: .15rem .65rem; border-radius: 99px;
+  border: 1px solid #6f8c9b; color: var(--side-ink); text-decoration: none; font-weight: 600; font-size: .8rem; }
+.exports a .icon { fill: currentColor; }
+.exports a:hover { background: var(--side-active); color: #fff; }
+.a11y-link { margin: 0 .4rem; color: var(--side-muted); font-size: .8rem; }
+.a11y-link:hover { color: #fff; }
+/* menu compresso (solo da desktop): resta la colonna delle icone, i nomi restano per i lettori di schermo */
+.side-collapse { display: flex; align-items: center; gap: .65rem; padding: .45rem .6rem; border: 0; border-radius: 8px;
+  background: none; color: var(--side-muted); font-size: .85rem; text-align: left; }
+.side-collapse:hover { background: var(--side-active); color: #fff; }
+.side-collapse .icon { fill: currentColor; width: 1.15rem; height: 1.15rem; flex-shrink: 0; transition: transform .15s; }
+@media (min-width: 992px) {
+  .shell.side-collapsed { grid-template-columns: 4.5rem minmax(0, 1fr); }
+  .side-collapsed .sidebar { padding-inline: .6rem; align-items: center; }
+  .side-collapsed .brand-logo, .side-collapsed .nav-group, .side-collapsed .sidebar-foot { display: none; }
+  .side-collapsed .brand { padding: 0; }
+  .side-collapsed .brand-mark { display: block; }
+  .side-collapsed .side-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .side-collapsed .sidebar-nav a, .side-collapsed .side-collapse { justify-content: center; padding: .55rem; }
+  .side-collapsed .side-collapse .icon { transform: rotate(180deg); }
+}
 .shortcuts { margin: 0 .4rem .75rem; }
 .shortcuts > summary { color: var(--side-ink); font-weight: 600; }
 .shortcuts dl { margin: .25rem 0 .5rem; }
@@ -90,6 +116,7 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
   .brand-top { color: #fff; font-weight: 700; padding: 0; }
   .menu-toggle { background: none; border: 0; padding: .35rem; border-radius: 8px; line-height: 0; }
   .menu-toggle .icon { fill: #fff; }
+  .side-collapse { display: none; }
   .sidebar { position: static; height: auto; }
   .shell.js .sidebar { display: none; }
   .shell.js.menu-open .sidebar { display: flex; position: fixed; inset: 3.25rem 0 0 0; z-index: 50; height: auto; }
@@ -251,11 +278,11 @@ html { scroll-padding-bottom: 5.5rem; }
 .a11y-contrasto body { background: #fff; color: #000; }
 .a11y-contrasto .panel, .a11y-contrasto .group, .a11y-contrasto .doc-table, .a11y-contrasto .metric, .a11y-contrasto .ring-card,
 .a11y-contrasto .gauge-card, .a11y-contrasto .verdict, .a11y-contrasto .decision, .a11y-contrasto .queue-pane, .a11y-contrasto .record-card,
-.a11y-contrasto .try-progress, .a11y-contrasto .notice, .a11y-contrasto .choice-card, .a11y-contrasto .filters, .a11y-contrasto .tag {
+.a11y-contrasto .try-progress, .a11y-contrasto .choice-card, .a11y-contrasto .filters, .a11y-contrasto .tag {
   border: 2px solid #000 !important; box-shadow: none !important; }
 .a11y-contrasto main a:not(.btn) { text-decoration: underline; }
 .a11y-contrasto .hint, .a11y-contrasto .muted, .a11y-contrasto .doc-folder, .a11y-contrasto .rec-name { color: #1a1a1a !important; }
-.a11y-contrasto .sidebar .hint, .a11y-contrasto .sidebar .brand-ente { color: #ffffff !important; }
+.a11y-contrasto .sidebar .hint { color: #ffffff !important; }
 .a11y-contrasto .meter, .a11y-contrasto .bar, .a11y-contrasto .tp-track, .a11y-contrasto .ring { outline: 2px solid #000; }
 .a11y-contrasto *:focus-visible { outline: 4px solid #000 !important; outline-offset: 2px; box-shadow: 0 0 0 7px #ffd600 !important; }
 
@@ -301,9 +328,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex="-1"]:fo
   margin: 2.25rem 0 .75rem; }
 .section-head h2 { margin: 0; }
 .page-lead { color: var(--muted); font-size: 1.125rem; margin-bottom: 1.5rem; }
-.notice { display: flex; gap: .6rem; align-items: flex-start; background: var(--card); border-radius: var(--radius);
-  padding: .85rem 1.1rem; font-size: .95rem; box-shadow: var(--shadow); }
-.notice .icon { fill: var(--blue); flex-shrink: 0; margin-top: .15rem; }
 
 /* triangolo di apertura (disclosure-controls.md): punta a destra chiuso, in basso aperto */
 details > summary { list-style: none; cursor: pointer; font-weight: 600; color: var(--blue); padding: .35rem 0; }
@@ -446,7 +470,7 @@ a.fig:hover { text-decoration: underline; text-decoration-thickness: 2px; text-u
 .doc-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; align-items: flex-start; }
 .doc-title { font-size: 1.75rem; margin-bottom: .1rem; overflow-wrap: anywhere; }
 .doc-path { color: var(--muted); overflow-wrap: anywhere; margin-bottom: 1.25rem; }
-.queue-nav { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.queue-nav { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.25rem; }
 .queue-pos { color: var(--muted); font-size: .95rem; }
 
 /* verdetto: esito in grande nel suo colore, fatti come lista raggruppata a destra */

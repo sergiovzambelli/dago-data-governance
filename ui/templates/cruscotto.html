@@ -1,15 +1,10 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icon, outcome %}
-{% block title %}Cruscotto{% endblock %}
-{% block breadcrumb %}<li class="breadcrumb-item active" aria-current="page">Cruscotto</li>{% endblock %}
+{% block title %}Compliance{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active" aria-current="page">Compliance</li>{% endblock %}
 {% block content %}
-<h1 class="mb-1">Cruscotto</h1>
+<h1 class="mb-1">Compliance</h1>
 <p class="page-lead">{{ docs|length }} file analizzati, {{ personal }} con dati personali.</p>
-{% if local_mode %}
-<p class="notice">{{ icon("it-info-circle", "icon-sm") }}
-  <span>Modalità locale: la UI risponde solo da questo computer e non chiede le credenziali.
-  Per usarla in rete configura gli utenti con <code>python -m ui.users</code>.</span></p>
-{% endif %}
 
 {% set todo = personal - validated %}
 {% set pct = (100 * validated / personal)|round|int if personal else 0 %}

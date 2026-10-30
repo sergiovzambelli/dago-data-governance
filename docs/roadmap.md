@@ -38,6 +38,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #27 | feat/doc-view | Dettaglio documento come Prova un file: testo evidenziato (solo RPD, riletto dalla cartella analizzata) e card di scelta per le schede mancanti | – | – |
 | #38 | feat/palette-bauhaus | Colori dalla palette in `asset/palette.jpg`: blu e giallo principali (menu, azioni, logo, voce attiva), rosso come accento (non conforme), sfondo crema | – | – |
 | #37 | fix/gauge-verde-destra | Indicatori di conformità girati: rosso a sinistra, verde a destra (contachilometri e barra di Prova un file) | – | – |
+| #39 | feat/dago-menu-compatto | Nome e logo DaGo (scudo), voce Compliance al posto di Cruscotto, niente avviso di modalità locale, menu comprimibile, piede del menu ridisegnato | – | – |
 | #35 | feat/a11y-settings | Pannello Accessibilità: contrasto elevato, testo grande, caratteri leggibili, spaziatura, link evidenziati, animazioni ferme, cursore grande, guida alla lettura, bianco e nero | – | – |
 | #34 | feat/brand-vaglio | Nome del prodotto: Vaglio; brand kit in `docs/brand/`; nome, logo e favicon nell'app | – | – |
 | #33 | feat/a11y-pass | Accessibilità: riflusso a 320 px, link con contesto, menu inerte su telefono, contrasto elevato di Windows, dichiarazione di accessibilità | – | – |

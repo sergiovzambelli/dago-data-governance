@@ -63,7 +63,7 @@ flowchart TB
 
     subgraph WEB["Web — confine di fiducia 2: browser → server"]
         API[FastAPI + Jinja2]
-        UI[Bootstrap Italia 2.x<br/>inventario · coda validazione · cruscotto · ricerca]
+        UI[Bootstrap Italia 2.x<br/>inventario · coda validazione · compliance · ricerca]
         RPD((RPD / operatore))
     end
 
@@ -104,7 +104,7 @@ flowchart LR
     REG[(Registro_trattamenti.csv)] --> UI
     subgraph UI["ui/ — FastAPI + Jinja2 + Bootstrap Italia 2.18.3 (file locali)"]
         AUTH{utente?<br/>Basic + PBKDF2<br/>oppure solo 127.0.0.1}
-        PAG[cruscotto con settori · coda · inventario filtrabile per settore<br/>documento · ricerca · registro]
+        PAG[compliance con settori · coda · inventario filtrabile per settore<br/>documento · ricerca · registro]
         DEC[decisione RPD<br/>ruolo rpd + token CSRF + Origin]
         SCH[schede: crea · modifica · archivia<br/>ruolo rpd + token CSRF + Origin]
         EXP[esporta JSON / CSV]
@@ -133,7 +133,7 @@ flowchart LR
     S -->|NUOVA: bozza da classifier.drafts| SCH[(tabella schede: CREA)]
     S -->|predizione mascherata| CAR[(tabella caricati)]
     S -->|CONFERMA dell'RPD| DEC[(tabella decisioni)]
-    CAR --> INV[inventario, coda, cruscotto]
+    CAR --> INV[inventario, coda, compliance]
 ```
 
 Con JavaScript (feat/try-file-progress) lo stesso lavoro gira in background e la pagina mostra le fasi reali:

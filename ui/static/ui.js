@@ -39,6 +39,20 @@
       });
     }
 
+    // menu compresso da desktop: la scelta resta nel browser
+    var collapse = document.querySelector(".side-collapse");
+    if (shell && collapse) {
+      collapse.hidden = false;
+      var setCollapsed = function (on) {
+        shell.classList.toggle("side-collapsed", on);
+        collapse.setAttribute("aria-expanded", String(!on));
+        collapse.querySelector(".side-label").textContent = on ? "Espandi il menu" : "Comprimi il menu";
+        try { localStorage.setItem("menu-compresso", on ? "si" : "no"); } catch (e) { /* senza salvataggio vale solo per questa pagina */ }
+      };
+      try { if (localStorage.getItem("menu-compresso") === "si") setCollapsed(true); } catch (e) { /* menu aperto */ }
+      collapse.addEventListener("click", function () { setCollapsed(!shell.classList.contains("side-collapsed")); });
+    }
+
     // scorciatoie da tastiera (WCAG 2.1.4): tasti singoli solo fuori dai campi, e si possono disattivare
     var panel = document.getElementById("scorciatoie");
     var button = document.querySelector("[data-shortcuts-toggle]");
