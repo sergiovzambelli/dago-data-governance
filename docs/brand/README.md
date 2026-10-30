@@ -1,19 +1,18 @@
-# Vaglio
+# DaGo
 
 Ogni file, la sua scheda, il suo grado di conformità.
 
-> Brand kit di Vaglio. In questa cartella: questa guida, `tokens.json` (colori, caratteri, spazi, raggi), `logo-vaglio.svg` e `copertina.html` (la copertina del kit; usa le variabili dei token, quindi si vede a colori solo nella versione pubblicata). Nell'app i token corrispondono alle variabili in cima a `ui/static/ui.css` e il logo è `ui/static/brand/logo-vaglio.svg`: se cambi un valore qui, cambialo anche lì.
+> Brand kit di DaGo. In questa cartella: questa guida, `tokens.json` (colori, caratteri, spazi, raggi), `logo-vaglio.svg` e `copertina.html` (la copertina del kit; usa le variabili dei token, quindi si vede a colori solo nella versione pubblicata). Nell'app i token corrispondono alle variabili in cima a `ui/static/ui.css` e il logo è `ui/static/brand/logo-vaglio.svg`: se cambi un valore qui, cambialo anche lì.
 
-Vaglio è lo strumento con cui l'RPD di un ente pubblico scopre quali dati personali stanno nelle cartelle di rete, li abbina al registro dei trattamenti e decide cosa correggere. È un'**area di lavoro**: chi la usa valida decine di documenti di fila, quindi ogni scelta di forma serve a decidere più in fretta e senza errori.
+DaGo è lo strumento con cui l'RPD di un ente pubblico scopre quali dati personali stanno nelle cartelle di rete, li abbina al registro dei trattamenti e decide cosa correggere. È un'**area di lavoro**: chi la usa valida decine di documenti di fila, quindi ogni scelta di forma serve a decidere più in fretta e senza errori.
 
 ## Nome
 
-**Vaglio**, da *vagliare*: esaminare con cura e separare ciò che va tenuto da ciò che va corretto. È quello che fa lo strumento con i documenti e quello che fa l'RPD nella coda di validazione.
+**DaGo** (prima si chiamava Vaglio; il nome è cambiato per decisione dell'utente).
 
-- Si scrive sempre **Vaglio**: iniziale maiuscola, mai tutto maiuscolo, mai tradotto.
-- Senza articolo quando è il nome dello strumento: "apri Vaglio", "Vaglio propone T-PER-07".
-- Il descrittore è **Patrimonio informativo**: va sotto o accanto al nome quando chi legge non conosce lo strumento (intestazioni, documenti, presentazioni); dentro l'app basta "Vaglio".
-- Il verbo si può usare nel testo ("40 documenti vagliati su 132"), mai al posto dei termini fissi (validare, confermare, correggere) nei pulsanti.
+- Si scrive sempre **DaGo**: D e G maiuscole, il resto minuscolo, mai tutto maiuscolo, mai tradotto.
+- Senza articolo quando è il nome dello strumento: "apri DaGo", "DaGo propone T-PER-07".
+- Il descrittore è **Patrimonio informativo**: va sotto o accanto al nome quando chi legge non conosce lo strumento (intestazioni, documenti, presentazioni); dentro l'app basta "DaGo".
 
 ## Principi
 
@@ -44,7 +43,7 @@ Italiano semplice, frasi corte, verbi all'inizio. Si parla di ciò che la person
 
 Il marchio è un quadrato blu (`blue-700`) con angoli `radius-lg` e tre elementi: due fogli sovrapposti (le cartelle di rete; quello dietro giallo) e, sul foglio davanti, l'arco dell'indicatore di conformità con la lancetta, dal verde al rosso: il vaglio che separa conforme da non conforme. File: gruppo **Logos**, `logo-vaglio.svg`.
 
-- **Accanto al nome**: il marchio a sinistra, "Vaglio" in `card-title` e, sotto, "Patrimonio informativo · " e il nome dell'ente in `label` `muted`.
+- **Accanto al nome**: il marchio a sinistra, "DaGo" in `card-title` e, sotto, "Patrimonio informativo · " e il nome dell'ente in `label` `muted`.
 - **Area di rispetto**: almeno un quarto del lato del marchio su ogni lato.
 - **Misura minima**: 24 px (favicon) senza nome; 32 px con il nome accanto.
 - **Sfondi**: su `card`, `page` o `side`. Mai su foto o su uno dei colori degli esiti.

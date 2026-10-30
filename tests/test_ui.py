@@ -301,9 +301,16 @@ def test_decision_log_is_readable(client):
     assert "Conferma" in html and ">CONFERMA<" not in html
 
 
-def test_local_mode_notice_only_on_dashboard(client):
-    assert "Modalità locale" in client.get("/").text
-    assert "Modalità locale" not in client.get("/documenti").text
+def test_local_mode_has_no_banner(client):
+    assert "Modalità locale" not in client.get("/").text
+
+
+def test_sidebar_can_be_collapsed(client):
+    html = client.get("/documenti").text
+    assert re.search(r'<button class="side-collapse" type="button" aria-expanded="true" aria-controls="menu-principale" hidden>', html)
+    assert "Comprimi il menu" in html
+    js = (Path(__file__).parents[1] / "ui/static/ui.js").read_text(encoding="utf-8")
+    assert "side-collapsed" in js
 
 
 def test_active_filters_can_be_removed_one_by_one(client):
@@ -798,21 +805,21 @@ def test_mobile_menu_makes_page_inert_and_skip_link_opens_it():
     assert ".inert = open" in js and 'a[href="#menu-principale"]' in js
 
 
-# --- marchio Vaglio (docs/brand) ---
+# --- marchio DaGo (docs/brand) ---
 
-def test_pages_carry_the_vaglio_name_logo_and_favicon(client):
+def test_pages_carry_the_dago_name_logo_and_favicon(client):
     html = client.get("/").text
-    assert "<title>Cruscotto · Vaglio · Comune di Prova</title>" in html
+    assert "<title>Compliance · DaGo · Comune di Prova</title>" in html
     assert re.search(r'<link rel="icon" href="/static/brand/logo-vaglio.svg" type="image/svg\+xml">', html)
     assert re.search(r'<img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="\d+" height="\d+">', html)
-    assert '<span class="brand-name">Vaglio</span>' in html and "Patrimonio informativo" in html
+    assert '<span class="brand-name">DaGo</span>' in html and "Vaglio" not in html and "Cruscotto" not in html and "Patrimonio informativo" in html
     assert client.get("/static/brand/logo-vaglio.svg").status_code == 200
 
 
 def test_brand_kit_is_kept_in_the_repository():
     brand = Path(__file__).parents[1] / "docs/brand"
     tokens = json.loads((brand / "tokens.json").read_text(encoding="utf-8"))
-    assert tokens["name"] == "Vaglio"
+    assert tokens["name"] == "DaGo"
     css = (Path(__file__).parents[1] / "ui/static/ui.css").read_text(encoding="utf-8").lower()
     # i colori principali del marchio sono quelli usati dall'app
     for name in ("blue-700", "yellow", "side", "ink", "muted", "green", "amber", "red"):

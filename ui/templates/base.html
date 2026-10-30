@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %} · Vaglio · {{ ente }}</title>
+  <title>{% block title %}{% endblock %} · DaGo · {{ ente }}</title>
   <link rel="icon" href="/static/brand/logo-vaglio.svg" type="image/svg+xml">
   <script src="/static/a11y-init.js"></script>
   {# Bootstrap Italia resta solo come base (griglia, moduli, pulsanti); aspetto e guscio sono in ui.css #}
@@ -22,17 +22,20 @@
     <button class="menu-toggle" type="button" aria-controls="menu-principale" aria-expanded="false" hidden>
       {{ icon("it-burger") }}<span class="visually-hidden">Apri il menu</span>
     </button>
-    <a class="brand brand-top" href="/"><img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="26" height="26">Vaglio</a>
+    <a class="brand brand-top" href="/"><img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="26" height="26">DaGo</a>
   </header>
 
   <aside class="sidebar" id="menu-principale">
     <a class="brand" href="/">
       <img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="36" height="36">
-      <span><span class="brand-name">Vaglio</span><span class="brand-ente">Patrimonio informativo · {{ ente }}</span></span>
+      <span><span class="brand-name">DaGo</span><span class="brand-ente">Patrimonio informativo · {{ ente }}</span></span>
     </a>
+    <button class="side-collapse" type="button" aria-expanded="true" aria-controls="menu-principale" hidden>
+      {{ icon("it-chevron-left") }}<span class="side-label">Comprimi il menu</span>
+    </button>
     <nav class="sidebar-nav" aria-label="Navigazione principale">
       {% set groups = [
-        ("Lavoro", [("cruscotto", "/", "Cruscotto", "it-chart-line"), ("coda", "/coda", "Coda di validazione", "it-check-circle"),
+        ("Lavoro", [("cruscotto", "/", "Compliance", "it-chart-line"), ("coda", "/coda", "Coda di validazione", "it-check-circle"),
                     ("documenti", "/documenti", "Inventario", "it-folder"), ("ricerca", "/ricerca", "Ricerca", "it-search"),
                     ("prova", "/prova", "Prova un file", "it-upload")]),
         ("Registro", [("schede", "/schede", "Schede", "it-list"), ("bozze", "/bozze", "Bozze di schede", "it-pencil"),
@@ -41,7 +44,7 @@
       <p class="nav-group" id="nav-g{{ loop.index }}">{{ title }}</p>
       <ul aria-labelledby="nav-g{{ loop.index }}">
         {% for key, href, label, ico in items %}
-        <li><a href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}>{{ icon(ico) }}<span>{{ label }}</span></a></li>
+        <li><a href="{{ href }}" title="{{ label }}"{% if nav == key %} aria-current="page"{% endif %}>{{ icon(ico) }}<span class="side-label">{{ label }}</span></a></li>
         {% endfor %}
       </ul>
       {% endfor %}
@@ -60,10 +63,17 @@
         <p class="shortcuts-state" aria-live="polite"></p>
         <button type="button" class="btn btn-sm btn-outline-primary" data-shortcuts-toggle>Disattiva le scorciatoie</button>
       </details>
-      <p class="whoami">{{ icon("it-user", "icon-sm") }} {{ user.nome }} · {{ roles[user.ruolo] }}
-        {% if local_mode %}<span class="d-block hint">Solo su questo computer</span>{% endif %}</p>
-      <p class="exports">Esporta: <a href="/esporta.json">JSON</a> · <a href="/esporta.csv">CSV</a></p>
-      <p class="exports"><a href="/accessibilita">Dichiarazione di accessibilità</a></p>
+      <div class="whoami">
+        <span class="whoami-avatar">{{ icon("it-user", "icon-sm") }}</span>
+        <p><span class="whoami-name">{{ user.nome }}</span>
+          <span class="whoami-role">{{ roles[user.ruolo] }}{% if local_mode %} · solo su questo computer{% endif %}</span></p>
+      </div>
+      <div class="exports" role="group" aria-labelledby="exports-label">
+        <span id="exports-label">Esporta</span>
+        <a href="/esporta.json">{{ icon("it-download", "icon-xs") }} JSON</a>
+        <a href="/esporta.csv">{{ icon("it-download", "icon-xs") }} CSV</a>
+      </div>
+      <a class="a11y-link" href="/accessibilita">Dichiarazione di accessibilità</a>
     </div>
   </aside>
 
