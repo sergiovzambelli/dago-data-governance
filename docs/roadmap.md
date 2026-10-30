@@ -36,7 +36,7 @@ Si aggiorna **in ogni PR**: la riga della PR passa in "Fatte" con il punteggio, 
 | #26 | feat/sector-view | UI: tabella dei documenti per settore nel cruscotto (cartella sotto il server) e filtro per settore nell'inventario | – (invariato) | – (invariato) |
 | #25 | feat/no-location-check | Tolto il controllo LUOGO_NON_DICHIARATO da classificatore, UI e scorer, su decisione dell'utente | 89,8 (86,3 con lo scorer di prima) | 90,4 (86,7 con lo scorer di prima) |
 | #27 | feat/doc-view | Dettaglio documento come Prova un file: testo evidenziato (solo RPD, riletto dalla cartella analizzata) e card di scelta per le schede mancanti | – | – |
-| – | feat/a11y-settings | Pannello Accessibilità: contrasto elevato, testo grande, caratteri leggibili, spaziatura, link evidenziati, animazioni ferme, cursore grande, guida alla lettura, bianco e nero | – | – |
+| #35 | feat/a11y-settings | Pannello Accessibilità: contrasto elevato, testo grande, caratteri leggibili, spaziatura, link evidenziati, animazioni ferme, cursore grande, guida alla lettura, bianco e nero | – | – |
 | #34 | feat/brand-vaglio | Nome del prodotto: Vaglio; brand kit in `docs/brand/`; nome, logo e favicon nell'app | – | – |
 | #33 | feat/a11y-pass | Accessibilità: riflusso a 320 px, link con contesto, menu inerte su telefono, contrasto elevato di Windows, dichiarazione di accessibilità | – | – |
 | #32 | feat/try-file-progress | Prova un file: analisi in background con barra delle 5 fasi reali, poi scala Conforme → Non conforme con l'indicatore che scorre fino al grado | – | – |
