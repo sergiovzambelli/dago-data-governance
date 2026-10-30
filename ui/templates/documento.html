@@ -30,7 +30,7 @@
 
 <div class="doc-head">
   <div>
-    <h1 class="doc-title">{{ doc.file|nome_file }}</h1>
+    <h1 class="doc-title">{{ doc.file|nome_file|spezza }}</h1>
     <p class="doc-path">{{ doc.file|cartella or "cartella principale" }}</p>
   </div>
   {% if position or next_id %}

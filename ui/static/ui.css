@@ -184,6 +184,77 @@ a.metric:hover .metric-label { text-decoration: underline; }
 @keyframes tp-pulse { 50% { box-shadow: 0 0 0 4px rgba(67, 56, 202, .25); } }
 .tp-open { margin: 1rem 0 0; }
 
+/* pannello Accessibilità: pulsante sempre visibile in basso a destra; ciò che riceve il focus scorre sopra di lui (2.4.11) */
+html { scroll-padding-bottom: 5.5rem; }
+.workspace main { padding-bottom: 6rem; }
+.a11y-toggle { position: fixed; right: max(1rem, env(safe-area-inset-right, 0px)); bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  z-index: 60; width: 3.25rem; height: 3.25rem; border-radius: 50%; border: 2px solid #fff; background: var(--blue);
+  display: grid; place-items: center; box-shadow: 0 2px 10px rgba(0, 0, 0, .25); cursor: pointer; }
+.a11y-toggle svg { fill: #fff; }
+.a11y-toggle:hover { background: #3730a3; }
+.a11y-toggle:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.a11y-panel { position: fixed; right: max(1rem, env(safe-area-inset-right, 0px)); bottom: 5rem; z-index: 60;
+  width: min(23rem, calc(100vw - 2rem)); max-height: calc(100vh - 7rem); overflow-y: auto; background: var(--card); color: var(--ink);
+  border: 1px solid var(--sep); border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0, 0, 0, .2); padding: 1rem 1.25rem; }
+.a11y-head { display: flex; justify-content: space-between; align-items: center; }
+.a11y-head h2 { margin: 0; }
+.a11y-close { background: none; border: 0; font-size: 1.75rem; line-height: 1; width: 2.5rem; height: 2.5rem; border-radius: 8px; color: var(--ink); cursor: pointer; }
+.a11y-close:hover { background: var(--page); }
+.a11y-panel fieldset { border: 0; padding: 0; margin: .75rem 0; }
+.a11y-panel legend { font-size: .95rem; font-weight: 700; margin-bottom: .4rem; color: var(--ink); }
+.a11y-sizes { display: flex; flex-wrap: wrap; gap: .4rem; }
+.a11y-sizes legend { width: 100%; }
+.a11y-sizes input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.a11y-sizes label { flex: 1 1 5rem; text-align: center; padding: .5rem .4rem; border: 2px solid var(--sep); border-radius: 10px; cursor: pointer; font-weight: 600; }
+.a11y-sizes .size-125 { font-size: 1.125rem; } .a11y-sizes .size-150 { font-size: 1.3rem; }
+.a11y-sizes input:checked + label { border-color: var(--blue); background: var(--indigo-50, #eef0ff); color: var(--blue); }
+.a11y-sizes input:focus-visible + label { outline: 3px solid var(--blue); outline-offset: 2px; }
+.a11y-option { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); column-gap: .6rem; align-items: start; padding: .45rem 0;
+  border-bottom: 1px solid var(--sep); }
+.a11y-option:last-child { border-bottom: 0; }
+.a11y-option input { width: 1.25rem; height: 1.25rem; margin-top: .15rem; accent-color: var(--blue); }
+.a11y-option label { font-weight: 600; cursor: pointer; }
+.a11y-option .hint { grid-column: 2; font-size: .85rem; }
+.reading-guide { display: none; }
+
+/* preferenze scelte dall'utente (classi sul documento, da a11y-init.js) */
+.a11y-testo-125 { font-size: 125%; }
+.a11y-testo-150 { font-size: 150%; }
+.a11y-testo-125 body, .a11y-testo-150 body { font-size: 1rem; }
+.a11y-testo-150 .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.a11y-testo-150 .ring-card, .a11y-testo-150 .gauge-card { grid-column: 1 / -1; }
+.a11y-testo-150 .review { grid-template-columns: minmax(0, 1fr); } .a11y-testo-150 .queue-pane { display: none; }
+.a11y-leggibile body, .a11y-leggibile h1, .a11y-leggibile h2, .a11y-leggibile h3, .a11y-leggibile h4, .a11y-leggibile h5,
+.a11y-leggibile .btn, .a11y-leggibile input, .a11y-leggibile select, .a11y-leggibile textarea, .a11y-leggibile label {
+  font-family: Verdana, Tahoma, "DejaVu Sans", sans-serif; }
+.a11y-spaziatura body { line-height: 1.5 !important; letter-spacing: .12em; word-spacing: .16em; }
+.a11y-spaziatura p { margin-bottom: 2em; }
+.a11y-spaziatura main p, .a11y-spaziatura main li, .a11y-spaziatura main dd { line-height: 1.8; }
+.a11y-link main a:not(.btn), .a11y-link .sidebar a { text-decoration: underline !important; text-decoration-thickness: 2px !important;
+  text-underline-offset: .2em; }
+.a11y-link main a:not(.btn) { background: #fff3bf; color: #1d1a8a !important; }
+.a11y-animazioni *, .a11y-animazioni *::before, .a11y-animazioni *::after { animation: none !important; transition: none !important;
+  scroll-behavior: auto !important; }
+.a11y-cursore, .a11y-cursore * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M4 2l26 18-11 2 7 13-5 3-7-13-8 8z' fill='%23000' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E") 4 2, auto !important; }
+.a11y-guida .reading-guide { display: block; position: fixed; left: 0; right: 0; top: -100px; height: 2.25rem; z-index: 55;
+  pointer-events: none; background: rgba(255, 214, 0, .25); border-top: 2px solid #1b1f2a; border-bottom: 2px solid #1b1f2a; }
+/* il filtro va sull'app e non sul body: un filtro sul body sposterebbe il pulsante fisso del pannello */
+.a11y-grigi .shell { filter: grayscale(1); }
+/* contrasto elevato: nero su bianco, bordi netti, niente sfumature */
+.a11y-contrasto { --page: #ffffff; --card: #ffffff; --ink: #000000; --muted: #1a1a1a; --sep: #000000; --fill: #ffffff;
+  --side: #000000; --side-ink: #ffffff; --side-muted: #ffffff; --side-active: #333333; --blue: #0033cc;
+  --green: #00561f; --amber: #6b3600; --red: #9c0006; --grey: #262626; --purple: #4b1c80; }
+.a11y-contrasto body { background: #fff; color: #000; }
+.a11y-contrasto .panel, .a11y-contrasto .group, .a11y-contrasto .doc-table, .a11y-contrasto .metric, .a11y-contrasto .ring-card,
+.a11y-contrasto .gauge-card, .a11y-contrasto .verdict, .a11y-contrasto .decision, .a11y-contrasto .queue-pane, .a11y-contrasto .record-card,
+.a11y-contrasto .try-progress, .a11y-contrasto .notice, .a11y-contrasto .choice-card, .a11y-contrasto .filters, .a11y-contrasto .tag {
+  border: 2px solid #000 !important; box-shadow: none !important; }
+.a11y-contrasto main a:not(.btn) { text-decoration: underline; }
+.a11y-contrasto .hint, .a11y-contrasto .muted, .a11y-contrasto .doc-folder, .a11y-contrasto .rec-name { color: #1a1a1a !important; }
+.a11y-contrasto .sidebar .hint, .a11y-contrasto .sidebar .brand-ente { color: #ffffff !important; }
+.a11y-contrasto .meter, .a11y-contrasto .bar, .a11y-contrasto .tp-track, .a11y-contrasto .ring { outline: 2px solid #000; }
+.a11y-contrasto *:focus-visible { outline: 4px solid #000 !important; outline-offset: 2px; box-shadow: 0 0 0 7px #ffd600 !important; }
+
 /* contrasto elevato di Windows (colori forzati): gli sfondi colorati spariscono, quindi bordi e colori di sistema */
 @media (forced-colors: active) {
   .esito, .prio, .tag, .stato, .metric, .ring-card, .gauge-card, .panel, .group, .doc-table, .queue-pane,

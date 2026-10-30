@@ -76,7 +76,58 @@
     });
 
     tryProgress();
+    a11yPanel();
   });
+
+  // Pannello Accessibilità: le classi a11y-* sul documento cambiano lo stile; la scelta si salva nel browser.
+  function a11yPanel() {
+    var toggle = document.querySelector(".a11y-toggle");
+    var panel = document.getElementById("a11y-panel");
+    if (!toggle || !panel) return;
+    var state = window.vaglioA11y || { key: "vaglio-a11y", prefs: {} };
+    var prefs = state.prefs, root = document.documentElement;
+    var status = panel.querySelector("[data-a11y-status]");
+    var guide = document.querySelector(".reading-guide");
+
+    function save() { try { localStorage.setItem(state.key, JSON.stringify(prefs)); } catch (e) { /* solo per questa pagina */ } }
+    function apply() {
+      panel.querySelectorAll("[data-a11y]").forEach(function (box) {
+        var on = prefs[box.dataset.a11y] === true;
+        box.checked = on;
+        root.classList.toggle("a11y-" + box.dataset.a11y, on);
+      });
+      var size = prefs.testo === "125" || prefs.testo === "150" ? prefs.testo : "100";
+      root.classList.remove("a11y-testo-125", "a11y-testo-150");
+      if (size !== "100") root.classList.add("a11y-testo-" + size);
+      var radio = document.getElementById("a11y-testo-" + size);
+      if (radio) radio.checked = true;
+    }
+    function setOpen(open) {
+      panel.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      if (open) panel.querySelector("#a11y-title").focus(); else toggle.focus();
+    }
+
+    apply();
+    toggle.addEventListener("click", function () { setOpen(panel.hidden); });
+    panel.querySelector(".a11y-close").addEventListener("click", function () { setOpen(false); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !panel.hidden) setOpen(false); });
+    panel.addEventListener("change", function (e) {
+      var t = e.target;
+      if (t.dataset.a11y) { prefs[t.dataset.a11y] = t.checked; status.textContent = t.labels[0].textContent + (t.checked ? ": attivo" : ": disattivo"); }
+      if (t.name === "a11y-testo") { prefs.testo = t.value; status.textContent = "Dimensione del testo: " + t.labels[0].textContent; }
+      apply(); save();
+    });
+    panel.querySelector("[data-a11y-reset]").addEventListener("click", function () {
+      Object.keys(prefs).forEach(function (k) { delete prefs[k]; });
+      apply(); save();
+      status.textContent = "Impostazioni ripristinate.";
+    });
+    // guida alla lettura: una banda orizzontale all'altezza del puntatore
+    document.addEventListener("mousemove", function (e) {
+      if (guide && root.classList.contains("a11y-guida")) guide.style.top = (e.clientY - 18) + "px";
+    });
+  }
 
   // Prova un file: analisi in background, barra che segue le fasi reali del server; alla fine la barra diventa la
   // scala Conforme → Non conforme e l'indicatore scorre fino al grado del documento.
