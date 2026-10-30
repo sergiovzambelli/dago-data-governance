@@ -136,6 +136,17 @@ flowchart LR
     CAR --> INV[inventario, coda, cruscotto]
 ```
 
+Con JavaScript (feat/try-file-progress) lo stesso lavoro gira in background e la pagina mostra le fasi reali:
+
+```mermaid
+flowchart LR
+    U((RPD)) -->|"POST /prova/avvia: stessi controlli di /prova"| J[(lavori in memoria<br/>per utente, max 2, 15 min)]
+    J -->|thread| W[lettura → estrazione → analisi<br/>→ evidenziazione → risultato]
+    W -->|fase corrente| J
+    U -->|"GET /prova/stato/id ogni 0,4 s<br/>solo fasi, esito e grado: niente testo"| J
+    U -->|"GET /prova/risultato/id<br/>una sola volta, poi cancellato"| R[pagina no-store come /prova]
+```
+
 ### Dettaglio documento con il file (feat/doc-view)
 
 Stessa vista di "Prova un file", ma il file viene dalla cartella analizzata dalla pipeline.

@@ -3,7 +3,10 @@ import csv
 import hashlib
 import io
 import re
+import secrets
 import tempfile
+import threading
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -23,7 +26,7 @@ from ui.data import (ACTIONS, CATEGORIES, DEVIATIONS, DRAFT_ACTIONS, DRAFT_EDITA
                      load_drafts, load_predictions, load_register, parse_predictions, priority, record_view, risk,
                      sector, split_path, when)
 from ui.decisions import DecisionLog
-from ui.gauge import average, compliance_score, gauge_svg
+from ui.gauge import average, compliance_score, gauge_svg, level
 from ui.security import HEADERS, LOCAL_USER, ROLES, Csrf, check_basic_auth, load_users
 
 HERE = Path(__file__).parent
@@ -35,6 +38,11 @@ ID_RE = re.compile(r"^[0-9a-f]{16}$")
 MAX_UPLOAD = 20 * 1024 * 1024
 MAX_TEXT_SHOWN = 5000
 FOLDER_RE = re.compile(r"^[\w .()-]+(/[\w .()-]+)*$")
+# fasi reali dell'analisi di Prova un file, nell'ordine in cui avvengono (barra di avanzamento)
+TRY_PHASES = ["Lettura del file", "Estrazione del testo", "Dati personali, categorie, scheda e controlli",
+              "Evidenziazione nel testo", "Risultato"]
+JOB_TTL = 15 * 60          # secondi: un risultato mai aperto viene buttato
+MAX_JOBS_PER_USER = 2      # analisi contemporanee per utente
 
 
 def _cell(v):
@@ -280,7 +288,7 @@ def create_app(settings):
             results = [d for d in documents() if all(t in haystack(d) for t in terms)]
         return page(request, "ricerca.html", nav="ricerca", q=q, results=results)
 
-    def analysis(rel, text, sha, origin):
+    def analysis(rel, text, sha, origin, progress=lambda phase: None):
         """Analisi del testo come nella pipeline: (esito, testo evidenziato, scelta della scheda se manca)."""
         from classifier.categories import find_categories
         from classifier.compliance import check, load_permissions
@@ -300,6 +308,7 @@ def create_app(settings):
                 settings.permissions.exists() else ()
             rules = {r["codice"]: r for r in load_rules(reg)}
             result = analyze(rel, text, list(rules.values()), perms)
+            progress(4)  # evidenziazione nel testo e, se manca la scheda, proposte e bozza
             shown = text[:MAX_TEXT_SHOWN]
             spans = [(e["inizio"], e["fine"], "entita", ENTITY_TYPES.get(e["tipo"], e["tipo"]))
                      for e in result["entita"]]
@@ -349,22 +358,20 @@ def create_app(settings):
 
     @app.get("/prova", response_class=HTMLResponse)
     def try_form(request: Request):
-        return page(request, "prova.html", nav="prova", result=None)
+        return page(request, "prova.html", nav="prova", result=None, try_phases=TRY_PHASES)
 
-    @app.post("/prova", response_class=HTMLResponse)
-    async def try_file(request: Request):
-        """Analizza un file caricato e mostra ogni passo. Il file resta solo in una cartella temporanea."""
+    async def read_upload(request):
+        """Controlli del modulo di Prova un file: (nome, percorso relativo, contenuto)."""
         form = await request.form()
         guard(request, form.get("csrf", ""), "analizzare un file")
         file, cartella = form.get("file"), form.get("cartella", "")
         # import qui: il resto della UI funziona anche senza le dipendenze del classificatore (requirements.txt)
         try:
-            from classifier.extract import extract_text
+            from classifier.extract import extract_text  # noqa: F401  (lo usa run_analysis)
             from classifier.pipeline import analyze  # noqa: F401  (lo usa analysis(): qui si verifica che ci sia)
         except ImportError:
             raise HTTPException(503, "Analisi non disponibile: installa le dipendenze del classificatore "
                                      "(requirements.txt).")
-
         name = Path(file.filename or "").name.strip()[:200] if isinstance(file, UploadFile) else ""
         if not name or not isinstance(cartella, str):
             raise HTTPException(400, "Scegli un file da analizzare.")
@@ -374,22 +381,96 @@ def create_app(settings):
         data = await file.read(MAX_UPLOAD + 1)
         if len(data) > MAX_UPLOAD:
             raise HTTPException(400, f"File troppo grande: massimo {MAX_UPLOAD // (1024 * 1024)} MB.")
-        rel = f"{folder}/{name}" if folder else name
+        return name, (f"{folder}/{name}" if folder else name), data
 
-        def run():  # estrazione e OCR possono durare minuti: fuori dal ciclo degli eventi
-            with tempfile.TemporaryDirectory() as tmp:
-                # il nome sul disco è fisso: dall'utente si prende solo l'estensione, che sceglie l'estrattore
-                path = Path(tmp) / ("file" + "".join(c for c in Path(name).suffix if c.isalnum() or c == ".")[:10])
-                path.write_bytes(data)
-                text = extract_text(path)
-            return (text, *analysis(rel, text, hashlib.sha256(data).hexdigest(), "Prova un file"))
+    def run_analysis(name, rel, data, progress=lambda phase: None):
+        """Estrazione e analisi, con le fasi di TRY_PHASES. Estrazione e OCR possono durare minuti."""
+        from classifier.extract import extract_text
+        progress(1)
+        with tempfile.TemporaryDirectory() as tmp:
+            # il nome sul disco è fisso: dall'utente si prende solo l'estensione, che sceglie l'estrattore
+            path = Path(tmp) / ("file" + "".join(c for c in Path(name).suffix if c.isalnum() or c == ".")[:10])
+            path.write_bytes(data)
+            progress(2)
+            text = extract_text(path)
+        progress(3)
+        return (text, *analysis(rel, text, hashlib.sha256(data).hexdigest(), "Prova un file", progress))
 
-        text, result, segments, choice = await run_in_threadpool(run)
+    def try_result(request, rel, text, result, segments, choice):
         user = request.state.user
         response = page(request, "prova.html", nav="prova", result=result, rel=rel, chars=len(text),
-                        segments=segments, choice=choice, analisi=csrf.sign(user, choice) if choice else "")
+                        segments=segments, choice=choice, analisi=csrf.sign(user, choice) if choice else "",
+                        try_phases=TRY_PHASES)
         response.headers["Cache-Control"] = "no-store"  # la pagina contiene il testo del documento
         return response
+
+    @app.post("/prova", response_class=HTMLResponse)
+    async def try_file(request: Request):
+        """Analizza un file caricato e mostra ogni passo (senza JavaScript). Il file resta solo in una cartella temporanea."""
+        name, rel, data = await read_upload(request)
+        text, result, segments, choice = await run_in_threadpool(run_analysis, name, rel, data)
+        return try_result(request, rel, text, result, segments, choice)
+
+    # analisi in background, per la barra di avanzamento: lo stato non contiene il testo; il risultato si legge una volta
+    jobs, jobs_lock = {}, threading.Lock()
+
+    def job_of(request, job_id):
+        with jobs_lock:
+            job = jobs.get(job_id)
+        if job is None or job["utente"] != request.state.user["nome"]:
+            raise HTTPException(404, "Analisi non trovata o già mostrata.")
+        return job
+
+    @app.post("/prova/avvia")
+    async def try_start(request: Request):
+        name, rel, data = await read_upload(request)
+        user = request.state.user["nome"]
+        with jobs_lock:
+            now = time.monotonic()
+            for k in [k for k, j in jobs.items() if now - j["creato"] > JOB_TTL]:
+                del jobs[k]  # risultati mai aperti: il testo non resta in memoria
+            if sum(j["utente"] == user and not j["fatto"] for j in jobs.values()) >= MAX_JOBS_PER_USER:
+                raise HTTPException(429, "Hai già analisi in corso: aspetta che finiscano.")
+            job_id = secrets.token_urlsafe(16)
+            job = jobs[job_id] = {"utente": user, "creato": now, "fase": 0, "fatto": False, "errore": None,
+                                  "rel": rel, "risultato": None}
+
+        def work():
+            def progress(phase):
+                job["fase"] = phase
+            try:
+                job["risultato"] = run_analysis(name, rel, data, progress)
+                job["fase"] = len(TRY_PHASES)
+            except Exception:  # noqa: BLE001  (nessun dettaglio all'utente: potrebbe contenere il testo)
+                job["errore"] = "Analisi non riuscita: il file potrebbe essere danneggiato o in un formato non letto."
+            job["fatto"] = True
+
+        threading.Thread(target=work, daemon=True).start()
+        return JSONResponse({"lavoro": job_id}, headers={"Cache-Control": "no-store"})
+
+    @app.get("/prova/stato/{job_id}")
+    def try_status(request: Request, job_id: str):
+        job = job_of(request, job_id)
+        state = {"fasi": TRY_PHASES, "fase": job["fase"], "fatto": job["fatto"], "errore": job["errore"],
+                 "esito": None, "etichetta": None, "grado": None, "livello": None}
+        if job["fatto"] and job["risultato"]:
+            result = job["risultato"][1]
+            grade = compliance_score(result)
+            state.update(esito=result["esito"], etichetta=OUTCOMES[result["esito"]][0], grado=grade,
+                         livello=level(grade)[0] if grade is not None else None)
+        return JSONResponse(state, headers={"Cache-Control": "no-store"})
+
+    @app.get("/prova/risultato/{job_id}", response_class=HTMLResponse)
+    def try_job_result(request: Request, job_id: str):
+        job = job_of(request, job_id)
+        if not job["fatto"]:
+            raise HTTPException(400, "Analisi ancora in corso.")
+        with jobs_lock:
+            jobs.pop(job_id, None)  # una sola lettura: il testo del documento non resta sul server
+        if job["errore"]:
+            raise HTTPException(400, job["errore"])
+        text, result, segments, choice = job["risultato"]
+        return try_result(request, job["rel"], text, result, segments, choice)
 
     @app.post("/prova/salva")
     async def save_try(request: Request):
