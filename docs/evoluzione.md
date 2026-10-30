@@ -2,6 +2,11 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/brand-vaglio: il prodotto si chiama Vaglio
+- Nome scelto: **Vaglio** (da *vagliare*: esaminare e separare ciò che va tenuto da ciò che va corretto), con il descrittore "Patrimonio informativo". Alternative scartate: Lancetta, Custode, Mappa dati. Non è stata fatta una ricerca di marchi registrati: da fare prima di usarlo fuori dall'hackathon.
+- Brand kit salvato in `docs/brand/` (guida, `tokens.json`, logo, copertina) e pubblicato come artifact privato. I token sono i valori reali di `ui/static/ui.css`; un test controlla che i colori principali coincidano.
+- Nell'app: nome nel titolo delle pagine, nel menu e nella barra su telefono; logo al posto dell'icona generica; favicon SVG.
+
 ## 2026-10-30 — feat/a11y-pass: verifica e correzioni di accessibilità
 - Audit nel browser con controlli automatici su sei pagine e prova manuale a 320 px, con tastiera e menu su telefono. Trovati e corretti: riflusso della pagina del documento (breadcrumb e pulsanti), link solo numerici in Schede, Tab che finiva sotto il menu aperto, link "Vai alla navigazione" verso un menu nascosto, nessun supporto al contrasto elevato di Windows.
 - Nuova pagina `/accessibilita` (dichiarazione di accessibilità, come chiedono le linee guida AgID): dichiara lo strumento "parzialmente conforme" perché manca ancora la prova con lettori di schermo.

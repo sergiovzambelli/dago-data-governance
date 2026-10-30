@@ -1,0 +1,41 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--page); }
+  .cover { position: relative; width: 960px; height: 288px; overflow: hidden; background: var(--page); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .art { position: absolute; inset: 0; }
+  .side { fill: var(--side); } .brand { fill: var(--indigo-700); } .tint { fill: var(--indigo-300); } .relief { fill: var(--fill); }
+  .slab { rx: var(--radius-xl); } .tile { rx: var(--radius-lg); }
+  .ok { stroke: var(--green); } .ko { stroke: var(--red); } .needle { stroke: var(--indigo-300); } .hub { fill: var(--indigo-300); }
+  .arc { fill: none; stroke-width: 16px; stroke-linecap: round; }
+  .text { position: absolute; left: 32px; bottom: 32px; max-width: 440px; }
+  .name { margin: 0; font-size: 120px; line-height: .95; font-weight: 700; letter-spacing: -.02em; color: var(--ink); }
+  .tagline { margin: 12px 0 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+  <svg class="art" viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
+    <!-- blocks: side 224×308 (slab, radius-xl, bleeds top and bottom), indigo-700 208×168 (radius-lg, bleeds top-right), indigo-300 96×88, fill 96×88 (radius-lg) -->
+    <!-- arrangement: one tall dark slab with satellites to its right, two blocks bleeding off the top and right edges -->
+    <!-- pattern: a literal motif, the compliance gauge — green and red arcs with a needle on the slab; the product is the dial that goes from conforme to non conforme -->
+    <!-- scales: gaps space-4 (16px), stroke = space-4, tiles radius-lg, slab radius-xl; arcs radius 64 = 4 × space-4 -->
+    <rect class="side slab" x="496" y="-20" width="224" height="328"/>
+    <rect class="brand tile" x="736" y="-14" width="240" height="182"/>
+    <rect class="tint tile" x="736" y="184" width="96" height="120"/>
+    <rect class="relief tile" x="848" y="184" width="128" height="120"/>
+    <path class="arc ok" d="M552 214 A64 64 0 0 1 596 150.6"/>
+    <path class="arc ko" d="M620 150.6 A64 64 0 0 1 664 214"/>
+    <line class="needle" x1="608" y1="214" x2="636" y2="170" stroke-width="10" stroke-linecap="round"/>
+    <circle class="hub" cx="608" cy="214" r="12"/>
+  </svg>
+  <div class="text">
+    <h1 class="name">Vaglio</h1>
+    <p class="tagline">Patrimonio informativo: ogni file, la sua scheda, il suo grado di conformità.</p>
+  </div>
+</div>
+</body>
+</html>

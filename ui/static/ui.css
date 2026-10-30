@@ -43,9 +43,10 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
   padding: 1.25rem .85rem; display: flex; flex-direction: column; gap: 1.25rem; }
 .brand { display: flex; gap: .65rem; align-items: center; color: #fff; text-decoration: none; padding: 0 .4rem; }
 .brand:hover { color: #fff; }
-.brand-mark { width: 2.1rem; height: 2.1rem; border-radius: 9px; background: #6366f1; display: grid; place-items: center; flex-shrink: 0; }
-.brand-mark .icon { fill: #fff; width: 1.2rem; height: 1.2rem; }
-.brand-name { display: block; font-weight: 700; line-height: 1.2; }
+/* marchio di Vaglio (docs/brand): logo decorativo accanto al nome, che resta testo */
+.brand-logo { flex-shrink: 0; border-radius: 9px; }
+.brand-top { display: inline-flex; align-items: center; gap: .5rem; }
+.brand-name { display: block; font-weight: 700; font-size: 1.15rem; line-height: 1.2; letter-spacing: -.01em; }
 .brand-ente { display: block; font-size: .8rem; color: var(--side-muted); }
 .sidebar-nav ul { list-style: none; padding: 0; margin: 0 0 1rem; }
 .nav-group { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--side-muted);

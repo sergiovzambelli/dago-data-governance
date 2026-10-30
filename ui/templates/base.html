@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %} · Patrimonio informativo · {{ ente }}</title>
+  <title>{% block title %}{% endblock %} · Vaglio · {{ ente }}</title>
+  <link rel="icon" href="/static/brand/logo-vaglio.svg" type="image/svg+xml">
   {# Bootstrap Italia resta solo come base (griglia, moduli, pulsanti); aspetto e guscio sono in ui.css #}
   <link rel="stylesheet" href="{{ bi }}/css/bootstrap-italia.min.css">
   <link rel="stylesheet" href="/static/ui.css">
@@ -20,13 +21,13 @@
     <button class="menu-toggle" type="button" aria-controls="menu-principale" aria-expanded="false" hidden>
       {{ icon("it-burger") }}<span class="visually-hidden">Apri il menu</span>
     </button>
-    <a class="brand brand-top" href="/">Patrimonio informativo</a>
+    <a class="brand brand-top" href="/"><img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="26" height="26">Vaglio</a>
   </header>
 
   <aside class="sidebar" id="menu-principale">
     <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true">{{ icon("it-files") }}</span>
-      <span><span class="brand-name">Patrimonio informativo</span><span class="brand-ente">{{ ente }}</span></span>
+      <img class="brand-logo" src="/static/brand/logo-vaglio.svg" alt="" width="36" height="36">
+      <span><span class="brand-name">Vaglio</span><span class="brand-ente">Patrimonio informativo · {{ ente }}</span></span>
     </a>
     <nav class="sidebar-nav" aria-label="Navigazione principale">
       {% set groups = [
