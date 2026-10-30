@@ -14,19 +14,21 @@
 {% set todo = personal - validated %}
 {% set pct = (100 * validated / personal)|round|int if personal else 0 %}
 {% set nc, sm = by_outcome.get("NON_CONFORME", 0), by_outcome.get("SCHEDA_MANCANTE", 0) %}
-<section class="summary-card" aria-labelledby="h-urgenti">
-  <h2 id="h-urgenti" class="eyebrow">Da guardare subito</h2>
-  <p class="summary-sentence">
-    <a class="fig fig-red" href="/documenti?esito=NON_CONFORME"><span class="fig-n">{{ nc }}</span> non conform{{ "e" if nc == 1 else "i" }}</a>,
-    <a class="fig fig-amber" href="/documenti?esito=SCHEDA_MANCANTE"><span class="fig-n">{{ sm }}</span> senza scheda</a>
-    e <span class="fig fig-purple"><span class="fig-n">{{ sensitive }}</span> con categorie particolari</span>.
-  </p>
-  <div class="gauge-row">
-    <p class="gauge-text mb-0"><strong>{{ validated }} di {{ personal }}</strong> validati ({{ pct }}%)</p>
-    <span class="meter" aria-hidden="true"><span style="--pct: {{ pct }}%"></span></span>
-    {% if urgent %}<a class="btn btn-primary" href="/documenti/{{ urgent[0].id }}">Valida i {{ todo }} rimasti {{ icon("it-arrow-right", "icon-white icon-sm") }}</a>
-    {% else %}<span>Tutti i documenti con dati personali sono validati.</span>{% endif %}
+<section class="metrics" aria-labelledby="h-stato">
+  <h2 id="h-stato" class="visually-hidden">Stato dell'archivio</h2>
+  <div class="ring-card">
+    <div class="ring" role="img" aria-label="Validati {{ validated }} su {{ personal }}" style="--pct: {{ pct }}"><span aria-hidden="true">{{ pct }}%</span></div>
+    <div>
+      <p class="metric-label">Validazione</p>
+      <p class="ring-text"><strong>{{ validated }} di {{ personal }}</strong> documenti con dati personali</p>
+      {% if urgent %}<a class="btn btn-primary btn-sm" href="/documenti/{{ urgent[0].id }}">Valida i {{ todo }} rimasti {{ icon("it-arrow-right", "icon-white icon-sm") }}</a>
+      {% else %}<p class="mb-0">Tutti validati.</p>{% endif %}
+    </div>
   </div>
+  <a class="metric" href="/coda"><span class="metric-label">Da validare</span><span class="metric-value">{{ todo }}</span></a>
+  <a class="metric metric-red" href="/documenti?esito=NON_CONFORME"><span class="metric-label">Non conformi</span><span class="metric-value">{{ nc }}</span></a>
+  <a class="metric metric-amber" href="/documenti?esito=SCHEDA_MANCANTE"><span class="metric-label">Senza scheda</span><span class="metric-value">{{ sm }}</span></a>
+  <div class="metric metric-purple"><span class="metric-label">Con categorie particolari</span><span class="metric-value">{{ sensitive }}</span></div>
 </section>
 
 {% if urgent %}

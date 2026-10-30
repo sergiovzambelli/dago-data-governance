@@ -211,7 +211,10 @@ def create_app(settings):
         response = page(request, "documento.html", nav="coda" if position else "documenti", doc=doc, history=history,
                         record=store.register.get(doc["scheda"] or ""), register=store.register,
                         can_decide=user["ruolo"] == "rpd", position=position, queue_size=len(ids),
-                        next_id=following[0] if following else None, **view)
+                        next_id=following[0] if following else None,
+                        prev_id=ids[position - 2] if position and position > 1 else None,
+                        # coda accanto al documento: solo se il documento è da validare
+                        queue_docs=queue if position else [], **view)
         if "segments" in view:
             response.headers["Cache-Control"] = "no-store"  # la pagina contiene il testo del documento
         return response

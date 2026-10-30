@@ -2,6 +2,12 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/ui-workspace: la UI diventa un'area di lavoro
+- Richiesta dell'utente: un'interfaccia diversa dallo stile istituzionale. Proposte quattro direzioni (strumento denso, revisione affiancata, cruscotto a dati, servizio essenziale); scelta la combinazione consigliata: revisione affiancata + cruscotto a dati + scorciatoie da tastiera.
+- Menu laterale al posto di header e footer istituzionali; coda di validazione accanto al documento; scorciatoie J, K, C, E e ? disattivabili; cruscotto con anello della validazione e quattro riquadri numerici. Dettagli in `docs/ui.md` ("Area di lavoro").
+- Decisione: Bootstrap Italia resta solo come base CSS (griglia, moduli, icone), per non riscrivere le pagine Schede, Bozze e Prova un file; il suo JavaScript non si carica più. La regola 7 di `AGENTS.md` ora descrive l'area di lavoro, così un agente non ripristina lo stile istituzionale.
+- Verifiche nel browser: contrasto ≥ 4,5:1 su 9 pagine (menu compreso), menu su telefono con focus ed Esc, nessuno scorrimento orizzontale a 375 px, scorciatoie J e K provate dal vivo, E e C con eventi simulati (lo strumento di prova non inoltrava in modo affidabile alcuni tasti).
+
 ## 2026-10-29 — feat/doc-view: il dettaglio documento come Prova un file
 - Richiesta dell'utente: un file aperto dal cruscotto (o da coda e inventario) deve essere mostrato come in Prova un file.
 - Decisioni (dell'utente): sì al testo evidenziato nel dettaglio, solo per l'RPD; per i documenti senza scheda, le stesse card di scelta.

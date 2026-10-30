@@ -54,15 +54,14 @@ Ogni PR che cambia il comportamento del progetto **deve** aggiornare, nella stes
 - Il threat model segue i diagrammi: ogni confine di fiducia in `flussi.md` ha le sue minacce in `threat-model.md`.
 - Una minaccia senza mitigazione resta nel threat model con stato `aperta`: non si cancella.
 
-## 7. UI: standard della Pubblica Amministrazione italiana
+## 7. UI: area di lavoro per l'RPD, accessibile
 
-Il prodotto è rivolto alla PA: si usa **Bootstrap Italia** (Designers Italia / AgID), non Bootstrap "liscio" né altri framework UI.
+Decisione dell'utente (PR feat/ui-workspace): la UI **non** segue più lo stile istituzionale dei siti della PA. È uno strumento di lavoro interno: conta la velocità di validazione, non l'aspetto "Italia". Non reintrodurre header e footer istituzionali né i font Titillium.
 
-- Libreria: [Bootstrap Italia](https://italia.github.io/bootstrap-italia/) — npm `bootstrap-italia`, versione 2.x fissata a una release precisa (niente `@latest`).
-- Componenti, griglia, colori, icone (`sprites.svg`) e font (Titillium Web, Roboto Mono) arrivano già dalla libreria: usarli, non ricrearli.
-- Struttura pagina come i modelli Designers Italia: header istituzionale (slim header + header centrale con nome ente), breadcrumb, footer istituzionale.
-- Riferimenti: [Designers Italia](https://designers.italia.it/), [UI Kit Italia](https://designers.italia.it/design-system/), [Linee guida di design per i siti e i servizi digitali della PA (AgID)](https://docs.italia.it/italia/designers-italia/design-linee-guida-docs/).
-- **Accessibilità non negoziabile** (Legge Stanca, WCAG 2.1 AA): label su ogni campo, contrasto colori, navigazione da tastiera, `alt` sulle immagini, lingua `lang="it"`.
+- **Bootstrap Italia 2.18.3** resta in `ui/static/vendor/` solo come base CSS (griglia, moduli, pulsanti, `sprites.svg`): versione fissata, niente `@latest`, niente CDN. Il suo JavaScript non si carica.
+- Aspetto e guscio in `ui/static/ui.css` (token di colore in cima, con il contrasto scritto accanto) e comportamenti in `ui/static/ui.js` (nessuna libreria).
+- Struttura: menu laterale (barra in alto su telefono), coda di validazione accanto al documento, cruscotto a riquadri numerici. Dettagli in `docs/ui.md`.
+- **Accessibilità non negoziabile** (Legge Stanca, WCAG 2.1 AA): label su ogni campo, contrasto ≥ 4,5:1 misurato nel browser, navigazione da tastiera, focus visibile, `alt` sulle immagini, `lang="it"`, nessuno scorrimento orizzontale a 375 px. Le scorciatoie a tasto singolo si devono poter disattivare (2.1.4) e non agiscono dentro i campi.
 - Testi dell'interfaccia in italiano, linguaggio semplice e chiaro.
 
 ## 8. Varie
