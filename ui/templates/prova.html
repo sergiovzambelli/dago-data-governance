@@ -11,7 +11,7 @@
 <p>Carica un documento per vedere come lo analizza il classificatore: nel testo sono evidenziate le informazioni trovate.
   Il file non viene salvato; se manca la scheda puoi sceglierne una e aggiungere il documento all'inventario.</p>
 
-<form method="post" action="/prova" enctype="multipart/form-data" class="block">
+<form method="post" action="/prova" enctype="multipart/form-data" class="block" data-progress="/prova/avvia">
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <div class="row">
     <div class="col-md-6 field">
@@ -29,8 +29,26 @@
   <button type="submit" class="btn btn-primary">Analizza</button>
 </form>
 
+{# avanzamento dell'analisi: lo usa ui.js; senza JavaScript il modulo invia e la pagina mostra direttamente il risultato #}
+<section class="try-progress" id="avanzamento" aria-labelledby="tp-title" hidden>
+  <h2 class="h5" id="tp-title">Analisi del file</h2>
+  <div class="tp-track" role="progressbar" aria-labelledby="tp-title" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <span class="tp-fill"></span>
+    <span class="tp-marker" aria-hidden="true"></span>
+  </div>
+  <div class="tp-ends" aria-hidden="true" hidden><span>Conforme</span><span>Non conforme</span></div>
+  <p class="tp-now"><span class="tp-label">In attesa</span> <span class="tp-detail hint"></span></p>
+  <ol class="tp-steps">
+    {% for f in try_phases %}<li data-step="{{ loop.index }}"><span class="tp-dot" aria-hidden="true"></span>{{ f }}<span class="visually-hidden tp-state">: da fare</span></li>{% endfor %}
+  </ol>
+  <p class="visually-hidden" aria-live="polite" data-announce></p>
+  <p class="tp-open" hidden><a class="btn btn-primary" href="#">Vedi il risultato</a></p>
+</section>
+
 {% if result %}
-<section class="verdict verdict-{{ result.esito|lower }}" aria-labelledby="h-esito">
+{% set s = score(result) %}
+<section class="verdict verdict-{{ result.esito|lower }}{% if s is not none %} has-gauge{% endif %}" aria-labelledby="h-esito">
+  {% if s is not none %}<div class="verdict-gauge">{{ gauge(s, "file analizzato") }}<p class="gauge-title" aria-hidden="true">Conformità</p></div>{% endif %}
   <div class="verdict-main">
     <p class="verdict-kicker">{{ rel|spezza }}</p>
     <h2 id="h-esito" class="verdict-title">{{ outcomes[result.esito][0] }}</h2>

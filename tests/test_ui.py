@@ -711,3 +711,61 @@ def test_dashboard_shows_archive_and_sector_gauges(client):
     # archivio: media di 3 documenti con dati personali (non conforme, conforme, senza scheda)
     assert re.search(r'aria-label="Grado di conformità \d+ su 100, \w+ — archivio"', html)
     assert len(re.findall(r'aria-label="Grado di conformità \d+ su 100, \w+ — settore ', html)) >= 2
+
+
+# --- Prova un file: analisi in background con barra di avanzamento ---
+
+def start(client, text, folder, name="richiesta.txt"):
+    page = client.get("/prova").text
+    return client.post("/prova/avvia", data={"csrf": token(page), "cartella": folder},
+                       files={"file": (name, text.encode())})
+
+
+def wait_done(client, job, timeout=20):
+    import time
+    end = time.time() + timeout
+    while time.time() < end:
+        s = client.get(f"/prova/stato/{job}").json()
+        if s["fatto"]:
+            return s
+        time.sleep(0.05)
+    raise AssertionError("analisi non conclusa")
+
+
+def test_try_file_page_has_an_accessible_progress_bar(try_client):
+    html = try_client.get("/prova").text
+    assert 'data-progress' in html and 'role="progressbar"' in html and 'aria-live="polite"' in html
+
+
+def test_background_analysis_reports_phases_and_outcome(try_client):
+    r = start(try_client, "Richiesta di permesso. C.F. CSMPRZ97B66G702K", "fileserver/Personale/Permessi")
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    job = r.json()["lavoro"]
+    s = wait_done(try_client, job)
+    assert [f for f in s["fasi"]][0] == "Lettura del file" and len(s["fasi"]) == 5
+    assert s["fase"] == len(s["fasi"]) and s["errore"] is None
+    assert s["esito"] == "CONFORME" and s["etichetta"] == "Conforme" and s["grado"] == 100
+    assert "C.F." not in json.dumps(s)  # lo stato non contiene il testo del documento
+
+
+def test_background_result_is_shown_once(try_client):
+    job = start(try_client, "Richiesta di permesso. C.F. CSMPRZ97B66G702K", "fileserver/Personale/Permessi").json()["lavoro"]
+    wait_done(try_client, job)
+    page = try_client.get(f"/prova/risultato/{job}")
+    # "Richiesta" e "permesso" sono evidenziate come parole chiave (<mark>): si controllano testo e conteggio
+    assert page.status_code == 200 and "CSMPRZ97B66G702K" in page.text and "44 caratteri estratti" in page.text
+    assert "T-PER-07" in page.text
+    assert page.headers["cache-control"] == "no-store"
+    assert try_client.get(f"/prova/risultato/{job}").status_code == 404  # testo non conservato
+
+
+def test_background_analysis_is_protected(try_client, settings, tmp_path):
+    t = token(try_client.get("/prova").text)
+    assert try_client.post("/prova/avvia", data={"csrf": "x"}, files={"file": ("a.txt", b"x")}).status_code == 403
+    assert try_client.post("/prova/avvia", data={"csrf": t, "cartella": "../etc"},
+                           files={"file": ("a.txt", b"x")}).status_code == 400
+    assert try_client.get("/prova/stato/inesistente").status_code == 404
+    # un altro utente non vede lo stato né il risultato
+    other = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
+    job = start(try_client, "Richiesta di permesso.", "fileserver/Personale/Permessi").json()["lavoro"]
+    assert other.get(f"/prova/stato/{job}", headers=_auth("rpd", "pw-rpd-123")).status_code == 404

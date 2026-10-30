@@ -2,6 +2,14 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/try-file-progress: barra di avanzamento in Prova un file
+- Richiesta dell'utente: in Prova un file una barra "tipo download" che avanza durante l'analisi, dice le fasi e alla fine indica conforme o non conforme.
+- L'analisi gira in background (`/prova/avvia`, `/prova/stato/<id>`, `/prova/risultato/<id>`): la barra segue le 5 fasi reali del server, poi diventa la scala dal verde al rosso e l'indicatore scorre fino al grado di conformità, con l'etichetta che cambia lungo la strada. Dettagli in `docs/ui.md`.
+- Decisione: fasi reali e non un'animazione a tempo, perché l'estrazione (e l'OCR delle scansioni) può durare da un secondo a minuti. Ogni fase resta visibile almeno 0,45 s solo per leggibilità.
+- Decisione: il risultato con il testo del documento resta in memoria al massimo 15 minuti e si legge una sola volta; lo stato interrogato dalla pagina non contiene testo. Nuove minacce T-050…T-053.
+- Indicatore di conformità anche nel risultato di Prova un file, come nella pagina del documento.
+- Provata dal vivo nel browser: fasi, scala, etichette "Conforme → In parte conforme" e risultato aperto; nessuno scorrimento orizzontale a 375 px.
+
 ## 2026-10-30 — feat/compliance-gauge: indicatori a lancetta del grado di conformità
 - Richiesta dell'utente: indicatori visivi del grado di conformità, dal verde (conforme) al rosso (non conforme), come i contachilometri di un'immagine di riferimento.
 - `ui/gauge.py`: grado 0-100 per documento (conforme 100, scheda mancante 30, non conforme 70 meno il peso dei problemi) e SVG a sei settori con lancetta. Indicatori nel verdetto del documento, nel cruscotto (archivio) e nella tabella dei settori. Dettagli in `docs/ui.md`.
