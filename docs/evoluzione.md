@@ -2,6 +2,11 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/a11y-settings: pannello Accessibilità
+- Richiesta dell'utente: un pannello come quello dei siti pubblici, con contrasto elevato, testo grande e caratteri grandi. Aggiunte anche spaziatura del testo, link evidenziati, animazioni ferme, cursore grande, guida alla lettura, bianco e nero e ripristino. Dettagli in `docs/ui.md`.
+- Decisione: preferenze che cambiano lo stile vero (classi CSS) e restano nel browser dell'utente, non un "overlay" che promette di sistemare l'accessibilità: quella di base resta nel sito per tutti.
+- Corretti durante la prova: testo del menu nero su nero in contrasto elevato, filtro bianco e nero che spostava il pulsante fisso, pulsante che poteva coprire l'elemento con il focus su telefono.
+
 ## 2026-10-30 — feat/brand-vaglio: il prodotto si chiama Vaglio
 - Nome scelto: **Vaglio** (da *vagliare*: esaminare e separare ciò che va tenuto da ciò che va corretto), con il descrittore "Patrimonio informativo". Alternative scartate: Lancetta, Custode, Mappa dati. Non è stata fatta una ricerca di marchi registrati: da fare prima di usarlo fuori dall'hackathon.
 - Brand kit salvato in `docs/brand/` (guida, `tokens.json`, logo, copertina) e pubblicato come artifact privato. I token sono i valori reali di `ui/static/ui.css`; un test controlla che i colori principali coincidano.

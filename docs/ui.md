@@ -41,6 +41,16 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 
 Demo della specifica: dalla coda si apre un documento non conforme, poi uno senza scheda; si vedono le evidenze, si registra la correzione e il cruscotto si aggiorna.
 
+## Pannello Accessibilità (feat/a11y-settings)
+
+Pulsante rotondo sempre visibile in basso a destra (simbolo dell'accesso universale, `aria-expanded`, `aria-controls`) che apre il pannello "Accessibilità": dimensione del testo (normale, 125%, 150%), contrasto elevato, caratteri leggibili (Verdana), spaziatura del testo (valori WCAG 1.4.12), link evidenziati, animazioni ferme, cursore grande, guida alla lettura, bianco e nero, ripristino.
+
+- Ogni scelta è una classe `a11y-*` sull'elemento `html`, definita in `ui/static/ui.css`: cambia davvero lo stile della pagina, non la copre con un livello sopra.
+- `ui/static/a11y-init.js` nel `<head>` legge le scelte da `localStorage` (chiave `vaglio-a11y`) e le applica prima del disegno della pagina, quindi niente lampeggio; senza salvataggio disponibile la pagina resta normale. Le scelte non vanno al server.
+- Il pannello non è modale: si chiude con × o Esc e il focus torna al pulsante; ogni cambio viene annunciato in una regione `aria-live`.
+- Il pulsante fisso non copre ciò che riceve il focus: `scroll-padding-bottom` e spazio in fondo all'area di lavoro (WCAG 2.4.11).
+- Verificato nel browser: contrasto elevato senza testi sotto 4,5:1, testo al 150% e spaziatura senza scorrimento orizzontale a 1440 e 375 px, scelte mantenute al ricaricamento.
+
 ## Verifica di accessibilità (feat/a11y-pass)
 
 Controlli automatici nel browser su cruscotto, documento, inventario, Schede, Bozze e Prova un file: id duplicati, riferimenti ARIA, etichette, nomi di link e pulsanti, dimensione dei bersagli (2.5.8), ordine dei titoli, SVG e tabelle, riflusso a 320 px (1.4.10). Corretti:

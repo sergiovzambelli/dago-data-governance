@@ -818,3 +818,39 @@ def test_brand_kit_is_kept_in_the_repository():
     for name in ("indigo-700", "side", "ink", "muted", "green", "amber", "red"):
         value = next(t["value"] for t in tokens["color"]["tokens"] if t["name"] == name).lower()
         assert value in css, name
+
+
+# --- pannello Accessibilità (preferenze dell'utente) ---
+
+OPTIONS = ("contrasto", "leggibile", "spaziatura", "link", "animazioni", "cursore", "guida", "grigi")
+
+
+def test_accessibility_panel_has_labelled_controls(client):
+    html = client.get("/").text
+    assert re.search(r'<button[^>]*class="a11y-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="a11y-panel"', html)
+    assert 'aria-label="Impostazioni di accessibilità"' in html
+    panel = html[html.index('id="a11y-panel"'):]
+    assert "<legend" in panel and "Dimensione del testo" in panel
+    for opt in OPTIONS:
+        m = re.search(r'<input type="checkbox" id="a11y-' + opt + r'" data-a11y="' + opt + '"', panel)
+        assert m and f'<label for="a11y-{opt}"' in panel, opt
+    for size in ("100", "125", "150"):
+        assert f'value="{size}"' in panel
+    assert "Ripristina" in panel
+
+
+def test_preferences_apply_before_the_page_is_drawn(client):
+    head = client.get("/").text.split("</head>")[0]
+    assert '<script src="/static/a11y-init.js"></script>' in head  # nel head: niente lampeggio
+
+
+def test_css_defines_every_preference():
+    css = (Path(__file__).parents[1] / "ui/static/ui.css").read_text(encoding="utf-8")
+    for cls in ("a11y-contrasto", "a11y-leggibile", "a11y-spaziatura", "a11y-link", "a11y-animazioni",
+                "a11y-cursore", "a11y-grigi", "a11y-testo-125", "a11y-testo-150"):
+        assert "." + cls in css, cls
+
+
+def test_preferences_are_stored_safely_in_the_browser():
+    init = (Path(__file__).parents[1] / "ui/static/a11y-init.js").read_text(encoding="utf-8")
+    assert "localStorage" in init and "try" in init and "catch" in init

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %} · Vaglio · {{ ente }}</title>
   <link rel="icon" href="/static/brand/logo-vaglio.svg" type="image/svg+xml">
+  <script src="/static/a11y-init.js"></script>
   {# Bootstrap Italia resta solo come base (griglia, moduli, pulsanti); aspetto e guscio sono in ui.css #}
   <link rel="stylesheet" href="{{ bi }}/css/bootstrap-italia.min.css">
   <link rel="stylesheet" href="/static/ui.css">
@@ -82,6 +83,48 @@
     </footer>
   </div>
 </div>
+{# pannello Accessibilità: preferenze di visualizzazione scelte dall'utente, salvate solo nel suo browser #}
+<button type="button" class="a11y-toggle" aria-expanded="false" aria-controls="a11y-panel" aria-label="Impostazioni di accessibilità">
+  <svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true" focusable="false">
+    <circle cx="24" cy="10" r="5"/>
+    <path d="M9 17.5c5 1.6 10 2.4 15 2.4s10-.8 15-2.4l1.1 3.6c-3.7 1.2-7.4 2-11.1 2.4V30l4.6 12.4-3.6 1.4L24 32.6l-6 11.2-3.6-1.4L19 30v-6.5c-3.7-.4-7.4-1.2-11.1-2.4z"/>
+  </svg>
+</button>
+<section class="a11y-panel" id="a11y-panel" aria-labelledby="a11y-title" hidden>
+  <div class="a11y-head">
+    <h2 id="a11y-title" class="h5" tabindex="-1">Accessibilità</h2>
+    <button type="button" class="a11y-close" aria-label="Chiudi le impostazioni di accessibilità">×</button>
+  </div>
+  <p class="hint">Le scelte valgono per tutte le pagine e restano salvate solo in questo browser.</p>
+  <fieldset class="a11y-sizes">
+    <legend>Dimensione del testo</legend>
+    {% for v, label in [("100", "Normale"), ("125", "Grande"), ("150", "Molto grande")] %}
+    <input type="radio" name="a11y-testo" id="a11y-testo-{{ v }}" value="{{ v }}"{% if v == "100" %} checked{% endif %}>
+    <label for="a11y-testo-{{ v }}" class="size-{{ v }}">{{ label }}</label>
+    {% endfor %}
+  </fieldset>
+  <fieldset class="a11y-options">
+    <legend>Visualizzazione</legend>
+    {% for key, label, hint in [
+      ("contrasto", "Contrasto elevato", "nero su bianco, bordi netti"),
+      ("leggibile", "Caratteri leggibili", "lettere più larghe e distinte"),
+      ("spaziatura", "Spaziatura del testo", "più spazio tra righe, lettere e parole"),
+      ("link", "Evidenzia i link", "sottolineati e con sfondo"),
+      ("animazioni", "Ferma le animazioni", "niente movimento sulla pagina"),
+      ("cursore", "Cursore grande", "puntatore del mouse più grande"),
+      ("guida", "Guida alla lettura", "una banda che segue il mouse"),
+      ("grigi", "Bianco e nero", "toglie i colori; esiti e valori restano scritti")] %}
+    <div class="a11y-option">
+      <input type="checkbox" id="a11y-{{ key }}" data-a11y="{{ key }}" aria-describedby="a11y-{{ key }}-hint">
+      <label for="a11y-{{ key }}">{{ label }}</label>
+      <span class="hint" id="a11y-{{ key }}-hint">{{ hint }}</span>
+    </div>
+    {% endfor %}
+  </fieldset>
+  <button type="button" class="btn btn-outline-primary btn-sm" data-a11y-reset>Ripristina le impostazioni</button>
+  <p class="visually-hidden" aria-live="polite" data-a11y-status></p>
+</section>
+<div class="reading-guide" aria-hidden="true"></div>
 <script src="/static/ui.js"></script>
 </body>
 </html>
