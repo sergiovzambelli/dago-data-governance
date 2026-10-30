@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %} · Patrimonio informativo · {{ ente }}</title>
+  {# Bootstrap Italia resta solo come base (griglia, moduli, pulsanti); aspetto e guscio sono in ui.css #}
   <link rel="stylesheet" href="{{ bi }}/css/bootstrap-italia.min.css">
-  <link rel="stylesheet" href="/static/fonts.css">
   <link rel="stylesheet" href="/static/ui.css">
 </head>
 <body>
@@ -14,133 +14,72 @@
   <a class="visually-hidden-focusable" href="#main-content">Vai al contenuto principale</a>
   <a class="visually-hidden-focusable" href="#menu-principale">Vai alla navigazione</a>
 </div>
-<header class="it-header-wrapper">
-  <div class="it-header-slim-wrapper">
-    <div class="container">
-      <div class="row">
-        <div class="col-12">
-          <div class="it-header-slim-wrapper-content">
-            <span class="d-lg-block navbar-brand">{{ ente }}</span>
-            <div class="it-header-slim-right-zone">
-              <span class="text-white small">
-                {{ icon("it-user", "icon-white icon-sm") }}
-                {{ user.nome }} · {{ roles[user.ruolo] }}{% if local_mode %}<span class="d-none d-md-inline"> · solo su questo computer</span>{% endif %}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="it-nav-wrapper">
-    <div class="it-header-center-wrapper theme-light">
-      <div class="container">
-        <div class="row">
-          <div class="col-12">
-            <div class="it-header-center-content-wrapper">
-              <div class="it-brand-wrapper">
-                <a href="/">
-                  {{ icon("it-pa") }}
-                  <div class="it-brand-text">
-                    <div class="it-brand-title">Patrimonio informativo</div>
-                    <div class="it-brand-tagline d-none d-md-block">Dati personali nelle cartelle di rete e registro dei trattamenti</div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="it-header-navbar-wrapper theme-light-desk" id="menu-principale">
-      <div class="container">
-        <div class="row">
-          <div class="col-12">
-            <nav class="navbar navbar-expand-lg" aria-label="Navigazione principale">
-              <button class="custom-navbar-toggler" type="button" aria-controls="nav-principale" aria-expanded="false"
-                      aria-label="Mostra o nascondi la navigazione" data-bs-toggle="navbarcollapsible" data-bs-target="#nav-principale">
-                {{ icon("it-burger") }}
-              </button>
-              <div class="navbar-collapsable" id="nav-principale">
-                <div class="overlay"></div>
-                <div class="close-div">
-                  <button class="btn close-menu" type="button">
-                    <span class="visually-hidden">Nascondi la navigazione</span>
-                    {{ icon("it-close-big") }}
-                  </button>
-                </div>
-                <div class="menu-wrapper">
-                  <ul class="navbar-nav">
-                    {% for key, href, label in [("cruscotto", "/", "Cruscotto"), ("coda", "/coda", "Coda di validazione"),
-                                                ("documenti", "/documenti", "Inventario"), ("ricerca", "/ricerca", "Ricerca"), ("prova", "/prova", "Prova un file"),
-                                                ("schede", "/schede", "Schede"), ("bozze", "/bozze", "Bozze di schede"), ("decisioni", "/decisioni", "Registro decisioni")] %}
-                    <li class="nav-item">
-                      <a class="nav-link{% if nav == key %} active{% endif %}" href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}><span>{{ label }}</span></a>
-                    </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-              </div>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</header>
 
-<main id="main-content" class="container my-4">
-  <nav class="breadcrumb-container" aria-label="Percorso di navigazione">
-    <ol class="breadcrumb">
-      {% block breadcrumb %}{% endblock %}
-    </ol>
-  </nav>
-  {% block content %}{% endblock %}
-</main>
+<div class="shell" id="shell">
+  <header class="topbar">
+    <button class="menu-toggle" type="button" aria-controls="menu-principale" aria-expanded="false" hidden>
+      {{ icon("it-burger") }}<span class="visually-hidden">Apri il menu</span>
+    </button>
+    <a class="brand brand-top" href="/">Patrimonio informativo</a>
+  </header>
 
-<footer class="it-footer">
-  <div class="it-footer-main">
-    <div class="container">
-      <section>
-        <div class="row clearfix">
-          <div class="col-sm-12">
-            <div class="it-brand-wrapper">
-              <a href="/">
-                {{ icon("it-pa", "icon-white") }}
-                <div class="it-brand-text">
-                  <h2 class="no_toc">{{ ente }}</h2>
-                  <h3 class="no_toc d-none d-md-block">Classificatore del patrimonio informativo</h3>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="py-4 border-white border-top">
-        <div class="row">
-          <div class="col-lg-8">
-            <p class="text-white small mb-0">
-              Le proposte del sistema sono suggerimenti: ogni decisione definitiva spetta all'RPD ed è registrata.
-              I dati personali sono mostrati solo in forma mascherata.
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  </div>
-  <div class="it-footer-small-prints clearfix">
-    <div class="container">
-      <h3 class="visually-hidden">Informazioni sul software</h3>
-      <ul class="it-footer-small-prints-list list-inline mb-0 d-flex flex-column flex-md-row">
-        <li class="list-inline-item text-white">Software libero, licenza EUPL-1.2</li>
-        <li class="list-inline-item text-white">Interfaccia con Bootstrap Italia 2.18.3</li>
-        <li class="list-inline-item"><a href="/esporta.json">Esporta JSON</a></li>
-        <li class="list-inline-item"><a href="/esporta.csv">Esporta CSV</a></li>
+  <aside class="sidebar" id="menu-principale">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">{{ icon("it-files") }}</span>
+      <span><span class="brand-name">Patrimonio informativo</span><span class="brand-ente">{{ ente }}</span></span>
+    </a>
+    <nav class="sidebar-nav" aria-label="Navigazione principale">
+      {% set groups = [
+        ("Lavoro", [("cruscotto", "/", "Cruscotto", "it-chart-line"), ("coda", "/coda", "Coda di validazione", "it-check-circle"),
+                    ("documenti", "/documenti", "Inventario", "it-folder"), ("ricerca", "/ricerca", "Ricerca", "it-search"),
+                    ("prova", "/prova", "Prova un file", "it-upload")]),
+        ("Registro", [("schede", "/schede", "Schede", "it-list"), ("bozze", "/bozze", "Bozze di schede", "it-pencil"),
+                      ("decisioni", "/decisioni", "Registro decisioni", "it-clock")])] %}
+      {% for title, items in groups %}
+      <p class="nav-group" id="nav-g{{ loop.index }}">{{ title }}</p>
+      <ul aria-labelledby="nav-g{{ loop.index }}">
+        {% for key, href, label, ico in items %}
+        <li><a href="{{ href }}"{% if nav == key %} aria-current="page"{% endif %}>{{ icon(ico) }}<span>{{ label }}</span></a></li>
+        {% endfor %}
       </ul>
+      {% endfor %}
+    </nav>
+
+    <div class="sidebar-foot">
+      <details class="shortcuts" id="scorciatoie">
+        <summary>Scorciatoie da tastiera</summary>
+        <dl>
+          <div><dt><kbd>J</kbd></dt><dd>documento successivo della coda</dd></div>
+          <div><dt><kbd>K</kbd></dt><dd>documento precedente</dd></div>
+          <div><dt><kbd>C</kbd></dt><dd>conferma la proposta e vai al prossimo</dd></div>
+          <div><dt><kbd>E</kbd></dt><dd>apri la correzione</dd></div>
+          <div><dt><kbd>?</kbd></dt><dd>mostra o nascondi questo elenco</dd></div>
+        </dl>
+        <p class="shortcuts-state" aria-live="polite"></p>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-shortcuts-toggle>Disattiva le scorciatoie</button>
+      </details>
+      <p class="whoami">{{ icon("it-user", "icon-sm") }} {{ user.nome }} · {{ roles[user.ruolo] }}
+        {% if local_mode %}<span class="d-block hint">Solo su questo computer</span>{% endif %}</p>
+      <p class="exports">Esporta: <a href="/esporta.json">JSON</a> · <a href="/esporta.csv">CSV</a></p>
     </div>
+  </aside>
+
+  <div class="workspace">
+    <main id="main-content">
+      <nav class="crumbs" aria-label="Percorso di navigazione">
+        <ol class="breadcrumb">
+          {% block breadcrumb %}{% endblock %}
+        </ol>
+      </nav>
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="foot">
+      <p>Le proposte del sistema sono suggerimenti: ogni decisione definitiva spetta all'RPD ed è registrata.
+        I dati personali sono mostrati solo in forma mascherata.</p>
+      <p>{{ ente }} · Software libero, licenza EUPL-1.2</p>
+    </footer>
   </div>
-</footer>
-<script src="{{ bi }}/js/bootstrap-italia.bundle.min.js"></script>
+</div>
 <script src="/static/ui.js"></script>
 </body>
 </html>

@@ -41,10 +41,16 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 
 Demo della specifica: dalla coda si apre un documento non conforme, poi uno senza scheda; si vedono le evidenze, si registra la correzione e il cruscotto si aggiorna.
 
-## Linee guida seguite
+## Area di lavoro (feat/ui-workspace)
 
-- **Bootstrap Italia 2.18.3** in `ui/static/vendor/` (CSS, JS, icone `sprites.svg`, font Titillium Web, Roboto Mono e Lora con le licenze): nessuna CDN, funziona senza Internet. I font sono dichiarati in `ui/static/fonts.css` invece che con `bootstrapItalia.loadFonts`, che inserisce stili inline.
-- Struttura dei modelli Designers Italia: slim header con il nome dell'ente, header centrale, barra di navigazione che diventa menu laterale su telefono, breadcrumb, footer istituzionale.
+Decisione dell'utente: la UI è uno strumento di lavoro per l'RPD e non segue più lo stile istituzionale dei siti della PA. Scelte, tra le quattro direzioni proposte (strumento denso, revisione affiancata, cruscotto a dati, servizio essenziale): **revisione affiancata e cruscotto a dati, con le scorciatoie dello strumento denso**.
+
+- **Guscio**: menu laterale scuro con le voci in due gruppi (Lavoro, Registro), utente ed esportazioni in fondo. Sotto i 992 px diventa una barra in alto con il pulsante "Apri il menu" (`aria-expanded`, Esc chiude e riporta il focus); senza JavaScript il menu resta sempre visibile.
+- **Coda affiancata**: un documento da validare si apre con la coda a sinistra (documento corrente evidenziato con `aria-current`) e il documento a destra; "Conferma e vai al prossimo" aggiorna entrambi. Sotto i 1200 px la coda si nasconde e restano i pulsanti Precedente e Prossimo.
+- **Scorciatoie**: <kbd>J</kbd> successivo, <kbd>K</kbd> precedente, <kbd>C</kbd> conferma e vai al prossimo, <kbd>E</kbd> apre la correzione con il focus su "Esito corretto", <kbd>?</kbd> mostra l'elenco. Non agiscono dentro i campi né con Ctrl, Alt e Cmd, sono indicate sui pulsanti e si disattivano dal pannello "Scorciatoie da tastiera" (WCAG 2.1.4; preferenza salvata nel browser, non sul server).
+- **Cruscotto**: anello della validazione (`role="img"` con il testo "Validati X su Y") e quattro riquadri numerici (da validare, non conformi, senza scheda, con categorie particolari) che portano ai rispettivi elenchi.
+- **Identità visiva**: carattere di sistema al posto di Titillium, indaco `#4338ca` per azioni e link (7,9:1), menu `#141826` con testo `#d5d9e3` (12,9:1). Contrasto misurato nel browser su cruscotto, coda, documento, inventario, ricerca, Prova un file, Schede, Bozze e registro: nessun testo sotto 4,5:1.
+- **Bootstrap Italia 2.18.3** resta in `ui/static/vendor/` solo come base CSS (griglia, moduli, icone `sprites.svg`); il suo JavaScript non viene più caricato. `ui/static/fonts.css` e i font di Bootstrap Italia restano nel repository ma non sono più usati.
 - Accessibilità (WCAG 2.1 AA): `lang="it"`, link "Vai al contenuto principale", un solo `h1` per pagina, etichette su ogni campo, tabelle con `caption` e `scope`, esiti scritti a parole e non solo a colori, `aria-current` su navigazione e paginazione, nessuno scorrimento orizzontale a 375 px.
 - Testi in italiano semplice; ogni scostamento dice cosa significa e cosa può fare l'RPD.
 

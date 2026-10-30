@@ -386,10 +386,10 @@ def test_without_drafts_file_page_explains_how_to_create_them(settings, tmp_path
 
 def test_dashboard_puts_urgent_documents_first(client):
     html = client.get("/").text
-    assert "Da guardare subito" in html
-    urgent = html[html.index("Da guardare subito"):html.index("Documenti per esito")]
+    assert "I più urgenti" in html
+    urgent = html[html.index("I più urgenti"):html.index("Documenti per esito")]
     assert urgent.index("scansione_0412.pdf") < urgent.index("reclamo_117.eml")
-    assert re.search(r">\s*1\s*</span>\s*con categorie particolari", html)
+    assert re.search(r"Con categorie particolari\s*</span>\s*<[^>]+>\s*1\b", html)
 
 
 def test_document_verdict_says_what_matters(client):
@@ -647,3 +647,47 @@ def test_document_page_never_reads_outside_the_analysed_folder(doc_settings, tmp
     html = c.get("/documenti").text
     for url in set(re.findall(r'href="(/documenti/[0-9a-f]{16})"', html)):
         assert "SEGRETO" not in c.get(url).text
+
+
+# --- area di lavoro: menu laterale, coda affiancata, scorciatoie, cruscotto a dati ---
+
+def test_app_shell_has_sidebar_and_no_italia_header(client):
+    html = client.get("/documenti").text
+    assert '<nav class="sidebar-nav" aria-label="Navigazione principale">' in html
+    assert re.search(r'href="/documenti"[^>]*aria-current="page"', html)
+    assert "it-header-wrapper" not in html and "it-footer" not in html
+    assert "bootstrap-italia.bundle.min.js" not in html  # menu e scorciatoie con ui.js
+
+
+def test_queued_document_shows_the_queue_beside_it(client):
+    html = client.get(doc_url(client, "reclamo_117.eml")).text
+    pane = html[html.index('class="queue-pane"'):]
+    assert "scansione_0412.pdf" in pane and "congedo_Lenzi.docx" in pane
+    assert re.search(r'aria-current="true"[^>]*>(?:(?!</a>).)*reclamo_117\.eml', pane, re.S)
+
+
+def test_validated_document_has_no_queue_pane(client):
+    url = doc_url(client, "congedo_Lenzi.docx")
+    client.post(url + "/decisione", data={"csrf": token(client.get(url).text), "azione": "CONFERMA"})
+    assert 'class="queue-pane"' not in client.get(url).text
+
+
+def test_keyboard_shortcuts_are_declared_and_can_be_turned_off(client):
+    html = client.get(doc_url(client, "reclamo_117.eml")).text  # secondo della coda
+    assert re.search(r'data-key="c"[^>]*>\s*Conferma la proposta e vai al prossimo', html)
+    assert re.search(r'<details[^>]*data-key="e"', html)
+    assert re.search(r'data-key="j"[^>]*href="/documenti/[0-9a-f]+"|href="/documenti/[0-9a-f]+"[^>]*data-key="j"', html)
+    assert re.search(r'data-key="k"[^>]*href="/documenti/[0-9a-f]+"|href="/documenti/[0-9a-f]+"[^>]*data-key="k"', html)
+    assert "Scorciatoie da tastiera" in html and "Disattiva le scorciatoie" in html
+
+
+def test_operator_gets_no_decision_shortcuts(settings, tmp_path):
+    c = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
+    url = doc_url(c, "reclamo_117.eml", headers=_auth("ufficio", "pw-op-123"))
+    assert 'data-key="c"' not in c.get(url, headers=_auth("ufficio", "pw-op-123")).text
+
+
+def test_dashboard_shows_metrics_and_validation_ring(client):
+    html = client.get("/").text
+    assert re.search(r'class="metric-label">\s*Da validare\s*</[^>]+>\s*<[^>]+>\s*3\b', html)
+    assert re.search(r'role="img" aria-label="Validati 0 su 3"', html)

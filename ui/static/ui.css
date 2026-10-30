@@ -1,14 +1,20 @@
-/* Stile della UI sopra Bootstrap Italia, con il metodo delle Human Interface Guidelines di Apple:
-   sfondo raggruppato e riquadri bianchi, un colore = un significato, gerarchia data da peso e dimensione.
+/* Area di lavoro: menu laterale scuro, coda accanto al documento, cruscotto a riquadri.
+   Bootstrap Italia resta solo come base (griglia, moduli); identità visiva propria, non istituzionale.
    Contrasti misurati: ogni testo ≥ 4,5:1 sul suo sfondo (valori accanto ai token). */
 :root {
-  --page: #f5f5f7;       /* sfondo raggruppato */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --page: #f4f5f8;       /* sfondo dell'area di lavoro */
   --card: #ffffff;
-  --ink: #1d1d1f;        /* testo, 16,8:1 su bianco, 15,5:1 sullo sfondo */
-  --muted: #636366;      /* testo secondario, 6,0:1 su bianco, 5,5:1 sullo sfondo */
-  --sep: #d2d2d7;        /* separatori sottili */
-  --fill: #e8e8ed;       /* binari di barre e indicatori */
-  --blue: #0066cc;       /* solo link e azioni, 5,6:1 */
+  --ink: #1b1f2a;        /* testo, 16,4:1 su bianco */
+  --muted: #5b6272;      /* testo secondario, 6,1:1 su bianco, 5,6:1 sullo sfondo */
+  --sep: #dfe2e8;        /* separatori sottili */
+  --fill: #e7e9ef;       /* binari di barre e indicatori */
+  --side: #141826;       /* menu laterale */
+  --side-ink: #d5d9e3;   /* testo del menu, 12,9:1 */
+  --side-muted: #9aa1b2; /* titoli dei gruppi, 7,0:1 */
+  --side-active: #262c40;
+  --blue: #4338ca;       /* azioni e link (indaco), 7,9:1 su bianco */
   --red: #b3261e;        /* non conforme e problemi, 6,5:1 */
   --amber: #8a4b00;      /* scheda mancante, 6,8:1 */
   --green: #1b6b3a;      /* conforme e validato, 6,5:1 */
@@ -18,7 +24,107 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 2px 12px rgba(0, 0, 0, .04);
 }
 
-body { color: var(--ink); background: var(--page); font-size: 1.0625rem; }
+body { color: var(--ink); background: var(--page); font-size: 1rem; }
+body, h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .btn, input, select, textarea, label, legend { font-family: var(--font); }
+code, kbd, pre { font-family: var(--mono); }
+a { color: var(--blue); }
+.btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn-primary:hover, .btn-primary:focus { background: #3730a3; border-color: #3730a3; color: #fff; }
+.btn-outline-primary { color: var(--blue); border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.btn-outline-primary:hover { background: #eef0ff; color: #3730a3; }
+.btn .icon-primary { fill: currentColor; }
+kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em; border: 1px solid currentColor;
+  border-radius: 4px; background: transparent; color: inherit; box-shadow: none; vertical-align: .1em; }
+
+/* guscio: menu laterale fisso + area di lavoro */
+.shell { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); min-height: 100vh; }
+.topbar { display: none; }
+.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--side); color: var(--side-ink);
+  padding: 1.25rem .85rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.brand { display: flex; gap: .65rem; align-items: center; color: #fff; text-decoration: none; padding: 0 .4rem; }
+.brand:hover { color: #fff; }
+.brand-mark { width: 2.1rem; height: 2.1rem; border-radius: 9px; background: #6366f1; display: grid; place-items: center; flex-shrink: 0; }
+.brand-mark .icon { fill: #fff; width: 1.2rem; height: 1.2rem; }
+.brand-name { display: block; font-weight: 700; line-height: 1.2; }
+.brand-ente { display: block; font-size: .8rem; color: var(--side-muted); }
+.sidebar-nav ul { list-style: none; padding: 0; margin: 0 0 1rem; }
+.nav-group { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--side-muted);
+  margin: 0 0 .35rem .6rem; }
+.sidebar-nav a { display: flex; align-items: center; gap: .65rem; padding: .5rem .6rem; border-radius: 8px;
+  color: var(--side-ink); text-decoration: none; font-size: .95rem; }
+.sidebar-nav a .icon { fill: currentColor; width: 1.15rem; height: 1.15rem; flex-shrink: 0; }
+.sidebar-nav a:hover { background: var(--side-active); color: #fff; }
+.sidebar-nav a[aria-current="page"] { background: var(--side-active); color: #fff; font-weight: 600;
+  box-shadow: inset 3px 0 0 #818cf8; }
+.sidebar a:focus-visible, .sidebar summary:focus-visible, .sidebar button:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 1px; }
+.sidebar-foot { margin-top: auto; font-size: .85rem; border-top: 1px solid #2b3145; padding-top: 1rem; }
+.sidebar-foot p { margin: .5rem .4rem; }
+.sidebar-foot a { color: #c7d2fe; }
+.sidebar-foot .hint { color: var(--side-muted); }
+.whoami .icon { fill: currentColor; }
+.shortcuts { margin: 0 .4rem .75rem; }
+.shortcuts > summary { color: var(--side-ink); font-weight: 600; }
+.shortcuts dl { margin: .25rem 0 .5rem; }
+.shortcuts dl > div { display: flex; gap: .6rem; align-items: baseline; padding: .2rem 0; }
+.shortcuts dt { min-width: 1.75rem; } .shortcuts dt kbd { margin: 0; }
+.shortcuts dd { margin: 0; color: var(--side-ink); }
+.shortcuts .btn-outline-primary { color: var(--side-ink); border-color: #64748b; box-shadow: inset 0 0 0 1px #64748b; border-radius: 8px; }
+.shortcuts .btn-outline-primary:hover { background: var(--side-active); color: #fff; }
+.workspace { min-width: 0; display: flex; flex-direction: column; }
+.workspace main { flex: 1; width: 100%; max-width: 88rem; padding: 1.25rem 2rem 3rem; }
+.crumbs .breadcrumb { padding: 0; margin: 0 0 1rem; background: none; font-size: .9rem; }
+.foot { padding: 1.25rem 2rem; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--sep); }
+.foot p { margin: 0 0 .25rem; max-width: 80ch; }
+
+/* telefono e tablet: barra in alto, il menu si apre sopra il contenuto; senza JavaScript resta visibile */
+@media (max-width: 991.98px) {
+  .shell { display: block; }
+  .topbar { display: flex; align-items: center; gap: .75rem; position: sticky; top: 0; z-index: 40; height: 3.25rem;
+    padding: 0 1rem; background: var(--side); }
+  .brand-top { color: #fff; font-weight: 700; padding: 0; }
+  .menu-toggle { background: none; border: 0; padding: .35rem; border-radius: 8px; line-height: 0; }
+  .menu-toggle .icon { fill: #fff; }
+  .sidebar { position: static; height: auto; }
+  .shell.js .sidebar { display: none; }
+  .shell.js.menu-open .sidebar { display: flex; position: fixed; inset: 3.25rem 0 0 0; z-index: 50; height: auto; }
+  .workspace main { padding: 1rem 1rem 2.5rem; }
+  .foot { padding: 1rem; }
+}
+
+/* coda accanto al documento: elenco a sinistra, documento a destra */
+.review { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.queue-pane { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; background: var(--card);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: .75rem .5rem; }
+.queue-pane-title { font-size: .95rem; font-weight: 700; margin: .1rem .5rem .6rem; display: flex; justify-content: space-between; }
+.queue-pane-title a { color: var(--ink); text-decoration: none; }
+.queue-pane ol { list-style: none; padding: 0; margin: 0; }
+.queue-pane li a { display: block; padding: .5rem .6rem; border-radius: 9px; text-decoration: none; color: var(--ink); }
+.queue-pane li a:hover { background: var(--page); }
+.queue-pane li a[aria-current="true"] { background: #eef0ff; box-shadow: inset 3px 0 0 var(--blue); }
+.qp-name { display: block; font-weight: 600; font-size: .9rem; line-height: 1.3; overflow-wrap: break-word; }
+.qp-meta { display: flex; align-items: center; gap: .35rem; font-size: .8rem; color: var(--muted); margin-top: .1rem; }
+.qp-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--grey); flex-shrink: 0; }
+.qp-non_conforme { background: var(--red); } .qp-scheda_mancante { background: var(--amber); } .qp-conforme { background: var(--green); }
+@media (max-width: 1199.98px) { .review { display: block; } .queue-pane { display: none; } }
+
+/* cruscotto: anello della validazione e numeri chiave */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; margin: .5rem 0 1rem; }
+.ring-card, .metric { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem 1.25rem; }
+.ring-card { grid-column: span 2; display: flex; gap: 1.25rem; align-items: center; }
+@media (max-width: 575.98px) { .ring-card { grid-column: 1 / -1; } .ring { width: 5rem; height: 5rem; } .metric-value { font-size: 1.75rem; } }
+.ring { --pct: 0; flex-shrink: 0; width: 6.25rem; height: 6.25rem; border-radius: 50%; position: relative; display: grid; place-items: center;
+  background: conic-gradient(var(--green) calc(var(--pct) * 1%), var(--fill) 0); }
+.ring::before { content: ""; position: absolute; inset: .7rem; border-radius: 50%; background: var(--card); }
+.ring span { position: relative; font-size: 1.35rem; font-weight: 700; }
+.ring-text { margin: .1rem 0 .6rem; }
+.metric { display: flex; flex-direction: column; justify-content: space-between; text-decoration: none; color: var(--ink);
+  border-top: 4px solid var(--blue); }
+a.metric:hover { color: var(--ink); box-shadow: 0 2px 4px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .08); }
+a.metric:hover .metric-label { text-decoration: underline; }
+.metric-label { font-size: .9rem; color: var(--muted); margin: 0; }
+.metric-value { font-size: 2.25rem; font-weight: 700; line-height: 1.1; margin-top: .4rem; }
+.metric-red { border-top-color: var(--red); } .metric-amber { border-top-color: var(--amber); } .metric-purple { border-top-color: var(--purple); }
+
 main { padding-bottom: 3rem; }
 main p, main li, main dd { line-height: 1.55; }
 .intro, main > p { max-width: 70ch; }
@@ -34,19 +140,8 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex="-1"]:fo
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* intestazione: temi chiari di Bootstrap Italia, il blu resta nella barra istituzionale */
-.it-header-center-wrapper.theme-light .it-brand-wrapper .icon { fill: var(--blue); }
-.it-header-center-wrapper.theme-light .it-brand-tagline { color: var(--muted); }
-.it-header-navbar-wrapper.theme-light-desk { border-bottom: 1px solid var(--sep); }
-@media (min-width: 992px) {
-  .it-header-navbar-wrapper.theme-light-desk .navbar .navbar-collapsable .navbar-nav li a.nav-link {
-    color: var(--ink); font-weight: 600; border-bottom-width: 3px; }
-  .it-header-navbar-wrapper.theme-light-desk .navbar .navbar-collapsable .navbar-nav li a.nav-link.active { color: var(--blue); }
-}
-.custom-navbar-toggler .icon { fill: var(--blue); }
-
-/* pulsanti a capsula, come i controlli di sistema */
-.btn { border-radius: 980px; font-weight: 600; padding-left: 1.25rem; padding-right: 1.25rem; }
+/* pulsanti con angoli morbidi */
+.btn { border-radius: 10px; font-weight: 600; padding-left: 1.1rem; padding-right: 1.1rem; }
 
 /* riquadri e liste raggruppate (lists-and-tables.md › Style: grouped) */
 .panel, .group { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }

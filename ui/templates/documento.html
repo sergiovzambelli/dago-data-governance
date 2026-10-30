@@ -9,6 +9,21 @@
 <li class="breadcrumb-item active" aria-current="page">{{ doc.file|nome_file }}</li>
 {% endblock %}
 {% block content %}
+{% if queue_docs %}
+<div class="review">
+<nav class="queue-pane" aria-labelledby="h-coda-pane">
+  <h2 id="h-coda-pane" class="queue-pane-title"><a href="/coda">Coda di validazione</a> <span class="hint">{{ queue_size }}</span></h2>
+  <ol>
+    {% for d in queue_docs %}{% set p = priority(d) %}
+    <li><a href="/documenti/{{ d.id }}"{% if d.id == doc.id %} aria-current="true"{% endif %}>
+      <span class="qp-name">{{ d.file|nome_file|spezza }}</span>
+      <span class="qp-meta"><span class="qp-dot qp-{{ d.esito|lower }}" aria-hidden="true"></span>{{ outcomes[d.esito][0] }} · {{ p.livello }}</span>
+    </a></li>
+    {% endfor %}
+  </ol>
+</nav>
+<div class="review-main">
+{% endif %}
 {% if request.query_params.get("registrata") %}
 <div class="alert alert-success" role="alert" tabindex="-1" data-focus>Decisione registrata.{% if position %} Questo è il prossimo documento da validare.{% endif %}</div>
 {% endif %}
@@ -19,9 +34,10 @@
     <p class="doc-path">{{ doc.file|cartella or "cartella principale" }}</p>
   </div>
   {% if position or next_id %}
-  <nav class="queue-nav" aria-label="Coda di validazione">
+  <nav class="queue-nav" aria-label="Spostati nella coda">
     {% if position %}<span class="queue-pos">{{ position }} di {{ queue_size }} da validare</span>{% endif %}
-    {% if next_id %}<a class="btn btn-outline-primary btn-sm" href="/documenti/{{ next_id }}">Prossimo da validare {{ icon("it-arrow-right", "icon-primary icon-sm") }}</a>{% endif %}
+    {% if prev_id %}<a class="btn btn-outline-primary btn-sm" data-key="k" href="/documenti/{{ prev_id }}">{{ icon("it-arrow-left", "icon-primary icon-sm") }} Precedente <kbd aria-hidden="true">K</kbd></a>{% endif %}
+    {% if next_id %}<a class="btn btn-outline-primary btn-sm" data-key="j" href="/documenti/{{ next_id }}">Prossimo da validare {{ icon("it-arrow-right", "icon-primary icon-sm") }} <kbd aria-hidden="true">J</kbd></a>{% endif %}
   </nav>
   {% endif %}
 </div>
@@ -63,13 +79,13 @@
       <input type="text" id="c-nota" name="nota" maxlength="500" aria-describedby="nota-aiuto">
     </div>
     <div class="actions">
-      <button type="submit" class="btn btn-primary" name="poi" value="prossimo">Conferma la proposta e vai al prossimo</button>
+      <button type="submit" class="btn btn-primary" name="poi" value="prossimo" data-key="c">Conferma la proposta e vai al prossimo <kbd aria-hidden="true">C</kbd></button>
       <button type="submit" class="btn btn-outline-primary" name="poi" value="">Conferma la proposta</button>
     </div>
   </form>
 
-  <details class="correction"{% if doc.esito == "SCHEDA_MANCANTE" %} open{% endif %}>
-    <summary>Correggi esito o scheda</summary>
+  <details class="correction" data-key="e"{% if doc.esito == "SCHEDA_MANCANTE" %} open{% endif %}>
+    <summary>Correggi esito o scheda <kbd aria-hidden="true">E</kbd></summary>
     <form method="post" action="/documenti/{{ doc.id }}/decisione">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <input type="hidden" name="azione" value="CORREZIONE">
@@ -237,4 +253,5 @@
   <p class="hint">Impronta SHA-256:<br><code class="sha">{{ doc.sha256 }}</code></p>
 </div>
 </div>
+{% if queue_docs %}</div></div>{% endif %}
 {% endblock %}
