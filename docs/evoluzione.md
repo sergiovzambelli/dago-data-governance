@@ -2,6 +2,10 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-10-30 — feat/a11y-pass: verifica e correzioni di accessibilità
+- Audit nel browser con controlli automatici su sei pagine e prova manuale a 320 px, con tastiera e menu su telefono. Trovati e corretti: riflusso della pagina del documento (breadcrumb e pulsanti), link solo numerici in Schede, Tab che finiva sotto il menu aperto, link "Vai alla navigazione" verso un menu nascosto, nessun supporto al contrasto elevato di Windows.
+- Nuova pagina `/accessibilita` (dichiarazione di accessibilità, come chiedono le linee guida AgID): dichiara lo strumento "parzialmente conforme" perché manca ancora la prova con lettori di schermo.
+
 ## 2026-10-30 — feat/try-file-progress: barra di avanzamento in Prova un file
 - Richiesta dell'utente: in Prova un file una barra "tipo download" che avanza durante l'analisi, dice le fasi e alla fine indica conforme o non conforme.
 - L'analisi gira in background (`/prova/avvia`, `/prova/stato/<id>`, `/prova/risultato/<id>`): la barra segue le 5 fasi reali del server, poi diventa la scala dal verde al rosso e l'indicatore scorre fino al grado di conformità, con l'etichetta che cambia lungo la strada. Dettagli in `docs/ui.md`.

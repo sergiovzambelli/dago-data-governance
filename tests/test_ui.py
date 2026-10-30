@@ -2,6 +2,7 @@
 import base64
 import json
 import re
+from pathlib import Path
 
 import pytest
 
@@ -769,3 +770,29 @@ def test_background_analysis_is_protected(try_client, settings, tmp_path):
     other = Client(create_app(Settings(**{**settings.__dict__, "users_file": _users_file(tmp_path)})))
     job = start(try_client, "Richiesta di permesso.", "fileserver/Personale/Permessi").json()["lavoro"]
     assert other.get(f"/prova/stato/{job}", headers=_auth("rpd", "pw-rpd-123")).status_code == 404
+
+
+# --- accessibilità: dichiarazione, link con contesto, riflusso, colori forzati ---
+
+def test_accessibility_statement_page(client):
+    html = client.get("/accessibilita").text
+    assert "<h1>Dichiarazione di accessibilità</h1>" in html
+    assert "WCAG 2.1" in html and "parzialmente conforme" in html and "Segnala un problema" in html
+    assert 'href="/accessibilita"' in client.get("/").text  # raggiungibile da ogni pagina
+
+
+def test_record_counts_say_what_they_count(client):
+    html = client.get("/schede").text
+    assert re.search(r'>\d+<span class="visually-hidden"> document[oi] con la scheda T-PER-07</span></a>', html)
+
+
+def test_css_supports_reflow_and_forced_colors():
+    css = (Path(__file__).parents[1] / "ui/static/ui.css").read_text(encoding="utf-8")
+    assert "@media (forced-colors: active)" in css
+    assert re.search(r"\.btn\s*\{[^}]*white-space:\s*normal", css)
+    assert re.search(r"\.crumbs \.breadcrumb\s*\{[^}]*flex-wrap:\s*wrap", css)
+
+
+def test_mobile_menu_makes_page_inert_and_skip_link_opens_it():
+    js = (Path(__file__).parents[1] / "ui/static/ui.js").read_text(encoding="utf-8")
+    assert ".inert = open" in js and 'a[href="#menu-principale"]' in js

@@ -72,7 +72,8 @@ kbd { font-size: .75em; font-weight: 600; padding: .05em .4em; margin-left: .4em
 .shortcuts .btn-outline-primary:hover { background: var(--side-active); color: #fff; }
 .workspace { min-width: 0; display: flex; flex-direction: column; }
 .workspace main { flex: 1; width: 100%; max-width: 88rem; padding: 1.25rem 2rem 3rem; }
-.crumbs .breadcrumb { padding: 0; margin: 0 0 1rem; background: none; font-size: .9rem; }
+.crumbs .breadcrumb { padding: 0; margin: 0 0 1rem; background: none; font-size: .9rem; flex-wrap: wrap; }
+.crumbs .breadcrumb-item { min-width: 0; overflow-wrap: anywhere; }
 .foot { padding: 1.25rem 2rem; color: var(--muted); font-size: .85rem; border-top: 1px solid var(--sep); }
 .foot p { margin: 0 0 .25rem; max-width: 80ch; }
 
@@ -182,6 +183,22 @@ a.metric:hover .metric-label { text-decoration: underline; }
 @keyframes tp-pulse { 50% { box-shadow: 0 0 0 4px rgba(67, 56, 202, .25); } }
 .tp-open { margin: 1rem 0 0; }
 
+/* contrasto elevato di Windows (colori forzati): gli sfondi colorati spariscono, quindi bordi e colori di sistema */
+@media (forced-colors: active) {
+  .esito, .prio, .tag, .stato, .metric, .ring-card, .gauge-card, .panel, .group, .doc-table, .queue-pane,
+  .verdict, .decision, .try-progress, .record-card, .choice-card { border: 1px solid CanvasText; }
+  .sidebar { border-right: 1px solid CanvasText; }
+  .sidebar-nav a[aria-current="page"], .queue-pane li a[aria-current="true"] { outline: 2px solid Highlight; }
+  .tp-track, .meter, .bar, .stack, .ring { border: 1px solid CanvasText; }
+  .tp-fill, .meter > span, .bar > span { background: Highlight; forced-color-adjust: none; }
+  .tp-marker { background: CanvasText; forced-color-adjust: none; }
+  .ring { forced-color-adjust: none; background: conic-gradient(Highlight calc(var(--pct) * 1%), Canvas 0); }
+  .ring::before { background: Canvas; } .ring span { color: CanvasText; }
+  .gauge svg { forced-color-adjust: none; }
+  .hl { border-bottom-width: 3px; }
+  kbd { border-color: CanvasText; }
+}
+
 main { padding-bottom: 3rem; }
 main p, main li, main dd { line-height: 1.55; }
 .intro, main > p { max-width: 70ch; }
@@ -197,8 +214,8 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex="-1"]:fo
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* pulsanti con angoli morbidi */
-.btn { border-radius: 10px; font-weight: 600; padding-left: 1.1rem; padding-right: 1.1rem; }
+/* pulsanti con angoli morbidi; il testo va a capo invece di allargare la pagina (riflusso a 320 px, WCAG 1.4.10) */
+.btn { border-radius: 10px; font-weight: 600; padding-left: 1.1rem; padding-right: 1.1rem; white-space: normal; }
 
 /* riquadri e liste raggruppate (lists-and-tables.md › Style: grouped) */
 .panel, .group { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }

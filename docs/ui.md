@@ -41,6 +41,16 @@ Utenti: `python -m ui.users ui/var/utenti.json mario.rossi rpd` (la password, al
 
 Demo della specifica: dalla coda si apre un documento non conforme, poi uno senza scheda; si vedono le evidenze, si registra la correzione e il cruscotto si aggiorna.
 
+## Verifica di accessibilità (feat/a11y-pass)
+
+Controlli automatici nel browser su cruscotto, documento, inventario, Schede, Bozze e Prova un file: id duplicati, riferimenti ARIA, etichette, nomi di link e pulsanti, dimensione dei bersagli (2.5.8), ordine dei titoli, SVG e tabelle, riflusso a 320 px (1.4.10). Corretti:
+
+- **Riflusso**: breadcrumb e pulsanti lunghi andavano su una riga e allargavano la pagina del documento a 380 px; ora vanno a capo.
+- **Link con contesto** (2.4.4): i numeri della colonna "Documenti" in Schede dicono anche cosa contano ("6 documenti con la scheda T-PER-07").
+- **Menu su telefono**: aperto, rende inerte il resto della pagina (il Tab non finisce sotto il menu); "Vai alla navigazione" lo apre invece di puntare a un menu nascosto.
+- **Contrasto elevato di Windows** (`forced-colors`): bordi e colori di sistema per esiti, riquadri, barre, anello e indicatori.
+- **Dichiarazione di accessibilità** in `/accessibilita`, linkata da ogni pagina: stato (parzialmente conforme), verifiche fatte, limiti noti, come segnalare un problema.
+
 ## Barra di avanzamento di Prova un file (feat/try-file-progress)
 
 Con JavaScript, "Analizza" avvia l'analisi in background (`POST /prova/avvia`) e la pagina chiede lo stato ogni 0,4 secondi (`GET /prova/stato/<id>`). La barra segue le **fasi reali**, nell'ordine in cui avvengono sul server:
