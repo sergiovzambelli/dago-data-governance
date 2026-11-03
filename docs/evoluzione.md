@@ -2,6 +2,10 @@
 
 Voci più recenti in cima. Formato: data, PR, cosa cambia, decisioni e perché.
 
+## 2026-11-03 — chore/readme-cartella-data: `data/` fuori da GitHub
+- Richiesta del team: per sicurezza togliere da GitHub la cartella con i dati del kit. Il timore è che i dati, dichiarati sintetici, contengano anche dati reali. `data/` è stata tolta da tutta la cronologia del repository pubblico (`git filter-repo`) ed è finita in `.gitignore`.
+- Il README ora dice che la cartella serve, dove metterla e con quale struttura. Il codice non cambia: legge ancora da `data/`.
+
 ## 2026-10-30 — feat/dago-menu-compatto: nome DaGo, pagina Compliance, menu comprimibile
 - Richiesta dell'utente: il prodotto si chiama **DaGo** (prima Vaglio). Cambiati titolo delle pagine, menu, barra su telefono, brand kit e regole. Il vecchio logo (`logo-vaglio.svg`) è tolto: al suo posto lo scudo DaGo da `asset/` (versione negativa nel menu e su telefono, solo scudo con il menu compresso e come favicon), senza più "Patrimonio informativo · ente" sotto. La chiave delle preferenze di accessibilità resta `vaglio-a11y`, per non perdere le scelte già salvate nei browser.
 - La voce "Cruscotto" diventa **Compliance** (menu, titolo, briciole di pane); indirizzo `/` invariato.

@@ -14,7 +14,7 @@ _Nessuno ancora (vedi `flussi.md`)._
 | ID | Componente | STRIDE | Minaccia | Mitigazione | Stato | PR |
 |----|------------|--------|----------|-------------|-------|----|
 | T-001 | Repository | I | Segreti committati per errore | `.env` escluso da git | chiusa | chore/kit-data |
-| T-002 | `data/` | I | Dati personali o etichette riservate pubblicati su GitHub | rischio accettato dal team: dati sintetici (LEGGIMI del kit), zip già nel repo | accettata | chore/kit-data |
+| T-002 | `data/` | I | Dati personali o etichette riservate pubblicati su GitHub | `data/` tolta dalla cronologia del repo pubblico e messa in `.gitignore`; restano le copie già clonate e le cache di GitHub | mitigata | chore/readme-cartella-data |
 | T-003 | `make data` | T | Archivio zip con percorsi `..` o assoluti (zip-slip) | estrazione con `zipfile` di Python, che li scarta | chiusa | chore/kit-data |
 | T-004 | Scorer | T | File di predizioni malformato o con percorsi inventati che falsa il punteggio | i file non etichettati vengono ignorati (non entrano nelle metriche, avviso su stderr); i campi mancanti contano come errore | chiusa | feat/scorer, feat/baseline |
 | T-005 | Scansione | I | Link simbolico nella cartella che porta a file fuori dal perimetro | link simbolici saltati; file aperti in sola lettura | chiusa | feat/baseline |
