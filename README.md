@@ -47,6 +47,22 @@ Ogni passo è una pull request con il suo punteggio: la storia completa è in [`
 
 Servono Python 3.10 o più recente e, per le scansioni, `tesseract-ocr`, `tesseract-ocr-ita` e `ocrmypdf`. Senza OCR tutto il resto funziona lo stesso.
 
+**Serve la cartella `data/`, che non è nel repository.** Contiene il kit della sfida (documenti di prova, registro dei trattamenti, etichette, validation set) e l'abbiamo tolta da GitHub, anche dalla cronologia, perché non va pubblicata. Chiedi il kit agli organizzatori della sfida e mettilo nella radice del progetto con questa struttura, altrimenti `make score`, l'interfaccia e parte dei test non partono:
+
+```text
+data/
+├── Kit_team_hackathon_sfida_5/
+│   ├── Registro_trattamenti.csv
+│   ├── Etichette_sviluppo.csv
+│   ├── permessi_cartelle.csv
+│   └── sviluppo/fileserver/...
+└── validation/
+    ├── Etichette_valutazione_RISERVATO.csv
+    └── valutazione/...
+```
+
+`data/` è in `.gitignore`: non aggiungerla di nuovo ai commit.
+
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt -r requirements-ui.txt
@@ -64,7 +80,7 @@ Per usare il modello locale sui casi dubbi: `make score LLM=qwen3:1.7b` (serve O
 | `ui/` | l'interfaccia per l'RPD (FastAPI, accessibile secondo WCAG 2.1 AA) |
 | `tests/` | 188 test, scritti prima del codice |
 | `docs/` | roadmap, diario del progetto, diagrammi di flusso, threat model, brand kit |
-| `data/` | il kit della sfida con i dati sintetici e le predizioni |
+| `data/` | il kit della sfida e le predizioni: **non è nel repository**, va aggiunta a mano (vedi sopra) |
 | `pitch/` | il pitch deck, il video della demo e la foto del team |
 
 ## Il pitch
